@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Simulator - AHCBUS408 Budget Master</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>AHCBUS408 Budget Master</h1>
+            <p>Agricultural Budgeting Simulation Tool</p>
+        </div>
+    </header>
+
+    <nav>
+        <div class="container">
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="lessons.html">Lessons</a></li>
+                <li><a href="budget.html" class="active">Budget Simulator</a></li>
+                <li><a href="assessments.html">Assessments</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <h2>Budget Simulator</h2>
+        <p>Practice creating and managing a farm budget with this interactive simulator.</p>
+        
+        <div class="budget-controls">
+            <div class="form-group">
+                <label for="budget-name">Budget Name:</label>
+                <input type="text" id="budget-name" value="My Farm Budget">
+            </div>
+            
+            <div class="form-group">
+                <label for="budget-period">Budget Period:</label>
+                <select id="budget-period">
+                    <option value="monthly">Monthly</option>
+                    <option value="quarterly" selected>Quarterly</option>
+                    <option value="annual">Annual</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="current-period">Current Period:</label>
+                <select id="current-period">
+                    <option value="1">Period 1</option>
+                    <option value="2">Period 2</option>
+                    <option value="3">Period 3</option>
+                    <option value="4">Period 4</option>
+                </select>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn" id="add-income">Add Income Item</button>
+                <button class="btn" id="add-expense">Add Expense Item</button>
+                <button class="btn btn-secondary" id="reset-budget">Reset Budget</button>
+            </div>
+        </div>
+        
+        <div class="budget-grid">
+            <table class="budget-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Category</th>
+                        <th>Budgeted</th>
+                        <th>Actual</th>
+                        <th>Variance</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="budget-items">
+                    <!-- Income Section -->
+                    <tr class="budget-category">
+                        <td colspan="6">Income</td>
+                    </tr>
+                    <tr>
+                        <td>Crop Sales</td>
+                        <td>Income</td>
+                        <td>
+                            <input type="number" class="budget-cell" value="15000" data-type="income" data-item="crop-sales" data-field="budgeted">
+                        </td>
+                        <td>
+                            <input type="number" class="budget-cell" value="14000" data-type="income" data-item="crop-sales" data-field="actual">
+                        </td>
+                        <td class="negative-variance">-$1,000</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm">Remove</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Livestock Sales</td>
+                        <td>Income</td>
+                        <td>
+                            <input type="number" class="budget-cell" value="8000" data-type="income" data-item="livestock-sales" data-field="budgeted">
+                        </td>
+                        <td>
+                            <input type="number" class="budget-cell" value="8500" data-type="income" data-item="livestock-sales" data-field="actual">
+                        </td>
+                        <td class="positive-variance">+$500</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm">Remove</button>
+                        </td>
+                    </tr>
+                    
+                    <!-- Expense Section -->
+                    <tr class="budget-category">
+                        <td colspan="6">Expenses</td>
+                    </tr>
+                    <tr>
+                        <td>Seeds & Plants</td>
+                        <td>Expense</td>
+                        <td>
+                            <input type="number" class="budget-cell" value="3000" data-type="expense" data-item="seeds" data-field="budgeted">
+                        </td>
+                        <td>
+                            <input type="number" class="budget-cell" value="3200" data-type="expense" data-item="seeds" data-field="actual">
+                        </td>
+                        <td class="negative-variance">-$200</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm">Remove</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Labor</td>
+                        <td>Expense</td>
+                        <td>
+                            <input type="number" class="budget-cell" value="5000" data-type="expense" data-item="labor" data-field="budgeted">
+                        </td>
+                        <td>
+                            <input type="number" class="budget-cell" value="4800" data-type="expense" data-item="labor" data-field="actual">
+                        </td>
+                        <td class="positive-variance">+$200</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm">Remove</button>
+                        </td>
+                    </tr>
+                    
+                    <!-- Summary Section -->
+                    <tr class="budget-total">
+                        <td>Total Income</td>
+                        <td></td>
+                        <td id="total-income-budgeted">$23,000</td>
+                        <td id="total-income-actual">$22,500</td>
+                        <td id="total-income-variance" class="negative-variance">-$500</td>
+                        <td></td>
+                    </tr>
+                    <tr class="budget-total">
+                        <td>Total Expenses</td>
+                        <td></td>
+                        <td id="total-expenses-budgeted">$8,000</td>
+                        <td id="total-expenses-actual">$8,000</td>
+                        <td id="total-expenses-variance" class="neutral-variance">$0</td>
+                        <td></td>
+                    </tr>
+                    <tr class="budget-net">
+                        <td>Net Profit/Loss</td>
+                        <td></td>
+                        <td id="net-profit-budgeted">$15,000</td>
+                        <td id="net-profit-actual">$14,500</td>
+                        <td id="net-profit-variance" class="negative-variance">-$500</td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="budget-analysis">
+            <h3>Budget Analysis</h3>
+            <div id="analysis-content" class="feedback info">
+                <p><strong>Budget Performance:</strong> Your budget is generally on track with a small negative variance in net profit (-3.3%).</p>
+                <p><strong>Key Observations:</strong></p>
+                <ul>
+                    <li>Crop sales are below budget by $1,000 (6.7%). Consider investigating the cause of this shortfall.</li>
+                    <li>Livestock sales are above budget by $500 (6.3%). This is a positive trend.</li>
+                    <li>Seed costs are over budget by $200 (6.7%). Monitor this expense category closely.</li>
+                    <li>Labor costs are under budget by $200 (4%). This indicates good labor management.</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="budget-scenarios">
+            <h3>Budget Scenarios</h3>
+            <p>Test how different scenarios affect your budget:</p>
+            
+            <div class="scenario-buttons">
+                <button class="btn" id="scenario-drought">Apply Drought Scenario</button>
+                <button class="btn" id="scenario-price-increase">Apply Price Increase Scenario</button>
+                <button class="btn" id="scenario-equipment-failure">Apply Equipment Failure Scenario</button>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 AHCBUS408 Budget Master</p>
+        </div>
+    </footer>
+    
+    <script>
+        // Simple script to handle budget calculations
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add event listeners to budget cells
+            const budgetCells = document.querySelectorAll('.budget-cell');
+            budgetCells.forEach(cell => {
+                cell.addEventListener('change', updateBudget);
+            });
+            
+            // Add event listeners to remove buttons
+            const removeButtons = document.querySelectorAll('.btn-danger');
+            removeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    row.remove();
+                    updateBudget();
+                });
+            });
+            
+            // Add event listeners to add buttons
+            document.getElementById('add-income').addEventListener('click', function() {
+                addBudgetItem('income');
+            });
+            
+            document.getElementById('add-expense').addEventListener('click', function() {
+                addBudgetItem('expense');
+            });
+            
+            // Add event listeners to scenario buttons
+            document.getElementById('scenario-drought').addEventListener('click', function() {
+                applyScenario('drought');
+            });
+            
+            document.getElementById('scenario-price-increase').addEventListener('click', function() {
+                applyScenario('price-increase');
+            });
+            
+            document.getElementById('scenario-equipment-failure').addEventListener('click', function() {
+                applyScenario('equipment-failure');
+            });
+            
+            // Reset budget
+            document.getElementById('reset-budget').addEventListener('click', function() {
+                if (confirm('Are you sure you want to reset the budget? All changes will be lost.')) {
+                    location.reload();
+                }
+            });
+        });
+        
+        // Function to update budget calculations
+        function updateBudget() {
+            // Calculate income totals
+            let totalIncomeBudgeted = 0;
+            let totalIncomeActual = 0;
+            
+            const incomeItems = document.querySelectorAll('[data-type="income"]');
+            incomeItems.forEach(item => {
+                if (item.dataset.field === 'budgeted') {
+                    totalIncomeBudgeted += parseFloat(item.value) || 0;
+                } else if (item.dataset.field === 'actual') {
+                    totalIncomeActual += parseFloat(item.value) || 0;
+                }
+            });
+            
+            // Calculate expense totals
+            let totalExpensesBudgeted = 0;
+            let totalExpensesActual = 0;
+            
+            const expenseItems = document.querySelectorAll('[data-type="expense"]');
+            expenseItems.forEach(item => {
+                if (item.dataset.field === 'budgeted') {
+                    totalExpensesBudgeted += parseFloat(item.value) || 0;
+                } else if (item.dataset.field === 'actual') {
+                    totalExpensesActual += parseFloat(item.value) || 0;
+                }
+            });
+            
+            // Calculate net profit
+            const netProfitBudgeted = totalIncomeBudgeted - totalExpensesBudgeted;
+            const netProfitActual = totalIncomeActual - totalExpensesActual;
+            
+            // Calculate variances
+            const incomeVariance = totalIncomeActual - totalIncomeBudgeted;
+            const expensesVariance = totalExpensesBudgeted - totalExpensesActual;
+            const netProfitVariance = netProfitActual - netProfitBudgeted;
+            
+            // Update summary rows
+            document.getElementById('total-income-budgeted').textContent = formatCurrency(totalIncomeBudgeted);
+            document.getElementById('total-income-actual').textContent = formatCurrency(totalIncomeActual);
+            document.getElementById('total-income-variance').textContent = formatVariance(incomeVariance);
+            
+            document.getElementById('total-expenses-budgeted').textContent = formatCurrency(totalExpensesBudgeted);
+            document.getElementById('total-expenses-actual').textContent = formatCurrency(totalExpensesActual);
+            document.getElementById('total-expenses-variance').textContent = formatVariance(expensesVariance);
+            
+            document.getElementById('net-profit-budgeted').textContent = formatCurrency(netProfitBudgeted);
+            document.getElementById('net-profit-actual').textContent = formatCurrency(netProfitActual);
+            document.getElementById('net-profit-variance').textContent = formatVariance(netProfitVariance);
+            
+            // Apply variance classes
+            applyVarianceClass('total-income-variance', incomeVariance);
+            applyVarianceClass('total-expenses-variance', expensesVariance);
+            applyVarianceClass('net-profit-variance', netProfitVariance);
+            
+            // Update individual row variances
+            updateRowVariances();
+            
+            // Update analysis
+            updateAnalysis(totalIncomeBudgeted, totalIncomeActual, totalExpensesBudgeted, totalExpensesActual, netProfitBudgeted, netProfitActual);
+        }
+        
+        // Function to update individual row variances
+        function updateRowVariances() {
+            const rows = document.querySelectorAll('#budget-items tr:not(.budget-category):not(.budget-total):not(.budget-net)');
+            
+            rows.forEach(row => {
+                const cells = row.cells;
+                if (cells.length < 5) return;
+                
+                const budgetedInput = row.querySelector('[data-field="budgeted"]');
+                const actualInput = row.querySelector('[data-field="actual"]');
+                
+                if (!budgetedInput || !actualInput) return;
+                
+                const type = budgetedInput.dataset.type;
+                const budgeted = parseFloat(budgetedInput.value) || 0;
+                const actual = parseFloat(actualInput.value) || 0;
+                
+                let variance;
+                if (type === 'income') {
+                    variance = actual - budgeted;
+                } else {
+                    variance = budgeted - actual;
+                }
+                
+                cells[4].textContent = formatVariance(variance);
+                
+                if (variance > 0) {
+                    cells[4].className = 'positive-variance';
+                } else if (variance < 0) {
+                    cells[4].className = 'negative-variance';
+                } else {
+                    cells[4].className = 'neutral-variance';
+                }
+            });
+        }
+        
+        // Function to add a new budget item
+        function addBudgetItem(type) {
+            const itemName = prompt(`Enter ${type} item name:`);
+            if (!itemName) return;
+            
+            const budgetItems = document.getElementById('budget-items');
+            const newRow = document.createElement('tr');
+            
+            // Find the appropriate section to add the item
+            let insertBefore;
+            if (type === 'income') {
+                // Find the first expense category row or summary row
+                const expenseCategoryRow = document.querySelector('#budget-items tr.budget-category:nth-of-type(2)');
+                insertBefore = expenseCategoryRow || document.querySelector('#budget-items tr.budget-total');
+            } else {
+                // Find the first summary row
+                insertBefore = document.querySelector('#budget-items tr.budget-total');
+            }
+            
+            // Create a unique ID for the item
+            const itemId = `${type}-${Date.now()}`;
+            
+            newRow.innerHTML = `
+                <td>${itemName}</td>
+                <td>${type.charAt(0).toUpperCase() + type.slice(1)}</td>
+                <td>
+                    <input type="number" class="budget-cell" value="0" data-type="${type}" data-item="${itemId}" data-field="budgeted">
+                </td>
+                <td>
+                    <input type="number" class="budget-cell" value="0" data-type="${type}" data-item="${itemId}" data-field="actual">
+                </td>
+                <td class="neutral-variance">$0</td>
+                <td>
+                    <button class="btn btn-danger btn-sm">Remove</button>
+                </td>
+            `;
+            
+            // Insert the new row
+            budgetItems.insertBefore(newRow, insertBefore);
+            
+            // Add event listeners
+            const budgetCells = newRow.querySelectorAll('.budget-cell');
+            budgetCells.forEach(cell => {
+                cell.addEventListener('change', updateBudget);
+            });
+            
+            const removeButton = newRow.querySelector('.btn-danger');
+            removeButton.addEventListener('click', function() {
+                newRow.remove();
+                updateBudget();
+            });
+            
+            // Focus on the budgeted input
+            newRow.querySelector('[data-field="budgeted"]').focus();
+        }
+        
+        // Function to apply a scenario
+        function applyScenario(scenario) {
+            switch (scenario) {
+                case 'drought':
+                    alert('Applying Drought Scenario: Crop yields reduced by 20%');
+                    // Reduce crop sales actual by 20%
+                    const cropSalesActual = document.querySelector('[data-type="income"][data-item="crop-sales"][data-field="actual"]');
+                    if (cropSalesActual) {
+                        const budgeted = parseFloat(document.querySelector('[data-type="income"][data-item="crop-sales"][data-field="budgeted"]').value) || 0;
+                        cropSalesActual.value = budgeted * 0.8;
+                    }
+                    break;
+                    
+                case 'price-increase':
+                    alert('Applying Price Increase Scenario: Livestock prices increased by 15%');
+                    // Increase livestock sales actual by 15%
+                    const livestockSalesActual = document.querySelector('[data-type="income"][data-item="livestock-sales"][data-field="actual"]');
+                    if (livestockSalesActual) {
+                        const budgeted = parseFloat(document.querySelector('[data-type="income"][data-item="livestock-sales"][data-field="budgeted"]').value) || 0;
+                        livestockSalesActual.value = budgeted * 1.15;
+                    }
+                    break;
+                    
+                case 'equipment-failure':
+                    alert('Applying Equipment Failure Scenario: Emergency repair costs of $2,000');
+                    // Add or increase repair expenses
+                    const repairsActual = document.querySelector('[data-item="repairs"][data-field="actual"]');
+                    if (repairsActual) {
+                        repairsActual.value = parseFloat(repairsActual.value) + 2000;
+                    } else {
+                        // Add a new expense item for repairs
+                        const budgetItems = document.getElementById('budget-items');
+                        const newRow = document.createElement('tr');
+                        
+                        // Find the first summary row
+                        const insertBefore = document.querySelector('#budget-items tr.budget-total');
+                        
+                        newRow.innerHTML = `
+                            <td>Equipment Repairs</td>
+                            <td>Expense</td>
+                            <td>
+                                <input type="number" class="budget-cell" value="0" data-type="expense" data-item="repairs" data-field="budgeted">
+                            </td>
+                            <td>
+                                <input type="number" class="budget-cell" value="2000" data-type="expense" data-item="repairs" data-field="actual">
+                            </td>
+                            <td class="negative-variance">-$2,000</td>
+                            <td>
+                                <button class="btn btn-danger btn-sm">Remove</button>
+                            </td>
+                        `;
+                        
+                        // Insert the new row
+                        budgetItems.insertBefore(newRow, insertBefore);
+                        
+                        // Add event listeners
+                        const budgetCells = newRow.querySelectorAll('.budget-cell');
+                        budgetCells.forEach(cell => {
+                            cell.addEventListener('change', updateBudget);
+                        });
+                        
+                        const removeButton = newRow.querySelector('.btn-danger');
+                        removeButton.addEventListener('click', function() {
+                            newRow.remove();
+                            updateBudget();
+                        });
+                    }
+                    break;
+            }
+            
+            // Update budget calculations
+            updateBudget();
+        }
+        
+        // Function to update the analysis
+        function updateAnalysis(totalIncomeBudgeted, totalIncomeActual, totalExpensesBudgeted, totalExpensesActual, netProfitBudgeted, netProfitActual) {
+            const analysisContent = document.getElementById('analysis-content');
+            
+            // Calculate variance percentages
+            const incomeVariancePercent = totalIncomeBudgeted === 0 ? 0 : ((totalIncomeActual - totalIncomeBudgeted) / totalIncomeBudgeted) * 100;
+            const expensesVariancePercent = totalExpensesBudgeted === 0 ? 0 : ((totalExpensesActual - totalExpensesBudgeted) / totalExpensesBudgeted) * 100;
+            const netProfitVariancePercent = netProfitBudgeted === 0 ? 0 : ((netProfitActual - netProfitBudgeted) / netProfitBudgeted) * 100;
+            
+            // Generate analysis text
+            let analysisText = `<p><strong>Budget Performance:</strong> `;
+            
+            if (Math.abs(netProfitVariancePercent) < 5) {
+                analysisText += `Your budget is on track with a small ${netProfitVariancePercent >= 0 ? 'positive' : 'negative'} variance in net profit (${netProfitVariancePercent.toFixed(1)}%).`;
+                analysisContent.className = 'feedback info';
+            } else if (netProfitVariancePercent >= 5) {
+                analysisText += `Your budget is performing better than expected with a positive variance in net profit of ${netProfitVariancePercent.toFixed(1)}%.`;
+                analysisContent.className = 'feedback success';
+            } else {
+                analysisText += `Your budget is underperforming with a negative variance in net profit of ${Math.abs(netProfitVariancePercent).toFixed(1)}%.`;
+                analysisContent.className = 'feedback warning';
+            }
+            
+            analysisText += `</p><p><strong>Key Observations:</strong></p><ul>`;
+            
+            // Add observations about income
+            if (Math.abs(incomeVariancePercent) >= 5) {
+                analysisText += `<li>Total income is ${incomeVariancePercent >= 0 ? 'above' : 'below'} budget by ${formatCurrency(Math.abs(totalIncomeActual - totalIncomeBudgeted))} (${Math.abs(incomeVariancePercent).toFixed(1)}%). ${incomeVariancePercent >= 0 ? 'This is positive.' : 'This needs attention.'}</li>`;
+            }
+            
+            // Add observations about expenses
+            if (Math.abs(expensesVariancePercent) >= 5) {
+                analysisText += `<li>Total expenses are ${expensesVariancePercent >= 0 ? 'above' : 'below'} budget by ${formatCurrency(Math.abs(totalExpensesActual - totalExpensesBudgeted))} (${Math.abs(expensesVariancePercent).toFixed(1)}%). ${expensesVariancePercent >= 0 ? 'This needs attention.' : 'This is positive.'}</li>`;
+            }
+            
+            // Add observations about individual items
+            const rows = document.querySelectorAll('#budget-items tr:not(.budget-category):not(.budget-total):not(.budget-net)');
+            
+            rows.forEach(row => {
+                const cells = row.cells;
+                if (cells.length < 5) return;
+                
+                const itemName = cells[0].textContent;
+                const itemType = cells[1].textContent.toLowerCase();
+                const budgetedInput = row.querySelector('[data-field="budgeted"]');
+                const actualInput = row.querySelector('[data-field="actual"]');
+                
+                if (!budgetedInput || !actualInput) return;
+                
+                const budgeted = parseFloat(budgetedInput.value) || 0;
+                const actual = parseFloat(actualInput.value) || 0;
+                
+                if (budgeted === 0) return;
+                
+                const variance = itemType === 'income' ? actual - budgeted : budgeted - actual;
+                const variancePercent = (variance / budgeted) * 100;
+                
+                if (Math.abs(variancePercent) >= 10) {
+                    const isPositive = variance > 0;
+                    const direction = itemType === 'income' ? (isPositive ? 'above' : 'below') : (isPositive ? 'below' : 'above');
+                    const assessment = (itemType === 'income' && isPositive) || (itemType === 'expense' && isPositive) ? 'This is positive.' : 'This needs attention.';
+                    
+                    analysisText += `<li>${itemName} is ${direction} budget by ${formatCurrency(Math.abs(variance))} (${Math.abs(variancePercent).toFixed(1)}%). ${assessment}</li>`;
+                }
+            });
+            
+            analysisText += `</ul>`;
+            
+            // Add recommendations
+            analysisText += `<p><strong>Recommendations:</strong></p><ul>`;
+            
+            if (netProfitVariancePercent < -10) {
+                analysisText += `<li>Review all expenses for potential savings.</li>`;
+                analysisText += `<li>Explore ways to increase income.</li>`;
+            } else if (netProfitVariancePercent < 0) {
+                analysisText += `<li>Monitor budget closely in the coming periods.</li>`;
+            }
+            
+            // Add specific recommendations based on individual items
+            let hasSpecificRecommendations = false;
+            
+            rows.forEach(row => {
+                const cells = row.cells;
+                if (cells.length < 5) return;
+                
+                const itemName = cells[0].textContent;
+                const itemType = cells[1].textContent.toLowerCase();
+                const budgetedInput = row.querySelector('[data-field="budgeted"]');
+                const actualInput = row.querySelector('[data-field="actual"]');
+                
+                if (!budgetedInput || !actualInput) return;
+                
+                const budgeted = parseFloat(budgetedInput.value) || 0;
+                const actual = parseFloat(actualInput.value) || 0;
+                
+                if (budgeted === 0) return;
+                
+                const variance = itemType === 'income' ? actual - budgeted : budgeted - actual;
+                const variancePercent = (variance / budgeted) * 100;
+                
+                if (variancePercent <= -15 && itemType === 'income') {
+                    analysisText += `<li>Investigate the cause of the ${itemName} shortfall and develop a plan to address it.</li>`;
+                    hasSpecificRecommendations = true;
+                } else if (variancePercent <= -15 && itemType === 'expense') {
+                    analysisText += `<li>Review ${itemName} spending to identify what's causing the higher costs.</li>`;
+                    hasSpecificRecommendations = true;
+                }
+            });
+            
+            if (!hasSpecificRecommendations) {
+                analysisText += `<li>Continue monitoring the budget and making adjustments as needed.</li>`;
+            }
+            
+            analysisText += `</ul>`;
+            
+            analysisContent.innerHTML = analysisText;
+        }
+        
+        // Helper function to format currency
+        function formatCurrency(amount) {
+            return '$' + amount.toLocaleString(undefined, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
+        }
+        
+        // Helper function to format variance
+        function formatVariance(amount) {
+            if (amount > 0) {
+                return '+' + formatCurrency(amount);
+            } else if (amount < 0) {
+                return formatCurrency(amount);
+            } else {
+                return '$0';
+            }
+        }
+        
+        // Helper function to apply variance class
+        function applyVarianceClass(elementId, value) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            
+            element.className = '';
+            if (value > 0) {
+                element.classList.add('positive-variance');
+            } else if (value < 0) {
+                element.classList.add('negative-variance');
+            } else {
+                element.classList.add('neutral-variance');
+            }
+        }
+    </script>
+</body>
+</html>

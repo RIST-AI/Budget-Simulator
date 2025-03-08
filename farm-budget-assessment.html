@@ -1,0 +1,2190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farm Budget Management Assessment - AHCBUS408</title>
+    <style>
+        /* General Styles */
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f7fa;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1, h2, h3, h4 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        
+        /* Header Styles */
+        header {
+            background-color: #3498db;
+            color: white;
+            padding: 15px 0;
+            margin-bottom: 30px;
+        }
+        
+        header h1 {
+            color: white;
+            margin: 0;
+        }
+        
+        /* Navigation Styles */
+        nav {
+            background-color: #2980b9;
+            padding: 10px 0;
+        }
+        
+        nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+        
+        nav li {
+            margin-right: 20px;
+        }
+        
+        nav a {
+            color: white;
+            text-decoration: none;
+            padding: 5px 10px;
+        }
+        
+        nav a:hover, nav a.active {
+            background-color: #1c638d;
+            border-radius: 4px;
+        }
+        
+        /* Assessment Styles */
+        .assessment-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .assessment-header {
+            border-bottom: 1px solid #e1e4e8;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .assessment-progress {
+            display: flex;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .progress-step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+        
+        .step-number {
+            width: 30px;
+            height: 30px;
+            background-color: #e1e4e8;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-weight: bold;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .progress-step.active .step-number {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .progress-step.completed .step-number {
+            background-color: #2ecc71;
+            color: white;
+        }
+        
+        .progress-line {
+            position: absolute;
+            top: 15px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #e1e4e8;
+            z-index: 1;
+        }
+        
+        .step-label {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        
+        .progress-step.active .step-label {
+            color: #3498db;
+            font-weight: bold;
+        }
+        
+        .progress-step.completed .step-label {
+            color: #2ecc71;
+        }
+        
+        /* Tab Styles */
+        .tabs {
+            margin-bottom: 20px;
+        }
+        
+        .tab-buttons {
+            display: flex;
+            border-bottom: 1px solid #e1e4e8;
+        }
+        
+        .tab-button {
+            padding: 10px 20px;
+            background-color: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            font-weight: bold;
+            color: #7f8c8d;
+            transition: all 0.3s;
+        }
+        
+        .tab-button:hover {
+            color: #3498db;
+        }
+        
+        .tab-button.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px 0;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        .error-input {
+            border-color: #e74c3c !important;
+        }
+        
+        /* Budget Table Styles */
+        .budget-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .budget-table th,
+        .budget-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e1e4e8;
+        }
+        
+        .budget-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        
+        .budget-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .budget-category {
+            background-color: #edf2f7;
+            font-weight: bold;
+        }
+        
+        .budget-total {
+            font-weight: bold;
+            background-color: #f8f9fa;
+        }
+        
+        .budget-net {
+            font-weight: bold;
+            background-color: #edf2f7;
+        }
+        
+        /* Variance Styles */
+        .positive-variance {
+            color: #2ecc71;
+        }
+        
+        .negative-variance {
+            color: #e74c3c;
+        }
+        
+        .neutral-variance {
+            color: #7f8c8d;
+        }
+        
+        /* Tooltip Styles */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+        
+        .tooltip .tooltip-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            background-color: #95a5a6;
+            color: white;
+            border-radius: 50%;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+        
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 250px;
+            background-color: #34495e;
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -125px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 14px;
+            font-weight: normal;
+        }
+        
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        /* Feedback Styles */
+        .feedback {
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .feedback.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        
+        .feedback.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        
+        .feedback.warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+            display: block;
+        }
+        
+        .feedback.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+        
+        /* Button Styles */
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn:active {
+            background-color: #1c638d;
+        }
+        
+        .btn-secondary {
+            background-color: #95a5a6;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .btn-success {
+            background-color: #2ecc71;
+        }
+        
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+        
+        .btn-danger {
+            background-color: #e74c3c;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        
+        /* Card Styles */
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .card-header {
+            border-bottom: 1px solid #e1e4e8;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+        }
+        
+        .card-title {
+            margin: 0;
+            font-size: 18px;
+        }
+        
+        /* Budget Item Entry */
+        .budget-item-entry {
+            background-color: #f8f9fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .budget-item-entry.error {
+            border-color: #e74c3c;
+            background-color: #fdf3f2;
+        }
+        
+        .budget-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .budget-item-title {
+            font-weight: bold;
+            margin: 0;
+        }
+        
+        .budget-item-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .budget-item-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            .budget-item-form {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Source Document Styles */
+        .source-document {
+            background-color: #f8f9fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .source-document h3 {
+            margin-top: 0;
+            border-bottom: 1px solid #e1e4e8;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        
+        /* Scenario Styles */
+        .scenario-card {
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .scenario-card h3 {
+            margin-top: 0;
+            color: #3498db;
+        }
+        
+        /* Recommendation Styles */
+        .recommendation-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .recommendation-option {
+            background-color: #f8f9fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 4px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .recommendation-option:hover {
+            border-color: #3498db;
+            box-shadow: 0 2px 10px rgba(52, 152, 219, 0.2);
+        }
+        
+        .recommendation-option.selected {
+            border-color: #3498db;
+            background-color: #ebf5fb;
+        }
+        
+        .recommendation-option h4 {
+            margin-top: 0;
+            color: #3498db;
+        }
+        
+        /* Helpers */
+        .text-center {
+            text-align: center;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .mt-20 {
+            margin-top: 20px;
+        }
+        
+        .mb-20 {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>AHCBUS408 Budget Master</h1>
+        </div>
+    </header>
+    
+    <nav>
+        <div class="container">
+            <ul>
+                <li><a href="#">Home</a></li>
+                <li><a href="#">Lessons</a></li>
+                <li><a href="#">Budget Simulator</a></li>
+                <li><a href="#" class="active">Assessments</a></li>
+            </ul>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <div class="assessment-container">
+            <div class="assessment-header">
+                <h2>Farm Budget Management Assessment</h2>
+                <div>
+                    <span id="timer">Time remaining: 60:00</span>
+                </div>
+            </div>
+            
+            <div class="assessment-progress">
+                <div class="progress-line"></div>
+                <div class="progress-step active" data-step="1">
+                    <div class="step-number">1</div>
+                    <div class="step-label">Budget Setup</div>
+                </div>
+                <div class="progress-step" data-step="2">
+                    <div class="step-number">2</div>
+                    <div class="step-label">Track Actuals</div>
+                </div>
+                <div class="progress-step" data-step="3">
+                    <div class="step-number">3</div>
+                    <div class="step-label">Variance Analysis</div>
+                </div>
+                <div class="progress-step" data-step="4">
+                    <div class="step-number">4</div>
+                    <div class="step-label">Adjustments</div>
+                </div>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab-buttons">
+                    <button class="tab-button active" data-tab="instructions">Instructions</button>
+                    <button class="tab-button" data-tab="budget-setup">Budget Setup</button>
+                    <button class="tab-button" data-tab="track-actuals">Track Actuals</button>
+                    <button class="tab-button" data-tab="variance-analysis">Variance Analysis</button>
+                    <button class="tab-button" data-tab="adjustments">Adjustments</button>
+                </div>
+                
+                <!-- Instructions Tab -->
+                <div class="tab-content active" id="instructions">
+                    <h3>Assessment Instructions</h3>
+                    <p>Welcome to the Farm Budget Management Assessment. In this assessment, you will:</p>
+                    <ol>
+                        <li>Set up a quarterly budget for Green Valley Farm based on source documents</li>
+                        <li>Track actual income and expenses for the first two quarters</li>
+                        <li>Analyze variances between budgeted and actual figures</li>
+                        <li>Make recommendations and adjustments to address budget issues</li>
+                    </ol>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Green Valley Farm - Background Information</h3>
+                        </div>
+                        <p>Green Valley Farm is a mixed farming operation with the following characteristics:</p>
+                        <ul>
+                            <li>100 acres of crop production (wheat, corn, and soybeans)</li>
+                            <li>50 head of beef cattle</li>
+                            <li>Small poultry operation (500 laying hens)</li>
+                            <li>Farm store selling produce and eggs directly to consumers</li>
+                            <li>3 full-time employees and seasonal workers during planting/harvest</li>
+                        </ul>
+                        <p>The farm operates year-round with seasonal variations in income and expenses. Your task is to help the farm owner manage their budget effectively.</p>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <div></div>
+                        <button class="btn" onclick="nextTab('budget-setup')">Start Assessment</button>
+                    </div>
+                </div>
+                
+                <!-- Budget Setup Tab -->
+                <div class="tab-content" id="budget-setup">
+                    <h3>Step 1: Budget Setup</h3>
+                    <p>Review the source documents below and set up a quarterly budget for Green Valley Farm. Enter all relevant income and expense items, categorizing them correctly.</p>
+                    
+                    <div id="budget-setup-feedback" class="feedback"></div>
+                    
+                    <div class="source-document">
+                        <h3>Source Document 1: Income Projections</h3>
+                        <p>The following income is projected for the year:</p>
+                        <ul>
+                            <li>Crop Sales: $120,000 (Q1: $10,000, Q2: $15,000, Q3: $45,000, Q4: $50,000)</li>
+                            <li>Livestock Sales: $75,000 (Q1: $15,000, Q2: $20,000, Q3: $15,000, Q4: $25,000)</li>
+                            <li>Poultry & Eggs: $36,000 (Approximately $9,000 per quarter)</li>
+                            <li>Farm Store: $48,000 (Approximately $12,000 per quarter)</li>
+                            <li>Government Subsidies: $20,000 (Received in Q2 and Q4, $10,000 each)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="source-document">
+                        <h3>Source Document 2: Expense Projections</h3>
+                        <p>The following expenses are projected for the year:</p>
+                        <ul>
+                            <li>Seeds & Plants: $30,000 (Q1: $25,000, Q2: $5,000)</li>
+                            <li>Fertilizer & Chemicals: $25,000 (Q1: $15,000, Q2: $10,000)</li>
+                            <li>Animal Feed: $40,000 (Approximately $10,000 per quarter)</li>
+                            <li>Veterinary Services: $8,000 (Q1: $2,000, Q2: $2,000, Q3: $2,000, Q4: $2,000)</li>
+                            <li>Fuel & Utilities: $24,000 (Q1: $5,000, Q2: $6,000, Q3: $7,000, Q4: $6,000)</li>
+                            <li>Repairs & Maintenance: $18,000 (Q1: $3,000, Q2: $5,000, Q3: $5,000, Q4: $5,000)</li>
+                            <li>Labor & Wages: $90,000 (Q1: $20,000, Q2: $25,000, Q3: $25,000, Q4: $20,000)</li>
+                            <li>Insurance: $12,000 (Paid in Q1 and Q3, $6,000 each)</li>
+                            <li>Property Taxes: $8,000 (Paid in Q4)</li>
+                            <li>Loan Payments: $36,000 (Q1: $9,000, Q2: $9,000, Q3: $9,000, Q4: $9,000)</li>
+                            <li>Marketing & Advertising: $6,000 (Q1: $1,500, Q2: $1,500, Q3: $1,500, Q4: $1,500)</li>
+                        </ul>
+                    </div>
+                    
+                    <h3 class="mt-20">Budget Entry</h3>
+                    <p>Enter the budget items from the source documents. Make sure to categorize each item correctly.</p>
+                    
+                    <div id="budget-items-container">
+                        <!-- Budget items will be added here -->
+                    </div>
+                    
+                    <button class="btn mt-20" onclick="addBudgetItem()">+ Add Budget Item</button>
+                    
+                    <div class="card mt-20">
+                        <div class="card-header">
+                            <h3 class="card-title">Budget Summary</h3>
+                        </div>
+                        <div class="budget-summary">
+                            <table class="budget-table" id="budget-summary-table">
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Q1</th>
+                                        <th>Q2</th>
+                                        <th>Q3</th>
+                                        <th>Q4</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="budget-category">
+                                        <td>Total Income</td>
+                                        <td id="income-q1">$0</td>
+                                        <td id="income-q2">$0</td>
+                                        <td id="income-q3">$0</td>
+                                        <td id="income-q4">$0</td>
+                                        <td id="income-total">$0</td>
+                                    </tr>
+                                    <tr class="budget-category">
+                                        <td>Total Expenses</td>
+                                        <td id="expenses-q1">$0</td>
+                                        <td id="expenses-q2">$0</td>
+                                        <td id="expenses-q3">$0</td>
+                                        <td id="expenses-q4">$0</td>
+                                        <td id="expenses-total">$0</td>
+                                    </tr>
+                                    <tr class="budget-net">
+                                        <td>Net Profit/Loss</td>
+                                        <td id="net-q1">$0</td>
+                                        <td id="net-q2">$0</td>
+                                        <td id="net-q3">$0</td>
+                                        <td id="net-q4">$0</td>
+                                        <td id="net-total">$0</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" onclick="prevTab('instructions')">Back</button>
+                        <button class="btn" onclick="validateBudgetSetup()">Continue to Track Actuals</button>
+                    </div>
+                </div>
+                
+                <!-- Track Actuals Tab -->
+                <div class="tab-content" id="track-actuals">
+                    <h3>Step 2: Track Actuals</h3>
+                    <p>The first two quarters of the year have passed. Enter the actual figures for Q1 and Q2 based on the information provided.</p>
+                    
+                    <div id="track-actuals-feedback" class="feedback"></div>
+                    
+                    <div class="scenario-card">
+                        <h3>Mid-Year Update</h3>
+                        <p>It's now the end of Q2, and Green Valley Farm has experienced some changes from their original budget:</p>
+                        <ul>
+                            <li>Crop sales in Q1 were 15% lower than budgeted due to lower market prices</li>
+                            <li>Livestock sales in Q2 exceeded budget by 10% due to higher demand</li>
+                            <li>Poultry & Egg sales were on target for both quarters</li>
+                            <li>Farm Store sales in Q1 were 5% below budget due to poor weather affecting customer visits</li>
+                            <li>Fertilizer costs in Q1 were 20% higher than budgeted due to price increases</li>
+                            <li>An unexpected equipment breakdown in Q2 increased Repairs & Maintenance costs by $3,000</li>
+                            <li>Fuel costs were 10% higher than budgeted in both quarters due to price increases</li>
+                            <li>Labor costs in Q2 were 5% lower than budgeted due to improved efficiency</li>
+                        </ul>
+                        <p>Use this information to enter the actual figures for Q1 and Q2.</p>
+                    </div>
+                    
+                    <div class="card mt-20">
+                        <div class="card-header">
+                            <h3 class="card-title">Budget vs. Actual</h3>
+                        </div>
+                        <div class="budget-vs-actual">
+                            <table class="budget-table" id="budget-vs-actual-table">
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Category</th>
+                                        <th>Q1 Budget</th>
+                                        <th>Q1 Actual</th>
+                                        <th>Q1 Variance</th>
+                                        <th>Q2 Budget</th>
+                                        <th>Q2 Actual</th>
+                                        <th>Q2 Variance</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="actuals-table-body">
+                                    <!-- Budget vs Actual rows will be added here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-20">
+                        <div class="card-header">
+                            <h3 class="card-title">Mid-Year Summary</h3>
+                        </div>
+                        <div class="mid-year-summary">
+                            <table class="budget-table" id="mid-year-summary-table">
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Q1+Q2 Budget</th>
+                                        <th>Q1+Q2 Actual</th>
+                                        <th>Variance ($)</th>
+                                        <th>Variance (%)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="budget-category">
+                                        <td>Total Income</td>
+                                        <td id="mid-income-budget">$0</td>
+                                        <td id="mid-income-actual">$0</td>
+                                        <td id="mid-income-variance-amount">$0</td>
+                                        <td id="mid-income-variance-percent">0%</td>
+                                    </tr>
+                                    <tr class="budget-category">
+                                        <td>Total Expenses</td>
+                                        <td id="mid-expenses-budget">$0</td>
+                                        <td id="mid-expenses-actual">$0</td>
+                                        <td id="mid-expenses-variance-amount">$0</td>
+                                        <td id="mid-expenses-variance-percent">0%</td>
+                                    </tr>
+                                    <tr class="budget-net">
+                                        <td>Net Profit/Loss</td>
+                                        <td id="mid-net-budget">$0</td>
+                                        <td id="mid-net-actual">$0</td>
+                                        <td id="mid-net-variance-amount">$0</td>
+                                        <td id="mid-net-variance-percent">0%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" onclick="prevTab('budget-setup')">Back</button>
+                        <button class="btn" onclick="validateActuals()">Continue to Variance Analysis</button>
+                    </div>
+                </div>
+                
+                <!-- Variance Analysis Tab -->
+                <div class="tab-content" id="variance-analysis">
+                    <h3>Step 3: Variance Analysis</h3>
+                    <p>Analyze the variances between budgeted and actual figures. Identify the most significant variances and their potential causes.</p>
+                    
+                    <div id="variance-analysis-feedback" class="feedback"></div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Significant Variances</h3>
+                        </div>
+                        <p>Review the budget vs. actual data and identify the three most significant variances that require attention:</p>
+                        
+                        <div class="form-group">
+                            <label for="variance-1">
+                                1. Most Significant Variance:
+                                <div class="tooltip">
+                                    <span class="tooltip-icon">?</span>
+                                    <span class="tooltip-text">Select the budget item with the largest or most concerning variance that needs immediate attention.</span>
+                                </div>
+                            </label>
+                            <select id="variance-1" class="variance-select">
+                                <option value="">-- Select Item --</option>
+                                <!-- Options will be added dynamically -->
+                            </select>
+                            <div id="variance-1-feedback" class="feedback"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="variance-1-cause">Cause of Variance:</label>
+                            <select id="variance-1-cause">
+                                <option value="">-- Select Cause --</option>
+                                <option value="market-price">Market Price Changes</option>
+                                <option value="volume">Volume/Quantity Changes</option>
+                                <option value="weather">Weather Conditions</option>
+                                <option value="operational">Operational Issues</option>
+                                <option value="unexpected">Unexpected Events</option>
+                                <option value="efficiency">Efficiency Improvements</option>
+                                <option value="timing">Timing Differences</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="variance-1-explanation">Explanation:</label>
+                            <textarea id="variance-1-explanation" rows="3" placeholder="Explain why this variance occurred..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="variance-2">
+                                2. Second Most Significant Variance:
+                                <div class="tooltip">
+                                    <span class="tooltip-icon">?</span>
+                                    <span class="tooltip-text">Select another important variance that requires management attention.</span>
+                                </div>
+                            </label>
+                            <select id="variance-2" class="variance-select">
+                                <option value="">-- Select Item --</option>
+                                <!-- Options will be added dynamically -->
+                            </select>
+                            <div id="variance-2-feedback" class="feedback"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="variance-2-cause">Cause of Variance:</label>
+                            <select id="variance-2-cause">
+                                <option value="">-- Select Cause --</option>
+                                <option value="market-price">Market Price Changes</option>
+                                <option value="volume">Volume/Quantity Changes</option>
+                                <option value="weather">Weather Conditions</option>
+                                <option value="operational">Operational Issues</option>
+                                <option value="unexpected">Unexpected Events</option>
+                                <option value="efficiency">Efficiency Improvements</option>
+                                <option value="timing">Timing Differences</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="variance-2-explanation">Explanation:</label>
+                            <textarea id="variance-2-explanation" rows="3" placeholder="Explain why this variance occurred..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="variance-3">
+                                3. Third Most Significant Variance:
+                                <div class="tooltip">
+                                    <span class="tooltip-icon">?</span>
+                                    <span class="tooltip-text">Select a third variance that should be addressed in your recommendations.</span>
+                                </div>
+                            </label>
+                            <select id="variance-3" class="variance-select">
+                                <option value="">-- Select Item --</option>
+                                <!-- Options will be added dynamically -->
+                            </select>
+                            <div id="variance-3-feedback" class="feedback"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="variance-3-cause">Cause of Variance:</label>
+                            <select id="variance-3-cause">
+                                <option value="">-- Select Cause --</option>
+                                <option value="market-price">Market Price Changes</option>
+                                <option value="volume">Volume/Quantity Changes</option>
+                                <option value="weather">Weather Conditions</option>
+                                <option value="operational">Operational Issues</option>
+                                <option value="unexpected">Unexpected Events</option>
+                                <option value="efficiency">Efficiency Improvements</option>
+                                <option value="timing">Timing Differences</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="variance-3-explanation">Explanation:</label>
+                            <textarea id="variance-3-explanation" rows="3" placeholder="Explain why this variance occurred..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-20">
+                        <div class="card-header">
+                            <h3 class="card-title">Overall Budget Performance</h3>
+                        </div>
+                        <div class="form-group">
+                            <label for="overall-assessment">
+                                Overall Assessment of Budget Performance:
+                                <div class="tooltip">
+                                    <span class="tooltip-icon">?</span>
+                                    <span class="tooltip-text">Provide a brief assessment of how the farm is performing against its budget at the mid-year point.</span>
+                                </div>
+                            </label>
+                            <textarea id="overall-assessment" rows="5" placeholder="Assess the overall budget performance..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" onclick="prevTab('track-actuals')">Back</button>
+                        <button class="btn" onclick="validateVarianceAnalysis()">Continue to Adjustments</button>
+                    </div>
+                </div>
+                
+                <!-- Adjustments Tab -->
+                <div class="tab-content" id="adjustments">
+                    <h3>Step 4: Budget Adjustments</h3>
+                    <p>Based on your variance analysis, make recommendations for adjustments to the budget for Q3 and Q4.</p>
+                    
+                    <div id="adjustments-feedback" class="feedback"></div>
+                    
+                    <div class="scenario-card">
+                        <h3>Looking Ahead</h3>
+                        <p>As you plan for Q3 and Q4, consider these additional factors:</p>
+                        <ul>
+                            <li>Weather forecasts predict a drier than normal Q3, which could affect crop yields</li>
+                            <li>Fuel prices are expected to remain elevated for the rest of the year</li>
+                            <li>Market analysts predict livestock prices will increase by approximately 5% in Q4</li>
+                            <li>The farm's main tractor needs major repairs estimated at $7,000 in Q3</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card mt-20">
+                        <div class="card-header">
+                            <h3 class="card-title">Recommendations for Top Variances</h3>
+                        </div>
+                        
+                        <div id="recommendation-1-container" class="mb-20">
+                            <h4 id="recommendation-1-title">Recommendation for [Variance 1]</h4>
+                            <p>What action do you recommend to address this variance?</p>
+                            
+                            <div class="recommendation-options">
+                                <div class="recommendation-option" data-option="1" onclick="selectRecommendation(1, 1)">
+                                    <h4>Adjust Budget</h4>
+                                    <p>Revise the budget to reflect the new reality</p>
+                                </div>
+                                <div class="recommendation-option" data-option="2" onclick="selectRecommendation(1, 2)">
+                                    <h4>Operational Change</h4>
+                                    <p>Change operations to address the issue</p>
+                                </div>
+                                <div class="recommendation-option" data-option="3" onclick="selectRecommendation(1, 3)">
+                                    <h4>Reallocate Resources</h4>
+                                    <p>Move resources from one area to another</p>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group mt-20">
+                                <label for="recommendation-1-details">Provide details of your recommendation:</label>
+                                <textarea id="recommendation-1-details" rows="3" placeholder="Explain your recommendation..."></textarea>
+                            </div>
+                            
+                            <div id="recommendation-1-feedback" class="feedback"></div>
+                        </div>
+                        
+                        <div id="recommendation-2-container" class="mb-20">
+                            <h4 id="recommendation-2-title">Recommendation for [Variance 2]</h4>
+                            <p>What action do you recommend to address this variance?</p>
+                            
+                            <div class="recommendation-options">
+                                <div class="recommendation-option" data-option="1" onclick="selectRecommendation(2, 1)">
+                                    <h4>Adjust Budget</h4>
+                                    <p>Revise the budget to reflect the new reality</p>
+                                </div>
+                                <div class="recommendation-option" data-option="2" onclick="selectRecommendation(2, 2)">
+                                    <h4>Operational Change</h4>
+                                    <p>Change operations to address the issue</p>
+                                </div>
+                                <div class="recommendation-option" data-option="3" onclick="selectRecommendation(2, 3)">
+                                    <h4>Reallocate Resources</h4>
+                                    <p>Move resources from one area to another</p>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group mt-20">
+                                <label for="recommendation-2-details">Provide details of your recommendation:</label>
+                                <textarea id="recommendation-2-details" rows="3" placeholder="Explain your recommendation..."></textarea>
+                            </div>
+                            
+                            <div id="recommendation-2-feedback" class="feedback"></div>
+                        </div>
+                        
+                        <div id="recommendation-3-container" class="mb-20">
+                            <h4 id="recommendation-3-title">Recommendation for [Variance 3]</h4>
+                            <p>What action do you recommend to address this variance?</p>
+                            
+                            <div class="recommendation-options">
+                                <div class="recommendation-option" data-option="1" onclick="selectRecommendation(3, 1)">
+                                    <h4>Adjust Budget</h4>
+                                    <p>Revise the budget to reflect the new reality</p>
+                                </div>
+                                <div class="recommendation-option" data-option="2" onclick="selectRecommendation(3, 2)">
+                                    <h4>Operational Change</h4>
+                                    <p>Change operations to address the issue</p>
+                                </div>
+                                <div class="recommendation-option" data-option="3" onclick="selectRecommendation(3, 3)">
+                                    <h4>Reallocate Resources</h4>
+                                    <p>Move resources from one area to another</p>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group mt-20">
+                                <label for="recommendation-3-details">Provide details of your recommendation:</label>
+                                <textarea id="recommendation-3-details" rows="3" placeholder="Explain your recommendation..."></textarea>
+                            </div>
+                            
+                            <div id="recommendation-3-feedback" class="feedback"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-20">
+                        <div class="card-header">
+                            <h3 class="card-title">Budget Revision for Q3 and Q4</h3>
+                        </div>
+                        <p>Based on your analysis and recommendations, indicate how you would adjust the budget for Q3 and Q4:</p>
+                        
+                        <table class="budget-table" id="budget-revision-table">
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Original Q3+Q4 Budget</th>
+                                    <th>Revised Q3+Q4 Budget</th>
+                                    <th>Change (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Crop Sales</td>
+                                    <td id="original-crop-sales">$95,000</td>
+                                    <td>
+                                        <input type="number" id="revised-crop-sales" class="budget-cell" value="95000" onchange="calculateRevisionChange('crop-sales')">
+                                    </td>
+                                    <td id="change-crop-sales">0%</td>
+                                </tr>
+                                <tr>
+                                    <td>Livestock Sales</td>
+                                    <td id="original-livestock-sales">$40,000</td>
+                                    <td>
+                                        <input type="number" id="revised-livestock-sales" class="budget-cell" value="40000" onchange="calculateRevisionChange('livestock-sales')">
+                                    </td>
+                                    <td id="change-livestock-sales">0%</td>
+                                </tr>
+                                <tr>
+                                    <td>Poultry & Eggs</td>
+                                    <td id="original-poultry">$18,000</td>
+                                    <td>
+                                        <input type="number" id="revised-poultry" class="budget-cell" value="18000" onchange="calculateRevisionChange('poultry')">
+                                    </td>
+                                    <td id="change-poultry">0%</td>
+                                </tr>
+                                <tr>
+                                    <td>Farm Store</td>
+                                    <td id="original-farm-store">$24,000</td>
+                                    <td>
+                                        <input type="number" id="revised-farm-store" class="budget-cell" value="24000" onchange="calculateRevisionChange('farm-store')">
+                                    </td>
+                                    <td id="change-farm-store">0%</td>
+                                </tr>
+                                <tr>
+                                    <td>Government Subsidies</td>
+                                    <td id="original-subsidies">$10,000</td>
+                                    <td>
+                                        <input type="number" id="revised-subsidies" class="budget-cell" value="10000" onchange="calculateRevisionChange('subsidies')">
+                                    </td>
+                                    <td id="change-subsidies">0%</td>
+                                </tr>
+                                <tr class="budget-category">
+                                    <td>Total Income</td>
+                                    <td id="original-total-income">$187,000</td>
+                                    <td id="revised-total-income">$187,000</td>
+                                    <td id="change-total-income">0%</td>
+                                </tr>
+                                <tr>
+                                    <td>Seeds & Plants</td>
+                                    <td id="original-seeds">$0</td>
+                                    <td>
+                                        <input type="number" id="revised-seeds" class="budget-cell" value="0" onchange="calculateRevisionChange('seeds')">
+                                    </td>
+                                    <td id="change-seeds">0%</td>
+                                </tr>
+                                <tr>
+                                    <td>Fertilizer & Chemicals</td>
+                                    <td id="original-fertilizer">$0</td>
+                                    <td>
+                                        <input type="number" id="revised-fertilizer" class="budget-cell" value="0" onchange="calculateRevisionChange('fertilizer')">
+                                    </td>
+                                    <td id="change-fertilizer">0%</td>
+                                </tr>
+                                <tr>
+                                    <td>Animal Feed</td>
+                                    <td id="original-feed">$20,000</td>
+                                    <td>
+                                        <input type="number" id="revised-feed" class="budget-d>
+                                </tr>
+                                <tr>
+                                    <td>Fuel & Utilities</td>
+                                    <td id="original-fuel">$13,000</td>
+                                    <td>
+                                        <input type="number" id="revised-fuel" class="budget-cell" value="13000" onchange="calculateRevisionChange('fuel')">
+                                    </td>
+                                    <td id="change-fuel">0%</td>
+                                </tr>
+                                <tr>
+                                    <td>Repairs & Maintenance</td>
+                                    <td id="original-repairs">$10,000</td>
+                                    <td>
+                                        <input type="number" id="revised-repairs" class="budget-cell" value="10000" onchange="calculateRevisionChange('repairs')">
+                                    </td>
+                                    <td id="change-repairs">0%</td>
+                                </tr>
+                                <tr>
+                                    <td>Labor & Wages</td>
+                                    <td id="original-labor">$45,000</td>
+                                    <td>
+                                        <input type="number" id="revised-labor" class="budget-cell" value="45000" onchange="calculateRevisionChange('labor')">
+                                    </td>
+                                    <td id="change-labor">0%</td>
+                                </tr>
+                                <tr>
+                                    <td>Insurance</td>
+                                    <td id="original-insurance">$6,000</td>
+                                    <td>
+                                        <input type="number" id="revised-insurance" class="budget-cell" value="6000" onchange="calculateRevisionChange('insurance')">
+                                    </td>
+                                    <td id="change-insurance">0%</td>
+                                </tr>
+                                <tr>
+                                    <td>Property Taxes</td>
+                                    <td id="original-taxes">$8,000</td>
+                                    <td>
+                                        <input type="number" id="revised-taxes" class="budget-cell" value="8000" onchange="calculateRevisionChange('taxes')">
+                                    </td>
+                                    <td id="change-taxes">0%</td>
+                                </tr>
+                                <tr>
+                                    <td>Loan Payments</td>
+                                    <td id="original-loan">$18,000</td>
+                                    <td>
+                                        <input type="number" id="revised-loan" class="budget-cell" value="18000" onchange="calculateRevisionChange('loan')">
+                                    </td>
+                                    <td id="change-loan">0%</td>
+                                </tr>
+                                <tr>
+                                    <td>Marketing & Advertising</td>
+                                    <td id="original-marketing">$3,000</td>
+                                    <td>
+                                        <input type="number" id="revised-marketing" class="budget-cell" value="3000" onchange="calculateRevisionChange('marketing')">
+                                    </td>
+                                    <td id="change-marketing">0%</td>
+                                </tr>
+                                <tr class="budget-category">
+                                    <td>Total Expenses</td>
+                                    <td id="original-total-expenses">$127,000</td>
+                                    <td id="revised-total-expenses">$127,000</td>
+                                    <td id="change-total-expenses">0%</td>
+                                </tr>
+                                <tr class="budget-net">
+                                    <td>Net Profit/Loss</td>
+                                    <td id="original-net-profit">$60,000</td>
+                                    <td id="revised-net-profit">$60,000</td>
+                                    <td id="change-net-profit">0%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="card mt-20">
+                        <div class="card-header">
+                            <h3 class="card-title">Final Budget Report</h3>
+                        </div>
+                        <div class="form-group">
+                            <label for="final-report">
+                                Prepare a brief budget report summarizing your findings and recommendations:
+                                <div class="tooltip">
+                                    <span class="tooltip-icon">?</span>
+                                    <span class="tooltip-text">Summarize the budget performance, key variances, your recommendations, and the expected impact of your budget revisions.</span>
+                                </div>
+                            </label>
+                            <textarea id="final-report" rows="8" placeholder="Write your budget report here..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" onclick="prevTab('variance-analysis')">Back</button>
+                        <button class="btn btn-success" onclick="submitAssessment()">Submit Assessment</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Global variables
+        let budgetItems = [];
+        let budgetItemCounter = 0;
+        let selectedRecommendations = {1: 0, 2: 0, 3: 0};
+        
+        // Initialize the assessment
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up tab navigation
+            const tabButtons = document.querySelectorAll('.tab-button');
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    openTab(tabId);
+                });
+            });
+            
+            // Start the timer
+            startTimer(60 * 60); // 60 minutes
+            
+            // Add initial budget item
+            addBudgetItem();
+        });
+        
+        // Timer function
+        function startTimer(duration) {
+            let timer = duration;
+            const timerElement = document.getElementById('timer');
+            
+            const interval = setInterval(function() {
+                const minutes = Math.floor(timer / 60);
+                const seconds = timer % 60;
+                
+                timerElement.textContent = `Time remaining: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (--timer < 0) {
+                    clearInterval(interval);
+                    timerElement.textContent = 'Time expired!';
+                    alert('Time has expired! Please submit your assessment now.');
+                }
+            }, 1000);
+        }
+        
+        // Tab navigation functions
+        function openTab(tabId) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Deactivate all tab buttons
+            const tabButtons = document.querySelectorAll('.tab-button');
+            tabButtons.forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Show the selected tab content
+            document.getElementById(tabId).classList.add('active');
+            
+            // Activate the selected tab button
+            document.querySelector(`.tab-button[data-tab="${tabId}"]`).classList.add('active');
+            
+            // Update progress steps
+            updateProgressSteps(tabId);
+        }
+        
+        function nextTab(tabId) {
+            openTab(tabId);
+        }
+        
+        function prevTab(tabId) {
+            openTab(tabId);
+        }
+        
+        // Update progress steps
+        function updateProgressSteps(tabId) {
+            const steps = {
+                'instructions': 1,
+                'budget-setup': 1,
+                'track-actuals': 2,
+                'variance-analysis': 3,
+                'adjustments': 4
+            };
+            
+            const currentStep = steps[tabId];
+            
+            // Update progress steps
+            document.querySelectorAll('.progress-step').forEach(step => {
+                const stepNumber = parseInt(step.getAttribute('data-step'));
+                
+                step.classList.remove('active', 'completed');
+                
+                if (stepNumber < currentStep) {
+                    step.classList.add('completed');
+                } else if (stepNumber === currentStep) {
+                    step.classList.add('active');
+                }
+            });
+        }
+        
+        // Budget item functions
+        function addBudgetItem() {
+            budgetItemCounter++;
+            const itemId = budgetItemCounter;
+            
+            const budgetItemsContainer = document.getElementById('budget-items-container');
+            
+            const budgetItemEntry = document.createElement('div');
+            budgetItemEntry.className = 'budget-item-entry';
+            budgetItemEntry.id = `budget-item-${itemId}`;
+            
+            budgetItemEntry.innerHTML = `
+                <div class="budget-item-header">
+                    <h4 class="budget-item-title">Budget Item ${itemId}</h4>
+                    <div class="budget-item-actions">
+                        <button class="btn btn-danger" onclick="removeBudgetItem(${itemId})">Remove</button>
+                    </div>
+                </div>
+                <div class="budget-item-form">
+                    <div class="form-group">
+                        <label for="item-name-${itemId}">
+                            Item Name:
+                            <div class="tooltip">
+                                <span class="tooltip-icon">?</span>
+                                <span class="tooltip-text">Enter the name of the budget item (e.g., Crop Sales, Seeds & Plants)</span>
+                            </div>
+                        </label>
+                        <input type="text" id="item-name-${itemId}" placeholder="Enter item name">
+                        <div id="item-name-${itemId}-feedback" class="feedback"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="item-category-${itemId}">
+                            Category:
+                            <div class="tooltip">
+                                <span class="tooltip-icon">?</span>
+                                <span class="tooltip-text">Select whether this is an income or expense item</span>
+                            </div>
+                        </label>
+                        <select id="item-category-${itemId}" onchange="updateSubcategories(${itemId})">
+                            <option value="">-- Select Category --</option>
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
+                        </select>
+                        <div id="item-category-${itemId}-feedback" class="feedback"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="item-subcategory-${itemId}">
+                            Subcategory:
+                            <div class="tooltip">
+                                <span class="tooltip-icon">?</span>
+                                <span class="tooltip-text">Select the specific type of income or expense</span>
+                            </div>
+                        </label>
+                        <select id="item-subcategory-${itemId}">
+                            <option value="">-- Select Subcategory --</option>
+                            <!-- Subcategories will be updated based on category selection -->
+                        </select>
+                        <div id="item-subcategory-${itemId}-feedback" class="feedback"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="item-description-${itemId}">Description:</label>
+                        <input type="text" id="item-description-${itemId}" placeholder="Brief description">
+                    </div>
+                    <div class="form-group">
+                        <label for="item-q1-${itemId}">Q1 Amount ($):</label>
+                        <input type="number" id="item-q1-${itemId}" placeholder="Q1 amount" onchange="updateBudgetSummary()">
+                    </div>
+                    <div class="form-group">
+                        <label for="item-q2-${itemId}">Q2 Amount ($):</label>
+                        <input type="number" id="item-q2-${itemId}" placeholder="Q2 amount" onchange="updateBudgetSummary()">
+                    </div>
+                    <div class="form-group">
+                        <label for="item-q3-${itemId}">Q3 Amount ($):</label>
+                        <input type="number" id="item-q3-${itemId}" placeholder="Q3 amount" onchange="updateBudgetSummary()">
+                    </div>
+                    <div class="form-group">
+                        <label for="item-q4-${itemId}">Q4 Amount ($):</label>
+                        <input type="number" id="item-q4-${itemId}" placeholder="Q4 amount" onchange="updateBudgetSummary()">
+                    </div>
+                </div>
+            `;
+            
+            budgetItemsContainer.appendChild(budgetItemEntry);
+        }
+        
+        function removeBudgetItem(itemId) {
+            const budgetItem = document.getElementById(`budget-item-${itemId}`);
+            if (budgetItem) {
+                budgetItem.remove();
+                updateBudgetSummary();
+            }
+        }
+        
+        function updateSubcategories(itemId) {
+            const categorySelect = document.getElementById(`item-category-${itemId}`);
+            const subcategorySelect = document.getElementById(`item-subcategory-${itemId}`);
+            
+            // Clear existing options
+            subcategorySelect.innerHTML = '<option value="">-- Select Subcategory --</option>';
+            
+            // Add appropriate subcategories based on category
+            if (categorySelect.value === 'income') {
+                const incomeOptions = [
+                    {value: 'crop-sales', text: 'Crop Sales'},
+                    {value: 'livestock-sales', text: 'Livestock Sales'},
+                    {value: 'poultry-eggs', text: 'Poultry & Eggs'},
+                    {value: 'farm-store', text: 'Farm Store'},
+                    {value: 'subsidies', text: 'Government Subsidies'},
+                    {value: 'other-income', text: 'Other Income'}
+                ];
+                
+                incomeOptions.forEach(option => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option.value;
+                    optionElement.textContent = option.text;
+                    subcategorySelect.appendChild(optionElement);
+                });
+            } else if (categorySelect.value === 'expense') {
+                const expenseOptions = [
+                    {value: 'seeds-plants', text: 'Seeds & Plants'},
+                    {value: 'fertilizer-chemicals', text: 'Fertilizer & Chemicals'},
+                    {value: 'animal-feed', text: 'Animal Feed'},
+                    {value: 'veterinary', text: 'Veterinary Services'},
+                    {value: 'fuel-utilities', text: 'Fuel & Utilities'},
+                    {value: 'repairs-maintenance', text: 'Repairs & Maintenance'},
+                    {value: 'labor-wages', text: 'Labor & Wages'},
+                    {value: 'insurance', text: 'Insurance'},
+                    {value: 'property-taxes', text: 'Property Taxes'},
+                    {value: 'loan-payments', text: 'Loan Payments'},
+                    {value: 'marketing-advertising', text: 'Marketing & Advertising'},
+                    {value: 'other-expense', text: 'Other Expense'}
+                ];
+                
+                expenseOptions.forEach(option => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option.value;
+                    optionElement.textContent = option.text;
+                    subcategorySelect.appendChild(optionElement);
+                });
+            }
+            
+            // Clear any feedback
+            const feedbackElement = document.getElementById(`item-category-${itemId}-feedback`);
+            if (feedbackElement) {
+                feedbackElement.className = 'feedback';
+                feedbackElement.textContent = '';
+            }
+        }
+        
+        function updateBudgetSummary() {
+            // Initialize totals
+            let incomeQ1 = 0, incomeQ2 = 0, incomeQ3 = 0, incomeQ4 = 0;
+            let expensesQ1 = 0, expensesQ2 = 0, expensesQ3 = 0, expensesQ4 = 0;
+            
+            // Collect all budget items
+            budgetItems = [];
+            
+            for (let i = 1; i <= budgetItemCounter; i++) {
+                const itemElement = document.getElementById(`budget-item-${i}`);
+                if (!itemElement) continue;
+                
+                const nameElement = document.getElementById(`item-name-${i}`);
+                const categoryElement = document.getElementById(`item-category-${i}`);
+                const subcategoryElement = document.getElementById(`item-subcategory-${i}`);
+                const descriptionElement = document.getElementById(`item-description-${i}`);
+                const q1Element = document.getElementById(`item-q1-${i}`);
+                const q2Element = document.getElementById(`item-q2-${i}`);
+                const q3Element = document.getElementById(`item-q3-${i}`);
+                const q4Element = document.getElementById(`item-q4-${i}`);
+                
+                if (!nameElement || !categoryElement || !subcategoryElement) continue;
+                
+                const name = nameElement.value;
+                const category = categoryElement.value;
+                const subcategory = subcategoryElement.value;
+                const description = descriptionElement ? descriptionElement.value : '';
+                const q1 = parseFloat(q1Element.value) || 0;
+                const q2 = parseFloat(q2Element.value) || 0;
+                const q3 = parseFloat(q3Element.value) || 0;
+                const q4 = parseFloat(q4Element.value) || 0;
+                
+                // Add to appropriate totals
+                if (category === 'income') {
+                    incomeQ1 += q1;
+                    incomeQ2 += q2;
+                    incomeQ3 += q3;
+                    incomeQ4 += q4;
+                } else if (category === 'expense') {
+                    expensesQ1 += q1;
+                    expensesQ2 += q2;
+                    expensesQ3 += q3;
+                    expensesQ4 += q4;
+                }
+                
+                // Add to budget items array
+                budgetItems.push({
+                    id: i,
+                    name,
+                    category,
+                    subcategory,
+                    description,
+                    q1,
+                    q2,
+                    q3,
+                    q4
+                });
+            }
+            
+            // Calculate totals
+            const incomeTotal = incomeQ1 + incomeQ2 + incomeQ3 + incomeQ4;
+            const expensesTotal = expensesQ1 + expensesQ2 + expensesQ3 + expensesQ4;
+            const netQ1 = incomeQ1 - expensesQ1;
+            const netQ2 = incomeQ2 - expensesQ2;
+            const netQ3 = incomeQ3 - expensesQ3;
+            const netQ4 = incomeQ4 - expensesQ4;
+            const netTotal = incomeTotal - expensesTotal;
+            
+            // Update summary table
+            document.getElementById('income-q1').textContent = formatCurrency(incomeQ1);
+            document.getElementById('income-q2').textContent = formatCurrency(incomeQ2);
+            document.getElementById('income-q3').textContent = formatCurrency(incomeQ3);
+            document.getElementById('income-q4').textContent = formatCurrency(incomeQ4);
+            document.getElementById('income-total').textContent = formatCurrency(incomeTotal);
+            
+            document.getElementById('expenses-q1').textContent = formatCurrency(expensesQ1);
+            document.getElementById('expenses-q2').textContent = formatCurrency(expensesQ2);
+            document.getElementById('expenses-q3').textContent = formatCurrency(expensesQ3);
+            document.getElementById('expenses-q4').textContent = formatCurrency(expensesQ4);
+            document.getElementById('expenses-total').textContent = formatCurrency(expensesTotal);
+            
+            document.getElementById('net-q1').textContent = formatCurrency(netQ1);
+            document.getElementById('net-q2').textContent = formatCurrency(netQ2);
+            document.getElementById('net-q3').textContent = formatCurrency(netQ3);
+            document.getElementById('net-q4').textContent = formatCurrency(netQ4);
+            document.getElementById('net-total').textContent = formatCurrency(netTotal);
+            
+            // Apply color coding to net profit/loss
+            applyVarianceColor('net-q1', netQ1);
+            applyVarianceColor('net-q2', netQ2);
+            applyVarianceColor('net-q3', netQ3);
+            applyVarianceColor('net-q4', netQ4);
+            applyVarianceColor('net-total', netTotal);
+        }
+        
+        function formatCurrency(amount) {
+            return '$' + amount.toLocaleString(undefined, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
+        }
+        
+        function applyVarianceColor(elementId, value) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            
+            element.classList.remove('positive-variance', 'negative-variance', 'neutral-variance');
+            
+            if (value > 0) {
+                element.classList.add('positive-variance');
+            } else if (value < 0) {
+                element.classList.add('negative-variance');
+            } else {
+                element.classList.add('neutral-variance');
+            }
+        }
+        
+        // Validation functions
+        function validateBudgetSetup() {
+            let isValid = true;
+            const feedbackContainer = document.getElementById('budget-setup-feedback');
+            
+            // Check if at least 5 budget items have been added
+            if (budgetItems.length < 5) {
+                feedbackContainer.className = 'feedback warning';
+                feedbackContainer.textContent = 'You should include at least 5 budget items to continue. Remember to include all major income and expense categories.';
+                isValid = false;
+            }
+            
+            // Check if both income and expense items are included
+            const hasIncome = budgetItems.some(item => item.category === 'income');
+            const hasExpense = budgetItems.some(item => item.category === 'expense');
+            
+            if (!hasIncome || !hasExpense) {
+                feedbackContainer.className = 'feedback error';
+                feedbackContainer.textContent = 'Your budget must include both income and expense items.';
+                isValid = false;
+            }
+            
+            // Check for required income categories
+            const requiredIncomeCategories = ['crop-sales', 'livestock-sales'];
+            const missingIncomeCategories = requiredIncomeCategories.filter(
+                category => !budgetItems.some(item => item.subcategory === category)
+            );
+            
+            if (missingIncomeCategories.length > 0) {
+                feedbackContainer.className = 'feedback warning';
+                feedbackContainer.textContent = `Remember to include all key income sources. Missing: ${missingIncomeCategories.map(c => c.replace('-', ' ')).join(', ')}.`;
+                isValid = false;
+            }
+            
+            // Check for required expense categories
+            const requiredExpenseCategories = ['seeds-plants', 'fertilizer-chemicals', 'labor-wages'];
+            const missingExpenseCategories = requiredExpenseCategories.filter(
+                category => !budgetItems.some(item => item.subcategory === category)
+            );
+            
+            if (missingExpenseCategories.length > 0) {
+                feedbackContainer.className = 'feedback warning';
+                feedbackContainer.textContent = `Remember to include all key expense categories. Missing: ${missingExpenseCategories.map(c => c.replace('-', ' ')).join(', ')}.`;
+                isValid = false;
+            }
+            
+            // If valid, proceed to next tab and populate actuals table
+            if (isValid) {
+                populateActualsTable();
+                nextTab('track-actuals');
+            }
+            
+            return isValid;
+        }
+        
+        function populateActualsTable() {
+            const tableBody = document.getElementById('actuals-table-body');
+            tableBody.innerHTML = '';
+            
+            // Add rows for each budget item
+            budgetItems.forEach(item => {
+                const row = document.createElement('tr');
+                
+                // Calculate actual values based on the scenario
+                let q1Actual = item.q1;
+                let q2Actual = item.q2;
+                
+                // Apply scenario modifications
+                if (item.subcategory === 'crop-sales') {
+                    q1Actual = item.q1 * 0.85; // 15% lower in Q1
+                } else if (item.subcategory === 'livestock-sales') {
+                    q2Actual = item.q2 * 1.1; // 10% higher in Q2
+                } else if (item.subcategory === 'farm-store') {
+                    q1Actual = item.q1 * 0.95; // 5% lower in Q1
+                } else if (item.subcategory === 'fertilizer-chemicals') {
+                    q1Actual = item.q1 * 1.2; // 20% higher in Q1
+                } else if (item.subcategory === 'repairs-maintenance' && item.q2 > 0) {
+                    q2Actual = item.q2 + 3000; // $3,000 higher in Q2
+                } else if (item.subcategory === 'fuel-utilities') {
+                    q1Actual = item.q1 * 1.1; // 10% higher in Q1
+                    q2Actual = item.q2 * 1.1; // 10% higher in Q2
+                } else if (item.subcategory === 'labor-wages') {
+                    q2Actual = item.q2 * 0.95; // 5% lower in Q2
+                }
+                
+                // Calculate variances
+                const q1Variance = item.category === 'income' ? q1Actual - item.q1 : item.q1 - q1Actual;
+                const q2Variance = item.category === 'income' ? q2Actual - item.q2 : item.q2 - q2Actual;
+                
+                // Create variance class
+                const q1VarianceClass = q1Variance > 0 ? 'positive-variance' : q1Variance < 0 ? 'negative-variance' : 'neutral-variance';
+                const q2VarianceClass = q2Variance > 0 ? 'positive-variance' : q2Variance < 0 ? 'negative-variance' : 'neutral-variance';
+                
+                // Create tooltip text
+                const q1TooltipText = createVarianceTooltip(item.category, item.q1, q1Actual);
+                const q2TooltipText = createVarianceTooltip(item.category, item.q2, q2Actual);
+                
+                row.innerHTML = `
+                    <td>${item.name}</td>
+                    <td>${item.category.charAt(0).toUpperCase() + item.category.slice(1)}</td>
+                    <td>${formatCurrency(item.q1)}</td>
+                    <td>
+                        <input type="number" class="budget-cell" value="${q1Actual.toFixed(0)}" 
+                            data-item-id="${item.id}" data-quarter="1" data-category="${item.category}"
+                            onchange="updateMidYearSummary()">
+                    </td>
+                    <td class="${q1VarianceClass}">
+                        <div class="tooltip">
+                            ${formatCurrency(q1Variance)}
+                            <span class="tooltip-text">${q1TooltipText}</span>
+                        </div>
+                    </td>
+                    <td>${formatCurrency(item.q2)}</td>
+                    <td>
+                        <input type="number" class="budget-cell" value="${q2Actual.toFixed(0)}" 
+                            data-item-id="${item.id}" data-quarter="2" data-category="${item.category}"
+                            onchange="updateMidYearSummary()">
+                    </td>
+                    <td class="${q2VarianceClass}">
+                        <div class="tooltip">
+                            ${formatCurrency(q2Variance)}
+                            <span class="tooltip-text">${q2TooltipText}</span>
+                        </div>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+            
+            // Update mid-year summary
+            updateMidYearSummary();
+        }
+        
+        function createVarianceTooltip(category, budgeted, actual) {
+            const variance = category === 'income' ? actual - budgeted : budgeted - actual;
+            const percentVariance = budgeted === 0 ? 0 : (variance / budgeted) * 100;
+            
+            let message;
+            if (Math.abs(percentVariance) < 5) {
+                message = 'This item is close to budget.';
+            } else if (variance > 0) {
+                message = category === 'income' 
+                    ? `Income exceeded budget by ${Math.abs(percentVariance).toFixed(1)}%. This is positive!` 
+                    : `Expenses were ${Math.abs(percentVariance).toFixed(1)}% under budget. This is positive!`;
+            } else {
+                message = category === 'income' 
+                    ? `Income was ${Math.abs(percentVariance).toFixed(1)}% below budget. This is concerning.` 
+                    : `Expenses exceeded budget by ${Math.abs(percentVariance).toFixed(1)}%. This is concerning.`;
+            }
+            
+            return message;
+        }
+        
+        function updateMidYearSummary() {
+            // Initialize totals
+            let incomeBudgetQ1Q2 = 0;
+            let incomeActualQ1Q2 = 0;
+            let expensesBudgetQ1Q2 = 0;
+            let expensesActualQ1Q2 = 0;
+            
+            // Get all actual inputs
+            const actualInputs = document.querySelectorAll('#actuals-table-body input');
+            
+            // Create a map to store actuals by item id and quarter
+            const actualsMap = new Map();
+            
+            actualInputs.forEach(input => {
+                const itemId = input.getAttribute('data-item-id');
+                const quarter = input.getAttribute('data-quarter');
+                const category = input.getAttribute('data-category');
+                const value = parseFloat(input.value) || 0;
+                
+                const key = `${itemId}-${quarter}`;
+                actualsMap.set(key, {category, value});
+            });
+            
+            // Calculate totals
+            budgetItems.forEach(item => {
+                // Budget totals
+                if (item.category === 'income') {
+                    incomeBudgetQ1Q2 += item.q1 + item.q2;
+                } else if (item.category === 'expense') {
+                    expensesBudgetQ1Q2 += item.q1 + item.q2;
+                }
+                
+                // Actual totals
+                const q1ActualObj = actualsMap.get(`${item.id}-1`);
+                const q2ActualObj = actualsMap.get(`${item.id}-2`);
+                
+                if (q1ActualObj && q1ActualObj.category === 'income') {
+                    incomeActualQ1Q2 += q1ActualObj.value;
+                } else if (q1ActualObj && q1ActualObj.category === 'expense') {
+                    expensesActualQ1Q2 += q1ActualObj.value;
+                }
+                
+                if (q2ActualObj && q2ActualObj.category === 'income') {
+                    incomeActualQ1Q2 += q2ActualObj.value;
+                } else if (q2ActualObj && q2ActualObj.category === 'expense') {
+                    expensesActualQ1Q2 += q2ActualObj.value;
+                }
+            });
+            
+            // Calculate net values
+            const netBudgetQ1Q2 = incomeBudgetQ1Q2 - expensesBudgetQ1Q2;
+            const netActualQ1Q2 = incomeActualQ1Q2 - expensesActualQ1Q2;
+            
+            // Calculate variances
+            const incomeVariance = incomeActualQ1Q2 - incomeBudgetQ1Q2;
+            const expensesVariance = expensesBudgetQ1Q2 - expensesActualQ1Q2;
+            const netVariance = netActualQ1Q2 - netBudgetQ1Q2;
+            
+            // Calculate variance percentages
+            const incomeVariancePercent = incomeBudgetQ1Q2 === 0 ? 0 : (incomeVariance / incomeBudgetQ1Q2) * 100;
+            const expensesVariancePercent = expensesBudgetQ1Q2 === 0 ? 0 : (expensesVariance / expensesBudgetQ1Q2) * 100;
+            const netVariancePercent = netBudgetQ1Q2 === 0 ? 0 : (netVariance / netBudgetQ1Q2) * 100;
+            
+            // Update the mid-year summary table
+            document.getElementById('mid-income-budget').textContent = formatCurrency(incomeBudgetQ1Q2);
+            document.getElementById('mid-income-actual').textContent = formatCurrency(incomeActualQ1Q2);
+            document.getElementById('mid-income-variance-amount').textContent = formatCurrency(incomeVariance);
+            document.getElementById('mid-income-variance-percent').textContent = `${incomeVariancePercent.toFixed(1)}%`;
+            
+            document.getElementById('mid-expenses-budget').textContent = formatCurrency(expensesBudgetQ1Q2);
+            document.getElementById('mid-expenses-actual').textContent = formatCurrency(expensesActualQ1Q2);
+            document.getElementById('mid-expenses-variance-amount').textContent = formatCurrency(expensesVariance);
+            document.getElementById('mid-expenses-variance-percent').textContent = `${expensesVariancePercent.toFixed(1)}%`;
+            
+            document.getElementById('mid-net-budget').textContent = formatCurrency(netBudgetQ1Q2);
+            document.getElementById('mid-net-actual').textContent = formatCurrency(netActualQ1Q2);
+            document.getElementById('mid-net-variance-amount').textContent = formatCurrency(netVariance);
+            document.getElementById('mid-net-variance-percent').textContent = `${netVariancePercent.toFixed(1)}%`;
+            
+            // Apply color coding
+            applyVarianceColor('mid-income-variance-amount', incomeVariance);
+            applyVarianceColor('mid-expenses-variance-amount', expensesVariance);
+            applyVarianceColor('mid-net-variance-amount', netVariance);
+        }
+        
+        function validateActuals() {
+            // For simplicity, we'll just check if all inputs have values
+            const actualInputs = document.querySelectorAll('#actuals-table-body input');
+            let isValid = true;
+            
+            actualInputs.forEach(input => {
+                if (!input.value || isNaN(parseFloat(input.value))) {
+                    input.classList.add('error-input');
+                    isValid = false;
+                } else {
+                    input.classList.remove('error-input');
+                }
+            });
+            
+            if (!isValid) {
+                const feedbackContainer = document.getElementById('track-actuals-feedback');
+                feedbackContainer.className = 'feedback error';
+                feedbackContainer.textContent = 'Please enter valid values for all actual figures.';
+                return false;
+            }
+            
+            // If valid, populate variance analysis options and proceed to next tab
+            populateVarianceOptions();
+            nextTab('variance-analysis');
+            return true;
+        }
+        
+        function populateVarianceOptions() {
+            // Get all variance select elements
+            const varianceSelects = document.querySelectorAll('.variance-select');
+            
+            // Clear existing options
+            varianceSelects.forEach(select => {
+                select.innerHTML = '<option value="">-- Select Item --</option>';
+            });
+            
+            // Get actual inputs and calculate variances
+            const actualInputs = document.querySelectorAll('#actuals-table-body input');
+            const varianceData = [];
+            
+            actualInputs.forEach(input => {
+                const itemId = input.getAttribute('data-item-id');
+                const quarter = input.getAttribute('data-quarter');
+                const category = input.getAttribute('data-category');
+                const actual = parseFloat(input.value) || 0;
+                
+                // Find the corresponding budget item
+                const budgetItem = budgetItems.find(item => item.id.toString() === itemId);
+                if (!budgetItem) return;
+                
+                // Get budgeted value
+                const budgeted = quarter === '1' ? budgetItem.q1 : budgetItem.q2;
+                
+                // Calculate variance
+                const variance = category === 'income' ? actual - budgeted : budgeted - actual;
+                const percentVariance = budgeted === 0 ? 0 : (variance / budgeted) * 100;
+                
+                // Add to variance data
+                varianceData.push({
+                    itemId,
+                    itemName: budgetItem.name,
+                    category,
+                    quarter,
+                    budgeted,
+                    actual,
+                    variance,
+                    percentVariance,
+                    absPercentVariance: Math.abs(percentVariance)
+                });
+            });
+            
+            // Sort by absolute percentage variance (largest first)
+            varianceData.sort((a, b) => b.absPercentVariance - a.absPercentVariance);
+            
+            // Add options to selects
+            varianceSelects.forEach(select => {
+                varianceData.forEach(data => {
+                    const option = document.createElement('option');
+                    const quarterLabel = data.quarter === '1' ? 'Q1' : 'Q2';
+                    const varianceDirection = data.variance < 0 ? 'unfavorable' : 'favorable';
+                    option.value = `${data.itemId}-${data.quarter}`;
+                    option.textContent = `${data.itemName} (${quarterLabel}): ${data.percentVariance.toFixed(1)}% ${varianceDirection}`;
+                    select.appendChild(option);
+                });
+            });
+        }
+        
+        function validateVarianceAnalysis() {
+            let isValid = true;
+            const feedbackContainer = document.getElementById('variance-analysis-feedback');
+            
+            // Check if all variance items are selected
+            const variance1 = document.getElementById('variance-1').value;
+            const variance2 = document.getElementById('variance-2').value;
+            const variance3 = document.getElementById('variance-3').value;
+            
+            if (!variance1 || !variance2 || !variance3) {
+                feedbackContainer.className = 'feedback error';
+                feedbackContainer.textContent = 'Please select all three significant variances.';
+                isValid = false;
+            }
+            
+            // Check if all causes are selected
+            const cause1 = document.getElementById('variance-1-cause').value;
+            const cause2 = document.getElementById('variance-2-cause').value;
+            const cause3 = document.getElementById('variance-3-cause').value;
+            
+            if (!cause1 || !cause2 || !cause3) {
+                feedbackContainer.className = 'feedback error';
+                feedbackContainer.textContent = 'Please select causes for all variances.';
+                isValid = false;
+            }
+            
+            // Check if all explanations are provided
+            const explanation1 = document.getElementById('variance-1-explanation').value;
+            const explanation2 = document.getElementById('variance-2-explanation').value;
+            const explanation3 = document.getElementById('variance-3-explanation').value;
+            
+            if (!explanation1 || !explanation2 || !explanation3) {
+                feedbackContainer.className = 'feedback error';
+                feedbackContainer.textContent = 'Please provide explanations for all variances.';
+                isValid = false;
+            }
+            
+            // Check if overall assessment is provided
+            const overallAssessment = document.getElementById('overall-assessment').value;
+            if (!overallAssessment) {
+                feedbackContainer.className = 'feedback error';
+                feedbackContainer.textContent = 'Please provide an overall assessment of the budget performance.';
+                isValid = false;
+            }
+            
+            // Check for duplicate selections
+            if (variance1 && (variance1 === variance2 || variance1 === variance3)) {
+                document.getElementById('variance-1-feedback').className = 'feedback error';
+                document.getElementById('variance-1-feedback').textContent = 'Please select different variances.';
+                isValid = false;
+            }
+            
+            if (variance2 && variance2 === variance3) {
+                document.getElementById('variance-2-feedback').className = 'feedback error';
+                document.getElementById('variance-2-feedback').textContent = 'Please select different variances.';
+                isValid = false;
+            }
+            
+            // If valid, update recommendation titles and proceed to next tab
+            if (isValid) {
+                updateRecommendationTitles();
+                nextTab('adjustments');
+            }
+            
+            return isValid;
+        }
+        
+        function updateRecommendationTitles() {
+            // Get selected variances
+            const variance1 = document.getElementById('variance-1');
+            const variance2 = document.getElementById('variance-2');
+            const variance3 = document.getElementById('variance-3');
+            
+            // Update recommendation titles
+            document.getElementById('recommendation-1-title').textContent = `Recommendation for ${variance1.options[variance1.selectedIndex].text}`;
+            document.getElementById('recommendation-2-title').textContent = `Recommendation for ${variance2.options[variance2.selectedIndex].text}`;
+            document.getElementById('recommendation-3-title').textContent = `Recommendation for ${variance3.options[variance3.selectedIndex].text}`;
+        }
+        
+        function selectRecommendation(varianceNum, optionNum) {
+            // Update selected recommendation
+            selectedRecommendations[varianceNum] = optionNum;
+            
+            // Update UI
+            const container = document.getElementById(`recommendation-${varianceNum}-container`);
+            const options = container.querySelectorAll('.recommendation-option');
+            
+            options.forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            const selectedOption = container.querySelector(`.recommendation-option[data-option="${optionNum}"]`);
+            if (selectedOption) {
+                selectedOption.classList.add('selected');
+            }
+            
+            // Provide feedback based on selection
+            const feedbackElement = document.getElementById(`recommendation-${varianceNum}-feedback`);
+            
+            // Clear previous feedback
+            feedbackElement.className = 'feedback';
+            feedbackElement.textContent = '';
+            
+            // Get variance details
+            const varianceSelect = document.getElementById(`variance-${varianceNum}`);
+            const varianceText = varianceSelect.options[varianceSelect.selectedIndex].text;
+            
+            // Check if this is a good recommendation
+            if (varianceText.includes('Repairs & Maintenance') && optionNum === 1) {
+                feedbackElement.className = 'feedback success';
+                feedbackElement.textContent = 'Good choice! Adjusting the budget for unexpected repairs is appropriate.';
+            } else if (varianceText.includes('Crop Sales') && optionNum === 2) {
+                feedbackElement.className = 'feedback success';
+                feedbackElement.textContent = 'Good choice! Changing operations to address sales issues is appropriate.';
+            } else if (varianceText.includes('Fuel & Utilities') && optionNum === 3) {
+                feedbackElement.className = 'feedback warning';
+                feedbackElement.textContent = 'Consider whether reallocating resources is the best approach for fuel costs, which may be outside your control.';
+            }
+        }
+        
+        function calculateRevisionChange(category) {
+            const originalElement = document.getElementById(`original-${category}`);
+            const revisedElement = document.getElementById(`revised-${category}`);
+            const changeElement = document.getElementById(`change-${category}`);
+            
+            if (!originalElement || !revisedElement || !changeElement) return;
+            
+            const originalValue = parseFloat(originalElement.textContent.replace(/[^0-9.-]+/g, '')) || 0;
+            const revisedValue = parseFloat(revisedElement.value) || 0;
+            
+            const changePercent = originalValue === 0 ? 0 : ((revisedValue - originalValue) / originalValue) * 100;
+            
+            changeElement.textContent = `${changePercent.toFixed(1)}%`;
+            
+            // Apply color coding
+            changeElement.className = '';
+            if (changePercent > 0) {
+                changeElement.classList.add(category.includes('sales') || category.includes('store') || category.includes('poultry') || category.includes('subsidies') ? 'positive-variance' : 'negative-variance');
+            } else if (changePercent < 0) {
+                changeElement.classList.add(category.includes('sales') || category.includes('store') || category.includes('poultry') || category.includes('subsidies') ? 'negative-variance' : 'positive-variance');
+            }
+            
+            // Update totals
+            updateRevisionTotals();
+        }
+        
+        function updateRevisionTotals() {
+            // Calculate income total
+            const incomeCategories = ['crop-sales', 'livestock-sales', 'poultry', 'farm-store', 'subsidies'];
+            let originalIncomeTotal = 0;
+            let revisedIncomeTotal = 0;
+            
+            incomeCategories.forEach(category => {
+                const originalElement = document.getElementById(`original-${category}`);
+                const revisedElement = document.getElementById(`revised-${category}`);
+                
+                if (originalElement && revisedElement) {
+                    originalIncomeTotal += parseFloat(originalElement.textContent.replace(/[^0-9.-]+/g, '')) || 0;
+                    revisedIncomeTotal += parseFloat(revisedElement.value) || 0;
+                }
+            });
+            
+            // Calculate expenses total
+            const expenseCategories = ['seeds', 'fertilizer', 'feed', 'vet', 'fuel', 'repairs', 'labor', 'insurance', 'taxes', 'loan', 'marketing'];
+            let originalExpensesTotal = 0;
+            let revisedExpensesTotal = 0;
+            
+            expenseCategories.forEach(category => {
+                const originalElement = document.getElementById(`original-${category}`);
+                const revisedElement = document.getElementById(`revised-${category}`);
+                
+                if (originalElement && revisedElement) {
+                    originalExpensesTotal += parseFloat(originalElement.textContent.replace(/[^0-9.-]+/g, '')) || 0;
+                    revisedExpensesTotal += parseFloat(revisedElement.value) || 0;
+                }
+            });
+            
+            // Calculate net profit
+            const originalNetProfit = originalIncomeTotal - originalExpensesTotal;
+            const revisedNetProfit = revisedIncomeTotal - revisedExpensesTotal;
+            
+            // Calculate change percentages
+            const incomeChangePercent = originalIncomeTotal === 0 ? 0 : ((revisedIncomeTotal - originalIncomeTotal) / originalIncomeTotal) * 100;
+            const expensesChangePercent = originalExpensesTotal === 0 ? 0 : ((revisedExpensesTotal - originalExpensesTotal) / originalExpensesTotal) * 100;
+            const netProfitChangePercent = originalNetProfit === 0 ? 0 : ((revisedNetProfit - originalNetProfit) / originalNetProfit) * 100;
+            
+            // Update totals in the table
+            document.getElementById('revised-total-income').textContent = formatCurrency(revisedIncomeTotal);
+            document.getElementById('revised-total-expenses').textContent = formatCurrency(revisedExpensesTotal);
+            document.getElementById('revised-net-profit').textContent = formatCurrency(revisedNetProfit);
+            
+            document.getElementById('change-total-income').textContent = `${incomeChangePercent.toFixed(1)}%`;
+            document.getElementById('change-total-expenses').textContent = `${expensesChangePercent.toFixed(1)}%`;
+            document.getElementById('change-net-profit').textContent = `${netProfitChangePercent.toFixed(1)}%`;
+            
+            // Apply color coding
+            applyVarianceColor('change-total-income', incomeChangePercent);
+            applyVarianceColor('change-total-expenses', -expensesChangePercent); // Negative because lower expenses are good
+            applyVarianceColor('change-net-profit', netProfitChangePercent);
+        }
+        
+        function submitAssessment() {
+            let isValid = true;
+            const feedbackContainer = document.getElementById('adjustments-feedback');
+            
+            // Check if all recommendation details are provided
+            const details1 = document.getElementById('recommendation-1-details').value;
+            const details2 = document.getElementById('recommendation-2-details').value;
+            const details3 = document.getElementById('recommendation-3-details').value;
+            
+            if (!details1 || !details2 || !details3) {
+                feedbackContainer.className = 'feedback error';
+                feedbackContainer.textContent = 'Please provide details for all recommendations.';
+                isValid = false;
+            }
+            
+            // Check if final report is provided
+            const finalReport = document.getElementById('final-report').value;
+            if (!finalReport || finalReport.length < 100) {
+                feedbackContainer.className = 'feedback error';
+                feedbackContainer.textContent = 'Please provide a detailed final budget report (at least 100 characters).';
+                isValid = false;
+            }
+            
+            if (isValid) {
+                // Show success message
+                feedbackContainer.className = 'feedback success';
+                feedbackContainer.textContent = 'Assessment completed successfully! Your responses have been submitted.';
+                
+                // Disable submit button
+                document.querySelector('button.btn-success').disabled = true;
+                
+                // In a real application, this would submit the assessment to a server
+                setTimeout(() => {
+                    alert('Assessment submitted successfully!');
+                }, 1000);
+            }
+            
+            return isValid;
+        }
+    </script>
+</body>
+</html>
