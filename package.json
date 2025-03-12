@@ -1,0 +1,16 @@
+{
+    "name": "ahcbus408-budget-master",
+    "version": "1.0.0",
+    "description": "Agricultural Budgeting Training Tool",
+    "main": "index.html",
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+      "agriculture",
+      "budget",
+      "training"
+    ],
+    "author": "",
+    "license": "ISC"
+  }
