@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>Lessons - AHCBUS408 Budget Master</title>
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -10,7 +10,7 @@
     <header>
         <div class="container">
             <h1>AHCBUS408 Budget Master</h1>
-            <p>Agricultural Budgeting Simulation Tool</p>
+            <p>Agricultural Budgeting Training Tool</p>
         </div>
     </header>
 
@@ -26,130 +26,186 @@
     </nav>
 
     <main class="container">
-        <h2>Budgeting Lessons</h2>
-        <p>Learn the fundamentals of budgeting for agricultural and business settings through these interactive lessons.</p>
+        <h2>Budget Management Lessons</h2>
+        <p>Explore our comprehensive lessons on farm budget management. Each lesson includes interactive content, examples, and practice activities.</p>
         
-        <div class="lesson-list">
-            <div class="lesson-card">
-                <h3>Lesson 1: Introduction to Budgeting</h3>
-                <div class="lesson-content">
-                    <p>A budget is a plan that helps you keep track of your money. It shows how much money you expect to get (income) and how much you plan to spend (expenses) over a certain time period.</p>
-                    
-                    <h4>Why Budgeting Matters in Agriculture</h4>
-                    <ul>
-                        <li>Plan for seasonal changes in income</li>
-                        <li>Prepare for unexpected events like weather problems</li>
-                        <li>Make smart decisions about buying equipment</li>
-                        <li>Know when you can afford to grow your business</li>
-                    </ul>
-                    
-                    <h4>Key Budget Terms</h4>
-                    <ul>
-                        <li><strong>Income:</strong> Money you receive from selling products or services</li>
-                        <li><strong>Expenses:</strong> Money you spend to run your business</li>
-                        <li><strong>Profit:</strong> Money left over after paying all expenses</li>
-                        <li><strong>Cash Flow:</strong> The movement of money in and out of your business</li>
-                    </ul>
+        <div class="lesson-filters">
+            <button class="filter-btn active" data-filter="all">All Lessons</button>
+            <button class="filter-btn" data-filter="basics">Budget Basics</button>
+            <button class="filter-btn" data-filter="planning">Budget Planning</button>
+            <button class="filter-btn" data-filter="monitoring">Monitoring & Analysis</button>
+            <button class="filter-btn" data-filter="advanced">Advanced Topics</button>
+        </div>
+        
+        <div class="lessons-grid">
+            <!-- Lesson 1 -->
+            <div class="lesson-card" data-category="basics">
+                <div class="lesson-header">
+                    <span class="lesson-number">Lesson 1</span>
+                    <span class="lesson-duration">30 minutes</span>
                 </div>
-                <button class="btn">Mark Complete</button>
+                <h3>Introduction to Farm Budgeting</h3>
+                <p>Learn the fundamentals of farm budgeting, including key terminology and basic concepts.</p>
+                <ul class="lesson-topics">
+                    <li>What is a budget?</li>
+                    <li>Types of farm budgets</li>
+                    <li>Budget components</li>
+                    <li>Budget timeframes</li>
+                </ul>
+                <a href="#" class="btn" data-lesson-id="lesson1">Start Lesson</a>
             </div>
             
-            <div class="lesson-card">
-                <h3>Lesson 2: Setting Up a Budget</h3>
-                <div class="lesson-content">
-                    <p>Creating a budget involves identifying all sources of income and all expenses for your farm or business.</p>
-                    
-                    <h4>Steps to Create a Budget:</h4>
-                    <ol>
-                        <li>Choose a time period (monthly, quarterly, or yearly)</li>
-                        <li>List all sources of income</li>
-                        <li>List all expenses</li>
-                        <li>Calculate total income and total expenses</li>
-                        <li>Calculate profit or loss (income minus expenses)</li>
-                    </ol>
-                    
-                    <h4>Common Farm Income Categories:</h4>
-                    <ul>
-                        <li>Crop sales (wheat, corn, vegetables, etc.)</li>
-                        <li>Livestock sales (cattle, sheep, poultry, etc.)</li>
-                        <li>Dairy products</li>
-                        <li>Government payments or subsidies</li>
-                    </ul>
-                    
-                    <h4>Common Farm Expense Categories:</h4>
-                    <ul>
-                        <li>Seeds and plants</li>
-                        <li>Fertilizer and chemicals</li>
-                        <li>Animal feed</li>
-                        <li>Veterinary services</li>
-                        <li>Fuel and utilities</li>
-                        <li>Equipment repairs and maintenance</li>
-                        <li>Labor/wages</li>
-                        <li>Insurance</li>
-                        <li>Loan payments</li>
-                    </ul>
+            <!-- Lesson 2 -->
+            <div class="lesson-card" data-category="basics">
+                <div class="lesson-header">
+                    <span class="lesson-number">Lesson 2</span>
+                    <span class="lesson-duration">45 minutes</span>
                 </div>
-                <button class="btn">Mark Complete</button>
+                <h3>Income Categories in Farm Budgets</h3>
+                <p>Explore the various income sources in agricultural operations and how to categorize them.</p>
+                <ul class="lesson-topics">
+                    <li>Crop sales income</li>
+                    <li>Livestock income</li>
+                    <li>Government payments</li>
+                    <li>Other farm income</li>
+                </ul>
+                <a href="#" class="btn" data-lesson-id="lesson2">Start Lesson</a>
             </div>
             
-            <div class="lesson-card">
-                <h3>Lesson 3: Tracking Actuals vs. Budget</h3>
-                <div class="lesson-content">
-                    <p>Once you have a budget, you need to track your actual income and expenses to see how they compare to your budget.</p>
-                    
-                    <h4>Why Track Actuals:</h4>
-                    <ul>
-                        <li>See if your budget is realistic</li>
-                        <li>Identify areas where you're spending more or less than planned</li>
-                        <li>Make adjustments to stay on track</li>
-                        <li>Plan better for the future</li>
-                    </ul>
-                    
-                    <h4>Variance Analysis:</h4>
-                    <p>A variance is the difference between your budgeted amount and the actual amount.</p>
-                    <ul>
-                        <li><strong>Positive variance:</strong> Better than budget (higher income or lower expenses)</li>
-                        <li><strong>Negative variance:</strong> Worse than budget (lower income or higher expenses)</li>
-                    </ul>
-                    
-                    <p>To calculate a variance:</p>
-                    <ul>
-                        <li>For income: Actual - Budget</li>
-                        <li>For expenses: Budget - Actual</li>
-                    </ul>
-                    
-                    <p>This way, a positive number always means a favorable variance.</p>
+            <!-- Lesson 3 -->
+            <div class="lesson-card" data-category="basics">
+                <div class="lesson-header">
+                    <span class="lesson-number">Lesson 3</span>
+                    <span class="lesson-duration">45 minutes</span>
                 </div>
-                <button class="btn">Mark Complete</button>
+                <h3>Expense Categories in Farm Budgets</h3>
+                <p>Learn about the different types of expenses in farm operations and how to track them.</p>
+                <ul class="lesson-topics">
+                    <li>Variable costs</li>
+                    <li>Fixed costs</li>
+                    <li>Operating expenses</li>
+                    <li>Capital expenses</li>
+                </ul>
+                <a href="#" class="btn" data-lesson-id="lesson3">Start Lesson</a>
             </div>
             
-            <div class="lesson-card">
-                <h3>Lesson 4: Making Budget Adjustments</h3>
-                <div class="lesson-content">
-                    <p>When your actual figures differ from your budget, you may need to make adjustments to your budget or your operations.</p>
-                    
-                    <h4>Types of Adjustments:</h4>
-                    <ol>
-                        <li><strong>Revise the budget:</strong> Update your budget to reflect the new reality</li>
-                        <li><strong>Change operations:</strong> Adjust your activities to get back on budget</li>
-                        <li><strong>Reallocate resources:</strong> Move money from one category to another</li>
-                    </ol>
-                    
-                    <h4>When to Make Adjustments:</h4>
-                    <ul>
-                        <li>When variances are significant (more than 10%)</li>
-                        <li>When variances are persistent (happening month after month)</li>
-                        <li>When external factors change (weather, market prices, etc.)</li>
-                    </ul>
-                    
-                    <h4>Examples of Budget Adjustments:</h4>
-                    <ul>
-                        <li>If feed costs are higher than budgeted, you might look for cheaper suppliers or adjust your livestock numbers</li>
-                        <li>If crop sales are lower than budgeted, you might need to find new markets or adjust your planting plans</li>
-                        <li>If equipment repairs are higher than budgeted, you might need to consider replacing old equipment</li>
-                    </ul>
+            <!-- Lesson 4 -->
+            <div class="lesson-card" data-category="planning">
+                <div class="lesson-header">
+                    <span class="lesson-number">Lesson 4</span>
+                    <span class="lesson-duration">60 minutes</span>
                 </div>
-                <button class="btn">Mark Complete</button>
+                <h3>Creating a Farm Budget</h3>
+                <p>Step-by-step guide to creating a comprehensive farm budget from scratch.</p>
+                <ul class="lesson-topics">
+                    <li>Gathering financial information</li>
+                    <li>Estimating income</li>
+                    <li>Projecting expenses</li>
+                    <li>Setting realistic goals</li>
+                </ul>
+                <a href="#" class="btn" data-lesson-id="lesson4">Start Lesson</a>
+            </div>
+            
+            <!-- Lesson 5 -->
+            <div class="lesson-card" data-category="planning">
+                <div class="lesson-header">
+                    <span class="lesson-number">Lesson 5</span>
+                    <span class="lesson-duration">45 minutes</span>
+                </div>
+                <h3>Seasonal Budget Planning</h3>
+                <p>Learn how to plan budgets that account for the seasonal nature of agricultural operations.</p>
+                <ul class="lesson-topics">
+                    <li>Seasonal cash flow patterns</li>
+                    <li>Planning for peak seasons</li>
+                    <li>Managing off-season expenses</li>
+                    <li>Quarterly budget reviews</li>
+                </ul>
+                <a href="#" class="btn" data-lesson-id="lesson5">Start Lesson</a>
+            </div>
+            
+            <!-- Lesson 6 -->
+            <div class="lesson-card" data-category="monitoring">
+                <div class="lesson-header">
+                    <span class="lesson-number">Lesson 6</span>
+                    <span class="lesson-duration">50 minutes</span>
+                </div>
+                <h3>Tracking Budget Performance</h3>
+                <p>Discover effective methods for tracking actual performance against budgeted figures.</p>
+                <ul class="lesson-topics">
+                    <li>Recording financial transactions</li>
+                    <li>Categorizing income and expenses</li>
+                    <li>Regular budget reviews</li>
+                    <li>Using financial software</li>
+                </ul>
+                <a href="#" class="btn" data-lesson-id="lesson6">Start Lesson</a>
+            </div>
+            
+            <!-- Lesson 7 -->
+            <div class="lesson-card" data-category="monitoring">
+                <div class="lesson-header">
+                    <span class="lesson-number">Lesson 7</span>
+                    <span class="lesson-duration">55 minutes</span>
+                </div>
+                <h3>Variance Analysis</h3>
+                <p>Learn how to identify, analyze, and respond to variances between budgeted and actual figures.</p>
+                <ul class="lesson-topics">
+                    <li>Calculating variances</li>
+                    <li>Identifying significant variances</li>
+                    <li>Root cause analysis</li>
+                    <li>Corrective actions</li>
+                </ul>
+                <a href="#" class="btn" data-lesson-id="lesson7">Start Lesson</a>
+            </div>
+            
+            <!-- Lesson 8 -->
+            <div class="lesson-card" data-category="advanced">
+                <div class="lesson-header">
+                    <span class="lesson-number">Lesson 8</span>
+                    <span class="lesson-duration">60 minutes</span>
+                </div>
+                <h3>Budget Adjustments and Revisions</h3>
+                <p>Strategies for making effective adjustments to your budget based on performance and changing conditions.</p>
+                <ul class="lesson-topics">
+                    <li>When to revise a budget</li>
+                    <li>Mid-year adjustments</li>
+                    <li>Reallocation strategies</li>
+                    <li>Documenting changes</li>
+                </ul>
+                <a href="#" class="btn" data-lesson-id="lesson8">Start Lesson</a>
+            </div>
+            
+            <!-- Lesson 9 -->
+            <div class="lesson-card" data-category="advanced">
+                <div class="lesson-header">
+                    <span class="lesson-number">Lesson 9</span>
+                    <span class="lesson-duration">70 minutes</span>
+                </div>
+                <h3>Risk Management in Budgeting</h3>
+                <p>Explore how to incorporate risk management strategies into your farm budget planning.</p>
+                <ul class="lesson-topics">
+                    <li>Identifying financial risks</li>
+                    <li>Contingency planning</li>
+                    <li>Scenario analysis</li>
+                    <li>Insurance considerations</li>
+                </ul>
+                <a href="#" class="btn" data-lesson-id="lesson9">Start Lesson</a>
+            </div>
+            
+            <!-- Lesson 10 -->
+            <div class="lesson-card" data-category="advanced">
+                <div class="lesson-header">
+                    <span class="lesson-number">Lesson 10</span>
+                    <span class="lesson-duration">65 minutes</span>
+                </div>
+                <h3>Budget Reporting and Communication</h3>
+                <p>Learn how to effectively report budget performance and communicate financial information to stakeholders.</p>
+                <ul class="lesson-topics">
+                    <li>Creating budget reports</li>
+                    <li>Visual presentation of data</li>
+                    <li>Stakeholder communication</li>
+                    <li>Action recommendations</li>
+                </ul>
+                <a href="#" class="btn" data-lesson-id="lesson10">Start Lesson</a>
             </div>
         </div>
     </main>
@@ -161,19 +217,141 @@
     </footer>
     
     <script>
-        // Simple script to handle lesson completion
+        // SCORM INTEGRATION POINT: Initialize SCORM API connection
+        // Add code here to:
+        // 1. Detect SCORM API
+        // 2. Initialize connection
+        // 3. Set lesson status to "incomplete" if not already started
+        // 4. Load any saved bookmark or suspend data
+        
         document.addEventListener('DOMContentLoaded', function() {
-            const completeButtons = document.querySelectorAll('.lesson-card .btn');
+            // Lesson filtering functionality with error handling
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            const lessonCards = document.querySelectorAll('.lesson-card');
             
-            completeButtons.forEach(button => {
+            filterButtons.forEach(button => {
                 button.addEventListener('click', function() {
-                    if (button.textContent === 'Mark Complete') {
-                        button.textContent = 'Completed';
-                        button.classList.add('btn-success');
-                        button.disabled = true;
+                    // Update active button
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Filter lessons
+                    const filter = this.getAttribute('data-filter');
+                    let visibleCount = 0;
+                    
+                    lessonCards.forEach(card => {
+                        if (filter === 'all' || card.getAttribute('data-category') === filter) {
+                            card.style.display = 'block';
+                            visibleCount++;
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                    
+                    // Show message if no items match the filter
+                    let noResultsMessage = document.getElementById('no-results-message');
+                    
+                    if (visibleCount === 0) {
+                        if (!noResultsMessage) {
+                            noResultsMessage = document.createElement('div');
+                            noResultsMessage.id = 'no-results-message';
+                            noResultsMessage.className = 'feedback info';
+                            noResultsMessage.textContent = 'No lessons match the selected filter.';
+                            
+                            // Insert after the filter buttons
+                            const container = document.querySelector('.lessons-grid');
+                            container.parentNode.insertBefore(noResultsMessage, container);
+                        }
+                        
+                        // Scroll to the message
+                        noResultsMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else if (noResultsMessage) {
+                        noResultsMessage.remove();
                     }
                 });
             });
+
+            // Add event listeners to lesson buttons
+            document.querySelectorAll('.lesson-card .btn').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    const lessonCard = this.closest('.lesson-card');
+                    const lessonNumber = lessonCard.querySelector('.lesson-number').textContent;
+                    const lessonTitle = lessonCard.querySelector('h3').textContent;
+                    const lessonId = this.getAttribute('data-lesson-id');
+                    
+                    // SCORM INTEGRATION POINT: Track lesson start
+                    // Add code here to:
+                    // 1. Set the lesson objective status to "attempted"
+                    // 2. Record the timestamp when lesson was started
+                    
+                    // For demonstration purposes only:
+                    console.log(`Lesson started: ${lessonNumber} - ${lessonTitle} (${lessonId})`);
+                    
+                    // Continue with lesson launch
+                    alert(`Starting lesson: ${lessonTitle}`);
+                    
+                    // Simulate lesson completion after a delay (for demonstration)
+                    setTimeout(() => {
+                        completeLesson(lessonId);
+                    }, 3000);
+                });
+            });
+
+            // Make navigation more touch-friendly
+            const navItems = document.querySelectorAll('nav a');
+            
+            navItems.forEach(item => {
+                // Add touch area padding
+                item.style.padding = '10px 15px';
+                
+                // Add active state for touch feedback
+                item.addEventListener('touchstart', function() {
+                    this.style.backgroundColor = '#1c638d';
+                });
+                
+                item.addEventListener('touchend', function() {
+                    // Only reset if not the active item
+                    if (!this.classList.contains('active')) {
+                        this.style.backgroundColor = '';
+                    }
+                });
+            });
+
+            // Handle orientation changes
+            window.addEventListener('orientationchange', function() {
+                // Small delay to allow the browser to complete the orientation change
+                setTimeout(function() {
+                    // Adjust any scrollable containers
+                    const scrollContainers = document.querySelectorAll('.lesson-filters');
+                    scrollContainers.forEach(container => {
+                        container.style.maxWidth = window.innerWidth + 'px';
+                    });
+                }, 200);
+            });
+        });
+        
+        // Function to handle lesson completion
+        function completeLesson(lessonId) {
+            // SCORM INTEGRATION POINT: Track lesson completion
+            // Add code here to:
+            // 1. Set the lesson objective status to "completed"
+            // 2. Update overall course progress
+            // 3. Record completion timestamp
+            
+            // For demonstration purposes only:
+            console.log(`Lesson completed: ${lessonId}`);
+        }
+        
+        // SCORM INTEGRATION POINT: Save session state on exit
+        // Add code here to:
+        // 1. Save current state to suspend_data if needed
+        // 2. Call Commit() to ensure data is saved
+        // 3. If user is completely exiting, call Terminate()
+        window.addEventListener('beforeunload', function() {
+            // For demonstration purposes only:
+            console.log("Page unloading, session data would be saved here");
         });
     </script>
 </body>

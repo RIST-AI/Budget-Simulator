@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>AHCBUS408 Budget Master</title>
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -10,7 +10,7 @@
     <header>
         <div class="container">
             <h1>AHCBUS408 Budget Master</h1>
-            <p>Agricultural Budgeting Simulation Tool</p>
+            <p>Agricultural Budgeting Training Tool</p>
         </div>
     </header>
 
@@ -27,11 +27,11 @@
 
     <main class="container">
         <section class="hero">
-            <h2>Welcome to Budget Master</h2>
-            <p>Learn budgeting skills for agricultural and business settings through interactive lessons, simulations, and assessments aligned with AHCBUS408 competency guidelines.</p>
-            <div class="hero-actions">
+            <h2>Master Farm Budget Management</h2>
+            <p>Welcome to AHCBUS408 Budget Master, your comprehensive training tool for agricultural budget management.</p>
+            <div class="cta-buttons">
                 <a href="lessons.html" class="btn">Start Learning</a>
-                <a href="budget.html" class="btn btn-secondary">Try the Simulator</a>
+                <a href="budget.html" class="btn">Try Budget Simulator</a>
             </div>
         </section>
 
@@ -39,41 +39,36 @@
             <div class="feature-card">
                 <div class="feature-icon">📚</div>
                 <h3>Interactive Lessons</h3>
-                <p>Learn budgeting concepts through easy-to-understand lessons with examples from agricultural settings.</p>
+                <p>Learn budget management concepts through structured, interactive lessons designed for agricultural contexts.</p>
+                <a href="lessons.html" class="btn btn-secondary">View Lessons</a>
             </div>
+            
             <div class="feature-card">
-                <div class="feature-icon">💻</div>
+                <div class="feature-icon">💰</div>
                 <h3>Budget Simulator</h3>
-                <p>Practice creating and managing budgets in a risk-free environment with real-time feedback.</p>
+                <p>Practice creating and managing farm budgets with our interactive simulator that provides real-time feedback.</p>
+                <a href="budget.html" class="btn btn-secondary">Open Simulator</a>
             </div>
+            
             <div class="feature-card">
-                <div class="feature-icon">📊</div>
-                <h3>Variance Analysis</h3>
-                <p>Learn to compare actual results with budgeted figures and understand the differences.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🎯</div>
+                <div class="feature-icon">📝</div>
                 <h3>Assessments</h3>
-                <p>Test your knowledge and skills with practical assessments based on real-world scenarios.</p>
+                <p>Test your knowledge and skills with practical assessments that simulate real-world farm budget scenarios.</p>
+                <a href="assessments.html" class="btn btn-secondary">Take Assessment</a>
             </div>
         </section>
 
-        <section class="getting-started">
-            <h2>Getting Started</h2>
-            <ol class="steps">
-                <li>
-                    <h3>Step 1: Learn the Basics</h3>
-                    <p>Start with the <a href="lessons.html">Lessons</a> to understand budgeting concepts and terminology.</p>
-                </li>
-                <li>
-                    <h3>Step 2: Practice with the Simulator</h3>
-                    <p>Use the <a href="budget.html">Budget Simulator</a> to practice creating and managing budgets.</p>
-                </li>
-                <li>
-                    <h3>Step 3: Test Your Skills</h3>
-                    <p>Complete the <a href="assessments.html">Assessments</a> to demonstrate your budgeting knowledge and skills.</p>
-                </li>
-            </ol>
+        <section class="course-info">
+            <h2>About This Course</h2>
+            <p>AHCBUS408 - Operate within a budget framework is designed to provide you with the skills and knowledge to effectively manage agricultural budgets. This course covers:</p>
+            <ul>
+                <li>Understanding budget structures and terminology</li>
+                <li>Monitoring income and expenditure</li>
+                <li>Identifying and reporting variances</li>
+                <li>Recording and reporting budget performance</li>
+                <li>Making recommendations for improving budget performance</li>
+            </ul>
+            <p>By the end of this course, you'll be able to confidently operate within a budget framework in an agricultural context.</p>
         </section>
     </main>
 
@@ -82,5 +77,60 @@
             <p>&copy; 2025 AHCBUS408 Budget Master</p>
         </div>
     </footer>
+
+    <script>
+        // SCORM INTEGRATION POINT: Initialize SCORM API connection
+        // Add code here to:
+        // 1. Detect SCORM API
+        // 2. Initialize connection
+        // 3. Set lesson status to "incomplete" if not already started
+        // 4. Load any saved bookmark or suspend data
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Make navigation more touch-friendly
+            const navItems = document.querySelectorAll('nav a');
+            
+            navItems.forEach(item => {
+                // Add touch area padding
+                item.style.padding = '10px 15px';
+                
+                // Add active state for touch feedback
+                item.addEventListener('touchstart', function() {
+                    this.style.backgroundColor = '#1c638d';
+                });
+                
+                item.addEventListener('touchend', function() {
+                    // Only reset if not the active item
+                    if (!this.classList.contains('active')) {
+                        this.style.backgroundColor = '';
+                    }
+                });
+            });
+        });
+
+        // Handle orientation changes
+        window.addEventListener('orientationchange', function() {
+            // Small delay to allow the browser to complete the orientation change
+            setTimeout(function() {
+                // Adjust any scrollable containers
+                const scrollContainers = document.querySelectorAll('.budget-grid, .lesson-filters, .assessment-filters');
+                scrollContainers.forEach(container => {
+                    if (container) {
+                        container.style.maxWidth = window.innerWidth + 'px';
+                    }
+                });
+            }, 200);
+        });
+        
+        // SCORM INTEGRATION POINT: Save session state on exit
+        // Add code here to:
+        // 1. Save current state to suspend_data if needed
+        // 2. Call Commit() to ensure data is saved
+        // 3. If user is completely exiting, call Terminate()
+        window.addEventListener('beforeunload', function() {
+            // For demonstration purposes only:
+            console.log("Page unloading, session data would be saved here");
+        });
+    </script>
 </body>
 </html>

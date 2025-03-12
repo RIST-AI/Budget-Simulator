@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>Budget Simulator - AHCBUS408 Budget Master</title>
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -55,8 +55,6 @@
             </div>
             
             <div class="btn-group">
-                <button class="btn" id="add-income">Add Income Item</button>
-                <button class="btn" id="add-expense">Add Expense Item</button>
                 <button class="btn btn-secondary" id="reset-budget">Reset Budget</button>
             </div>
         </div>
@@ -74,13 +72,16 @@
                     </tr>
                 </thead>
                 <tbody id="budget-items">
-                    <!-- Income Section -->
+                    <!-- Income Section with Add Button -->
                     <tr class="budget-category">
-                        <td colspan="6">Income</td>
+                        <td colspan="5">Income</td>
+                        <td>
+                            <button class="btn btn-sm" id="add-income">Add Income</button>
+                        </td>
                     </tr>
                     <tr>
+                        <td>Winter Wheat</td>
                         <td>Crop Sales</td>
-                        <td>Income</td>
                         <td>
                             <input type="number" class="budget-cell" value="15000" data-type="income" data-item="crop-sales" data-field="budgeted">
                         </td>
@@ -93,8 +94,8 @@
                         </td>
                     </tr>
                     <tr>
+                        <td>Beef Cattle</td>
                         <td>Livestock Sales</td>
-                        <td>Income</td>
                         <td>
                             <input type="number" class="budget-cell" value="8000" data-type="income" data-item="livestock-sales" data-field="budgeted">
                         </td>
@@ -107,13 +108,16 @@
                         </td>
                     </tr>
                     
-                    <!-- Expense Section -->
+                    <!-- Expense Section with Add Button -->
                     <tr class="budget-category">
-                        <td colspan="6">Expenses</td>
+                        <td colspan="5">Expenses</td>
+                        <td>
+                            <button class="btn btn-sm" id="add-expense">Add Expense</button>
+                        </td>
                     </tr>
                     <tr>
+                        <td>Hybrid Corn Seeds</td>
                         <td>Seeds & Plants</td>
-                        <td>Expense</td>
                         <td>
                             <input type="number" class="budget-cell" value="3000" data-type="expense" data-item="seeds" data-field="budgeted">
                         </td>
@@ -126,8 +130,8 @@
                         </td>
                     </tr>
                     <tr>
+                        <td>Seasonal Workers</td>
                         <td>Labor</td>
-                        <td>Expense</td>
                         <td>
                             <input type="number" class="budget-cell" value="5000" data-type="expense" data-item="labor" data-field="budgeted">
                         </td>
@@ -202,8 +206,18 @@
     </footer>
     
     <script>
+        // SCORM INTEGRATION POINT: Initialize SCORM API connection
+        // Add code here to:
+        // 1. Detect SCORM API
+        // 2. Initialize connection
+        // 3. Set lesson status to "incomplete" if not already started
+        // 4. Load any saved bookmark or suspend data
+        
         // Simple script to handle budget calculations
         document.addEventListener('DOMContentLoaded', function() {
+            // Calculate initial budget values
+            updateBudget();
+            
             // Add event listeners to budget cells
             const budgetCells = document.querySelectorAll('.budget-cell');
             budgetCells.forEach(cell => {
@@ -248,7 +262,86 @@
                     location.reload();
                 }
             });
+
+            // Make navigation more touch-friendly
+            const navItems = document.querySelectorAll('nav a');
+            
+            navItems.forEach(item => {
+                // Add touch area padding
+                item.style.padding = '10px 15px';
+                
+                // Add active state for touch feedback
+                item.addEventListener('touchstart', function() {
+                    this.style.backgroundColor = '#1c638d';
+                });
+                
+                item.addEventListener('touchend', function() {
+                    // Only reset if not the active item
+                    if (!this.classList.contains('active')) {
+                        this.style.backgroundColor = '';
+                    }
+                });
+            });
+
+            // Handle orientation changes
+            window.addEventListener('orientationchange', function() {
+                // Small delay to allow the browser to complete the orientation change
+                setTimeout(function() {
+                    // Refresh any components that need adjustment
+                    updateBudget();
+                    
+                    // Adjust any scrollable containers
+                    const scrollContainers = document.querySelectorAll('.budget-grid');
+                    scrollContainers.forEach(container => {
+                        container.style.maxWidth = window.innerWidth + 'px';
+                    });
+                }, 200);
+            });
         });
+        
+        // Function to show error and scroll to it
+        function showErrorAndScrollTo(elementId, message) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            
+            // Create or update error message
+            let errorElement = document.getElementById(`${elementId}-error`);
+            
+            if (!errorElement) {
+                errorElement = document.createElement('div');
+                errorElement.id = `${elementId}-error`;
+                errorElement.className = 'feedback error';
+                element.parentNode.insertBefore(errorElement, element.nextSibling);
+            }
+            
+            errorElement.textContent = message;
+            
+            // Highlight the input
+            element.classList.add('error-input');
+            
+            // Scroll to the error
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Focus on the element
+            setTimeout(() => {
+                element.focus();
+            }, 500);
+        }
+
+        // Function to clear error
+        function clearError(elementId) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            
+            // Remove error class
+            element.classList.remove('error-input');
+            
+            // Remove error message if it exists
+            const errorElement = document.getElementById(`${elementId}-error`);
+            if (errorElement) {
+                errorElement.remove();
+            }
+        }
         
         // Function to update budget calculations
         function updateBudget() {
@@ -310,6 +403,15 @@
             
             // Update analysis
             updateAnalysis(totalIncomeBudgeted, totalIncomeActual, totalExpensesBudgeted, totalExpensesActual, netProfitBudgeted, netProfitActual);
+            
+            // SCORM INTEGRATION POINT: Track budget activity
+            // Add code here to:
+            // 1. Record that the student has used the simulator
+            // 2. Save key budget metrics (optional)
+            // 3. Update activity completion status
+            
+            // For demonstration purposes only:
+            console.log("Budget simulator used, calculations updated");
         }
         
         // Function to update individual row variances
@@ -349,35 +451,89 @@
         }
         
         // Function to add a new budget item
+        // Function to add a new budget item
         function addBudgetItem(type) {
             const itemName = prompt(`Enter ${type} item name:`);
             if (!itemName) return;
             
-            const budgetItems = document.getElementById('budget-items');
-            const newRow = document.createElement('tr');
-            
             // Find the appropriate section to add the item
-            let insertBefore;
+            const budgetItems = document.getElementById('budget-items');
+            
+            // Get all rows
+            const rows = budgetItems.querySelectorAll('tr');
+            let insertBefore = null;
+            
             if (type === 'income') {
-                // Find the first expense category row or summary row
-                const expenseCategoryRow = document.querySelector('#budget-items tr.budget-category:nth-of-type(2)');
-                insertBefore = expenseCategoryRow || document.querySelector('#budget-items tr.budget-total');
+                // For income items, find the first income category row
+                const incomeCategoryRow = document.querySelector('#budget-items tr.budget-category:first-of-type');
+                
+                // Insert after the income category row
+                if (incomeCategoryRow && incomeCategoryRow.nextElementSibling) {
+                    insertBefore = incomeCategoryRow.nextElementSibling;
+                } else {
+                    // Fallback: insert at the beginning
+                    insertBefore = rows[0] || null;
+                }
             } else {
-                // Find the first summary row
-                insertBefore = document.querySelector('#budget-items tr.budget-total');
+                // For expense items, find the expense category row
+                const expenseCategoryRow = document.querySelector('#budget-items tr.budget-category:nth-of-type(2)');
+                
+                // Insert after the expense category row
+                if (expenseCategoryRow && expenseCategoryRow.nextElementSibling) {
+                    insertBefore = expenseCategoryRow.nextElementSibling;
+                } else {
+                    // Fallback: insert before the first summary row
+                    insertBefore = document.querySelector('#budget-items tr.budget-total') || null;
+                }
             }
             
             // Create a unique ID for the item
             const itemId = `${type}-${Date.now()}`;
             
+            // Set up different subcategory options based on type
+            let categoryOptions;
+            
+            if (type === 'income') {
+                // For income items, we'll have specific product names but general categories
+                categoryOptions = `
+                    <option value="crop-sales">Crop Sales</option>
+                    <option value="livestock-sales">Livestock Sales</option>
+                    <option value="poultry-eggs">Poultry & Eggs</option>
+                    <option value="farm-store">Farm Store</option>
+                    <option value="subsidies">Government Subsidies</option>
+                `;
+            } else {
+                // For expense items
+                categoryOptions = `
+                    <option value="seeds">Seeds & Plants</option>
+                    <option value="fertilizer">Fertilizer & Chemicals</option>
+                    <option value="feed">Animal Feed</option>
+                    <option value="vet">Veterinary Services</option>
+                    <option value="fuel">Fuel & Utilities</option>
+                    <option value="repairs">Repairs & Maintenance</option>
+                    <option value="labor">Labor & Wages</option>
+                    <option value="insurance">Insurance</option>
+                    <option value="taxes">Property Taxes</option>
+                    <option value="loan">Loan Payments</option>
+                    <option value="marketing">Marketing & Advertising</option>
+                `;
+            }
+            
+            // Create the HTML for the new row
+            const newRow = document.createElement('tr');
             newRow.innerHTML = `
                 <td>${itemName}</td>
-                <td>${type.charAt(0).toUpperCase() + type.slice(1)}</td>
                 <td>
-                    <input type="number" class="budget-cell" value="0" data-type="${type}" data-item="${itemId}" data-field="budgeted">
+                    <select class="budget-category-select" id="${itemId}-category" onchange="updateItemCategory(this, '${itemId}', '${type}')">
+                        <option value="">-- Select Category --</option>
+                        ${categoryOptions}
+                    </select>
                 </td>
                 <td>
-                    <input type="number" class="budget-cell" value="0" data-type="${type}" data-item="${itemId}" data-field="actual">
+                    <input type="number" class="budget-cell" id="${itemId}-budgeted" value="0" data-type="${type}" data-item="${itemId}" data-field="budgeted">
+                </td>
+                <td>
+                    <input type="number" class="budget-cell" id="${itemId}-actual" value="0" data-type="${type}" data-item="${itemId}" data-field="actual">
                 </td>
                 <td class="neutral-variance">$0</td>
                 <td>
@@ -386,7 +542,11 @@
             `;
             
             // Insert the new row
-            budgetItems.insertBefore(newRow, insertBefore);
+            if (insertBefore) {
+                budgetItems.insertBefore(newRow, insertBefore);
+            } else {
+                budgetItems.appendChild(newRow);
+            }
             
             // Add event listeners
             const budgetCells = newRow.querySelectorAll('.budget-cell');
@@ -400,8 +560,10 @@
                 updateBudget();
             });
             
-            // Focus on the budgeted input
-            newRow.querySelector('[data-field="budgeted"]').focus();
+            // Focus on the category select and scroll to it
+            const categorySelect = newRow.querySelector('.budget-category-select');
+            categorySelect.focus();
+            categorySelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
         
         // Function to apply a scenario
@@ -442,8 +604,8 @@
                         const insertBefore = document.querySelector('#budget-items tr.budget-total');
                         
                         newRow.innerHTML = `
-                            <td>Equipment Repairs</td>
-                            <td>Expense</td>
+                            <td>Emergency Repairs</td>
+                            <td>Repairs & Maintenance</td>
                             <td>
                                 <input type="number" class="budget-cell" value="0" data-type="expense" data-item="repairs" data-field="budgeted">
                             </td>
@@ -476,6 +638,14 @@
             
             // Update budget calculations
             updateBudget();
+            
+            // SCORM INTEGRATION POINT: Track scenario usage
+            // Add code here to:
+            // 1. Record which scenario was applied
+            // 2. Save scenario results (optional)
+            
+            // For demonstration purposes only:
+            console.log(`Scenario applied: ${scenario}`);
         }
         
         // Function to update the analysis
@@ -521,12 +691,13 @@
                 if (cells.length < 5) return;
                 
                 const itemName = cells[0].textContent;
-                const itemType = cells[1].textContent.toLowerCase();
+                const itemCategory = cells[1].textContent.trim();
                 const budgetedInput = row.querySelector('[data-field="budgeted"]');
                 const actualInput = row.querySelector('[data-field="actual"]');
                 
                 if (!budgetedInput || !actualInput) return;
                 
+                const itemType = budgetedInput.dataset.type;
                 const budgeted = parseFloat(budgetedInput.value) || 0;
                 const actual = parseFloat(actualInput.value) || 0;
                 
@@ -540,7 +711,7 @@
                     const direction = itemType === 'income' ? (isPositive ? 'above' : 'below') : (isPositive ? 'below' : 'above');
                     const assessment = (itemType === 'income' && isPositive) || (itemType === 'expense' && isPositive) ? 'This is positive.' : 'This needs attention.';
                     
-                    analysisText += `<li>${itemName} is ${direction} budget by ${formatCurrency(Math.abs(variance))} (${Math.abs(variancePercent).toFixed(1)}%). ${assessment}</li>`;
+                    analysisText += `<li>${itemName} (${itemCategory}) is ${direction} budget by ${formatCurrency(Math.abs(variance))} (${Math.abs(variancePercent).toFixed(1)}%). ${assessment}</li>`;
                 }
             });
             
@@ -564,12 +735,13 @@
                 if (cells.length < 5) return;
                 
                 const itemName = cells[0].textContent;
-                const itemType = cells[1].textContent.toLowerCase();
+                const itemCategory = cells[1].textContent.trim();
                 const budgetedInput = row.querySelector('[data-field="budgeted"]');
                 const actualInput = row.querySelector('[data-field="actual"]');
                 
                 if (!budgetedInput || !actualInput) return;
                 
+                const itemType = budgetedInput.dataset.type;
                 const budgeted = parseFloat(budgetedInput.value) || 0;
                 const actual = parseFloat(actualInput.value) || 0;
                 
@@ -579,10 +751,10 @@
                 const variancePercent = (variance / budgeted) * 100;
                 
                 if (variancePercent <= -15 && itemType === 'income') {
-                    analysisText += `<li>Investigate the cause of the ${itemName} shortfall and develop a plan to address it.</li>`;
+                    analysisText += `<li>Investigate the cause of the ${itemName} (${itemCategory}) shortfall and develop a plan to address it.</li>`;
                     hasSpecificRecommendations = true;
                 } else if (variancePercent <= -15 && itemType === 'expense') {
-                    analysisText += `<li>Review ${itemName} spending to identify what's causing the higher costs.</li>`;
+                    analysisText += `<li>Review ${itemName} (${itemCategory}) spending to identify what's causing the higher costs.</li>`;
                     hasSpecificRecommendations = true;
                 }
             });
@@ -629,6 +801,16 @@
                 element.classList.add('neutral-variance');
             }
         }
+        
+        // SCORM INTEGRATION POINT: Save session state on exit
+        // Add code here to:
+        // 1. Save current state to suspend_data if needed
+        // 2. Call Commit() to ensure data is saved
+        // 3. If user is completely exiting, call Terminate()
+        window.addEventListener('beforeunload', function() {
+            // For demonstration purposes only:
+            console.log("Page unloading, session data would be saved here");
+        });
     </script>
 </body>
 </html>

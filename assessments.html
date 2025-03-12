@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>Assessments - AHCBUS408 Budget Master</title>
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -10,7 +10,7 @@
     <header>
         <div class="container">
             <h1>AHCBUS408 Budget Master</h1>
-            <p>Agricultural Budgeting Simulation Tool</p>
+            <p>Agricultural Budgeting Training Tool</p>
         </div>
     </header>
 
@@ -26,25 +26,47 @@
     </nav>
 
     <main class="container">
-        <h2>Assessments</h2>
-        <p>Complete these assessments to demonstrate your budgeting skills and knowledge.</p>
+        <h2>Budget Management Assessments</h2>
+        <p>Test your knowledge and skills with these practical assessments on farm budget management.</p>
         
-        <div class="assessment-list">
-            <!-- Comprehensive Assessment -->
-            <div class="assessment-card">
-                <div class="assessment-header">
-                    <h3>Farm Budget Management Assessment</h3>
-                    <span class="assessment-badge">Comprehensive</span>
+        <div class="lesson-filters">
+            <button class="filter-btn active" data-filter="all">All Assessments</button>
+            <button class="filter-btn" data-filter="summative">Summative</button>
+            <button class="filter-btn" data-filter="formative">Formative</button>
+        </div>
+        
+        <div class="assessments-grid">
+            <!-- Assessment 1 - Farm Budget Management -->
+            <div class="assessment-card" data-category="summative">
+                <div class="assessment-card-header">
+                    <span class="assessment-type">Summative Assessment</span>
+                    <span class="assessment-duration">120 minutes</span>
                 </div>
-                <p>This comprehensive assessment covers the entire budget management process from setup to variance analysis and adjustments.</p>
+                <h3>Farm Budget Management Assessment</h3>
+                <p>Comprehensive assessment covering all aspects of farm budget management.</p>
                 <ul class="assessment-details">
-                    <li><strong>Format:</strong> Interactive simulation</li>
-                    <li><strong>Duration:</strong> 60 minutes</li>
-                    <li><strong>Skills Assessed:</strong> Budget setup, tracking actuals, variance analysis, making adjustments</li>
+                    <li>Budget creation</li>
+                    <li>Variance analysis</li>
+                    <li>Budget adjustments</li>
+                    <li>Performance reporting</li>
                 </ul>
-                <div class="assessment-actions">
-                    <a href="farm-budget-assessment.html" class="btn">Start Assessment</a>
+                <a href="farm-budget-assessment.html" class="btn">Start Assessment</a>
+            </div>
+            
+            <!-- Assessment 2 - Quiz -->
+            <div class="assessment-card" data-category="formative">
+                <div class="assessment-card-header">
+                    <span class="assessment-type">Formative Assessment</span>
+                    <span class="assessment-duration">30 minutes</span>
                 </div>
+                <h3>Budget Terminology Quiz</h3>
+                <p>Test your understanding of key budget terminology and concepts.</p>
+                <ul class="assessment-details">
+                    <li>20 multiple-choice questions</li>
+                    <li>Covers basic budget concepts</li>
+                    <li>Immediate feedback provided</li>
+                </ul>
+                <a href="#" class="btn">Start Assessment</a>
             </div>
         </div>
     </main>
@@ -54,5 +76,115 @@
             <p>&copy; 2025 AHCBUS408 Budget Master</p>
         </div>
     </footer>
+    
+    <script>
+        // SCORM INTEGRATION POINT: Initialize SCORM API connection
+        // Add code here to:
+        // 1. Detect SCORM API
+        // 2. Initialize connection
+        // 3. Set lesson status to "incomplete" if not already started
+        // 4. Load any saved bookmark or suspend data
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Assessment filtering functionality with error handling
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            const assessmentCards = document.querySelectorAll('.assessment-card');
+            
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Update active button
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Filter assessments
+                    const filter = this.getAttribute('data-filter');
+                    let visibleCount = 0;
+                    
+                    assessmentCards.forEach(card => {
+                        if (filter === 'all' || card.getAttribute('data-category') === filter) {
+                            card.style.display = 'block';
+                            visibleCount++;
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                    
+                    // Show message if no items match the filter
+                    let noResultsMessage = document.getElementById('no-results-message');
+                    
+                    if (visibleCount === 0) {
+                        if (!noResultsMessage) {
+                            noResultsMessage = document.createElement('div');
+                            noResultsMessage.id = 'no-results-message';
+                            noResultsMessage.className = 'feedback info';
+                            noResultsMessage.textContent = 'No assessments match the selected filter.';
+                            
+                            // Insert after the filter buttons
+                            const container = document.querySelector('.assessments-grid');
+                            container.parentNode.insertBefore(noResultsMessage, container);
+                        }
+                        
+                        // Scroll to the message
+                        noResultsMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else if (noResultsMessage) {
+                        noResultsMessage.remove();
+                    }
+                });
+            });
+
+            // Add event listeners to assessment buttons
+            document.querySelectorAll('.assessment-card .btn').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    if (this.getAttribute('href') === '#') {
+                        e.preventDefault();
+                        
+                        const assessmentCard = this.closest('.assessment-card');
+                        const assessmentTitle = assessmentCard.querySelector('h3').textContent;
+                        
+                        // SCORM INTEGRATION POINT: Track assessment start
+                        // Add code here to:
+                        // 1. Record which assessment was started
+                        // 2. Set assessment status to "attempted"
+                        
+                        // For demonstration purposes only:
+                        console.log(`Assessment started: ${assessmentTitle}`);
+                        
+                        // Continue with assessment launch
+                        alert(`Starting assessment: ${assessmentTitle}`);
+                    }
+                });
+            });
+
+            // Make navigation more touch-friendly
+            const navItems = document.querySelectorAll('nav a');
+            
+            navItems.forEach(item => {
+                // Add touch area padding
+                item.style.padding = '10px 15px';
+                
+                // Add active state for touch feedback
+                item.addEventListener('touchstart', function() {
+                    this.style.backgroundColor = '#1c638d';
+                });
+                
+                item.addEventListener('touchend', function() {
+                    // Only reset if not the active item
+                    if (!this.classList.contains('active')) {
+                        this.style.backgroundColor = '';
+                    }
+                });
+            });
+        });
+        
+        // SCORM INTEGRATION POINT: Save session state on exit
+        // Add code here to:
+        // 1. Save current state to suspend_data if needed
+        // 2. Call Commit() to ensure data is saved
+        // 3. If user is completely exiting, call Terminate()
+        window.addEventListener('beforeunload', function() {
+            // For demonstration purposes only:
+            console.log("Page unloading, session data would be saved here");
+        });
+    </script>
 </body>
 </html>
