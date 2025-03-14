@@ -1,11 +1,29 @@
+/* Import RIST brand fonts */
+@import url('https://fonts.googleapis.com/css2?family=Aleo:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+/* RIST Brand Color Variables */
+:root {
+    --primary-navy: #1E3F61;
+    --primary-orange: #E78C3C;
+    --secondary-taupe: #D8D2C0;
+    --secondary-offwhite: #F4F2EF;
+    --text-dark: #333;
+    --text-light: #fff;
+    --success-color: #2ecc71;
+    --danger-color: #e74c3c;
+    --warning-color: #f39c12;
+    --info-color: #3498db;
+}
+
 /* General Styles */
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Inter', Arial, sans-serif;
     line-height: 1.6;
-    color: #333;
+    color: var(--text-dark);
     margin: 0;
     padding: 0;
-    background-color: #f5f7fa;
+    background-color: var(--secondary-offwhite);
 }
 
 .container {
@@ -15,13 +33,15 @@ body {
 }
 
 h1, h2, h3, h4 {
-    color: #2c3e50;
+    font-family: 'Aleo', serif;
+    font-weight: 600;
+    color: var(--primary-navy);
     margin-top: 0;
 }
 
 /* Header Styles */
 header {
-    background-color: #3498db;
+    background-color: var(--primary-navy);
     color: white;
     padding: 15px 0;
     margin-bottom: 30px;
@@ -30,11 +50,32 @@ header {
 header h1 {
     color: white;
     margin: 0;
+    font-family: 'Aleo', serif;
+    font-weight: 600;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.logo-container {
+    flex: 0 0 auto;
+}
+
+.rist-logo {
+    max-height: 60px;
+    width: auto;
+}
+
+.title-container {
+    flex: 1 1 auto;
 }
 
 /* Navigation Styles */
 nav {
-    background-color: #2980b9;
+    background-color: var(--primary-navy);
     padding: 10px 0;
 }
 
@@ -53,10 +94,11 @@ nav a {
     color: white;
     text-decoration: none;
     padding: 5px 10px;
+    font-family: 'Inter', Arial, sans-serif;
 }
 
 nav a:hover, nav a.active {
-    background-color: #1c638d;
+    background-color: rgba(255, 255, 255, 0.2);
     border-radius: 4px;
 }
 
@@ -70,7 +112,7 @@ nav a:hover, nav a.active {
 }
 
 .assessment-header {
-    background-color: #f8f9fa;
+    background-color: var(--secondary-taupe);
     padding: 20px;
     border-radius: 8px;
     margin-bottom: 30px;
@@ -122,14 +164,14 @@ nav a:hover, nav a.active {
 }
 
 .progress-step.active {
-    border-color: #3498db;
-    background-color: #3498db;
+    border-color: var(--primary-orange);
+    background-color: var(--primary-orange);
     color: white;
 }
 
 .progress-step.completed {
-    border-color: #2ecc71;
-    background-color: #2ecc71;
+    border-color: var(--success-color);
+    background-color: var(--success-color);
     color: white;
 }
 
@@ -144,12 +186,12 @@ nav a:hover, nav a.active {
 }
 
 .progress-step.active .step-label {
-    color: #3498db;
+    color: var(--primary-orange);
     font-weight: bold;
 }
 
 .progress-step.completed .step-label {
-    color: #2ecc71;
+    color: var(--success-color);
 }
 
 /* Tab Styles */
@@ -165,15 +207,16 @@ nav a:hover, nav a.active {
 
 .tab-button {
     padding: 10px 20px;
-    background-color: #f8f9fa;
+    background-color: var(--secondary-offwhite);
     border: none;
     border-radius: 4px 4px 0 0;
     margin-right: 5px;
     cursor: pointer;
+    font-family: 'Inter', Arial, sans-serif;
 }
 
 .tab-button.active {
-    background-color: #3498db;
+    background-color: var(--primary-orange);
     color: white;
 }
 
@@ -198,6 +241,7 @@ label {
     display: block;
     margin-bottom: 8px;
     font-weight: bold;
+    font-family: 'Inter', Arial, sans-serif;
 }
 
 input[type="text"],
@@ -210,6 +254,7 @@ textarea {
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 16px;
+    font-family: 'Inter', Arial, sans-serif;
 }
 
 input[type="text"]:focus,
@@ -218,12 +263,12 @@ input[type="date"]:focus,
 select:focus,
 textarea:focus {
     outline: none;
-    border-color: #3498db;
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    border-color: var(--primary-orange);
+    box-shadow: 0 0 0 3px rgba(231, 140, 60, 0.2);
 }
 
 .error-input {
-    border-color: #e74c3c !important;
+    border-color: var(--danger-color) !important;
 }
 
 /* Budget Table Styles */
@@ -241,36 +286,39 @@ textarea:focus {
 }
 
 .budget-table th {
-    background-color: #f8f9fa;
+    background-color: var(--secondary-taupe);
     font-weight: bold;
+    color: var(--primary-navy);
 }
 
 .budget-table tr:hover {
-    background-color: #f8f9fa;
+    background-color: var(--secondary-offwhite);
 }
 
 .budget-category {
-    background-color: #edf2f7;
+    background-color: var(--secondary-taupe);
     font-weight: bold;
+    color: var(--primary-navy);
 }
 
 .budget-total {
     font-weight: bold;
-    background-color: #f8f9fa;
+    background-color: var(--secondary-offwhite);
 }
 
 .budget-net {
     font-weight: bold;
-    background-color: #edf2f7;
+    background-color: var(--secondary-taupe);
+    color: var(--primary-navy);
 }
 
 /* Variance Styles */
 .positive-variance {
-    color: #2ecc71;
+    color: var(--success-color);
 }
 
 .negative-variance {
-    color: #e74c3c;
+    color: var(--danger-color);
 }
 
 .neutral-variance {
@@ -299,7 +347,8 @@ textarea:focus {
 }
 
 .budget-items-table th {
-    background-color: #f8f9fa;
+    background-color: var(--secondary-taupe);
+    color: var(--primary-navy);
 }
 
 .actuals-table {
@@ -316,7 +365,8 @@ textarea:focus {
 }
 
 .actuals-table th {
-    background-color: #f8f9fa;
+    background-color: var(--secondary-taupe);
+    color: var(--primary-navy);
 }
 
 /* Tooltip Styles */
@@ -342,7 +392,7 @@ textarea:focus {
 .tooltip .tooltip-text {
     visibility: hidden;
     width: 250px;
-    background-color: #34495e;
+    background-color: var(--primary-navy);
     color: white;
     text-align: center;
     border-radius: 6px;
@@ -398,33 +448,36 @@ textarea:focus {
 .btn {
     display: inline-block;
     padding: 10px 20px;
-    background-color: #3498db;
+    background-color: var(--primary-orange);
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-size: 16px;
     transition: background-color 0.3s;
+    font-family: 'Inter', Arial, sans-serif;
+    text-decoration: none;
 }
 
 .btn:hover {
-    background-color: #2980b9;
+    background-color: #d47a2d; /* Darker orange */
 }
 
 .btn:active {
-    background-color: #1c638d;
+    background-color: #c06923;
 }
 
 .btn-secondary {
-    background-color: #95a5a6;
+    background-color: var(--secondary-taupe);
+    color: var(--primary-navy);
 }
 
 .btn-secondary:hover {
-    background-color: #7f8c8d;
+    background-color: #c9c2af;
 }
 
 .btn-success {
-    background-color: #2ecc71;
+    background-color: var(--success-color);
 }
 
 .btn-success:hover {
@@ -432,7 +485,7 @@ textarea:focus {
 }
 
 .btn-danger {
-    background-color: #e74c3c;
+    background-color: var(--danger-color);
 }
 
 .btn-danger:hover {
@@ -468,6 +521,7 @@ textarea:focus {
 .card-title {
     margin: 0;
     font-size: 18px;
+    color: var(--primary-navy);
 }
 
 /* Variance Selection */
@@ -478,7 +532,7 @@ textarea:focus {
 .variance-item {
     margin-bottom: 20px;
     padding: 15px;
-    background-color: #f8f9fa;
+    background-color: var(--secondary-offwhite);
     border-radius: 4px;
 }
 
@@ -491,14 +545,14 @@ textarea:focus {
 }
 
 .recommendation-option {
-    background-color: #f8f9fa;
+    background-color: var(--secondary-offwhite);
     padding: 15px;
     border-radius: 4px;
 }
 
 .recommendation-option.selected {
-    border-color: #3498db;
-    background-color: #ebf5fb;
+    border-color: var(--primary-orange);
+    background-color: #fdf2e9;
 }
 
 .recommendation-details {
@@ -507,20 +561,20 @@ textarea:focus {
 
 /* Scenario Card */
 .scenario-card {
-    background-color: #f8f9fa;
-    border-left: 4px solid #3498db;
+    background-color: var(--secondary-offwhite);
+    border-left: 4px solid var(--primary-orange);
     padding: 15px;
     margin-bottom: 20px;
 }
 
 .scenario-card h3 {
     margin-top: 0;
-    color: #3498db;
+    color: var(--primary-orange);
 }
 
 /* Source Document */
 .source-document {
-    background-color: #f8f9fa;
+    background-color: var(--secondary-offwhite);
     border: 1px solid #e1e4e8;
     border-radius: 4px;
     padding: 15px;
@@ -536,7 +590,7 @@ textarea:focus {
 
 /* Hero Section */
 .hero {
-    background-color: #3498db;
+    background-color: var(--primary-navy);
     color: white;
     padding: 40px;
     border-radius: 8px;
@@ -548,6 +602,7 @@ textarea:focus {
     color: white;
     font-size: 2.5em;
     margin-bottom: 20px;
+    font-family: 'Aleo', serif;
 }
 
 .hero p {
@@ -580,11 +635,12 @@ textarea:focus {
 .feature-icon {
     font-size: 3em;
     margin-bottom: 15px;
-    color: #3498db;
+    color: var(--primary-orange);
 }
 
 .feature-card h3 {
     margin-bottom: 15px;
+    color: var(--primary-navy);
 }
 
 .feature-card p {
@@ -602,6 +658,7 @@ textarea:focus {
 
 .course-info h2 {
     margin-bottom: 20px;
+    color: var(--primary-navy);
 }
 
 .course-info ul {
@@ -623,16 +680,17 @@ textarea:focus {
 
 .filter-btn {
     padding: 8px 15px;
-    background-color: #f8f9fa;
+    background-color: var(--secondary-offwhite);
     border: 1px solid #e1e4e8;
     border-radius: 4px;
     cursor: pointer;
+    font-family: 'Inter', Arial, sans-serif;
 }
 
 .filter-btn.active {
-    background-color: #3498db;
+    background-color: var(--primary-orange);
     color: white;
-    border-color: #3498db;
+    border-color: var(--primary-orange);
 }
 
 .lessons-grid {
@@ -657,7 +715,7 @@ textarea:focus {
 
 .lesson-number {
     font-weight: bold;
-    color: #3498db;
+    color: var(--primary-orange);
 }
 
 .lesson-duration {
@@ -666,6 +724,7 @@ textarea:focus {
 
 .lesson-card h3 {
     margin-bottom: 10px;
+    color: var(--primary-navy);
 }
 
 .lesson-topics {
@@ -728,11 +787,15 @@ textarea:focus {
     display: flex;
     justify-content: space-between;
     margin-bottom: 15px;
+    background-color: var(--secondary-taupe);
+    padding: 10px;
+    margin: -20px -20px 15px -20px;
+    border-radius: 8px 8px 0 0;
 }
 
 .assessment-type {
     font-weight: bold;
-    color: #3498db;
+    color: var(--primary-navy);
 }
 
 .assessment-duration {
@@ -741,10 +804,13 @@ textarea:focus {
 
 .assessment-card h3 {
     margin-bottom: 10px;
+    color: var(--primary-navy);
 }
 
 .assessment-details {
     margin-bottom: 20px;
+    list-style-type: disc;
+    padding-left: 20px;
 }
 
 .assessment-details li {
@@ -753,7 +819,7 @@ textarea:focus {
 
 /* Footer */
 footer {
-    background-color: #2c3e50;
+    background-color: var(--primary-navy);
     color: white;
     padding: 20px 0;
     margin-top: 40px;
@@ -761,6 +827,32 @@ footer {
 
 footer p {
     margin: 0;
+}
+
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.rist-logo-footer {
+    max-height: 40px;
+    width: auto;
+}
+
+.footer-info, .footer-contact {
+    flex: 1;
+}
+
+.footer-contact {
+    text-align: right;
+}
+
+footer a {
+    color: white;
+    text-decoration: underline;
 }
 
 /* Responsive Adjustments */
@@ -801,6 +893,20 @@ footer p {
     
     .features {
         grid-template-columns: 1fr;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .footer-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .footer-contact {
+        text-align: center;
     }
 }
 
