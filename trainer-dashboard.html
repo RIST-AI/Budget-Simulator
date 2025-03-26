@@ -412,78 +412,6 @@
     <script type="module">
         import { auth, onAuthStateChanged, signOut, db, doc, getDoc, collection, query, where, getDocs, orderBy, limit, startAfter } from './js/firebase-config.js';
         
-        // Check authentication first using localStorage
-        const storedUser = localStorage.getItem('currentUser');
-        if (storedUser) {
-            const user = JSON.parse(storedUser);
-            document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
-            
-            // Check role for appropriate access
-            const storedRole = localStorage.getItem('userRole');
-            if (storedRole !== 'trainer') {
-                // Redirect students to student dashboard
-                window.location.href = 'student-dashboard.html';
-            } else {
-                // Initialize the trainer dashboard
-                initializeDashboard(user);
-            }
-        } else {
-            // If no stored user, check Firebase auth
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
-                    
-                    // Store user in localStorage for persistence
-                    localStorage.setItem('currentUser', JSON.stringify({
-                        uid: user.uid,
-                        email: user.email
-                    }));
-                    
-                    // Check user role
-                    getDoc(doc(db, 'users', user.uid)).then(userDoc => {
-                        if (userDoc.exists()) {
-                            const role = userDoc.data().role;
-                            localStorage.setItem('userRole', role);
-                            
-                            // Check for appropriate access
-                            if (role !== 'trainer') {
-                                // Redirect students to student dashboard
-                                window.location.href = 'student-dashboard.html';
-                            } else {
-                                // Initialize the trainer dashboard
-                                initializeDashboard(user);
-                            }
-                        }
-                    }).catch(error => {
-                        console.error("Error checking user role:", error);
-                    });
-                } else {
-                    // Not authenticated, redirect to login
-                    window.location.href = 'login.html';
-                }
-            });
-        }
-        
-        // Logout functionality
-        document.getElementById('logout-link').addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            // Clear localStorage
-            localStorage.removeItem('currentUser');
-            localStorage.removeItem('userRole');
-            
-            // Also sign out from Firebase
-            signOut(auth).then(() => {
-                // Sign-out successful
-                window.location.href = 'login.html';
-            }).catch((error) => {
-                // An error happened
-                console.error("Error signing out:", error);
-                // Still redirect to login
-                window.location.href = 'login.html';
-            });
-        });
-        
         // Global variables for pagination
         const ITEMS_PER_PAGE = 10;
         let lastAssessmentDoc = null;
@@ -498,6 +426,92 @@
         let currentAssessmentsFilter = 'all';
         let currentBudgetsFilter = 'all';
         let currentStudentsFilter = 'all';
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check authentication first using localStorage
+            const storedUser = localStorage.getItem('currentUser');
+            if (storedUser) {
+                const user = JSON.parse(storedUser);
+                
+                // Make sure user-status element exists before setting its content
+                const userStatusElement = document.getElementById('user-status');
+                if (userStatusElement) {
+                    userStatusElement.innerHTML = 'Logged in as: ' + user.email;
+                }
+                
+                // Check role for appropriate access
+                const storedRole = localStorage.getItem('userRole');
+                if (storedRole !== 'trainer') {
+                    // Redirect students to student dashboard
+                    window.location.href = 'student-dashboard.html';
+                } else {
+                    // Initialize the trainer dashboard
+                    initializeDashboard(user);
+                }
+            } else {
+                // If no stored user, check Firebase auth
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        // Make sure user-status element exists before setting its content
+                        const userStatusElement = document.getElementById('user-status');
+                        if (userStatusElement) {
+                            userStatusElement.innerHTML = 'Logged in as: ' + user.email;
+                        }
+                        
+                        // Store user in localStorage for persistence
+                        localStorage.setItem('currentUser', JSON.stringify({
+                            uid: user.uid,
+                            email: user.email
+                        }));
+                        
+                        // Check user role
+                        getDoc(doc(db, 'users', user.uid)).then(userDoc => {
+                            if (userDoc.exists()) {
+                                const role = userDoc.data().role;
+                                localStorage.setItem('userRole', role);
+                                
+                                // Check for appropriate access
+                                if (role !== 'trainer') {
+                                    // Redirect students to student dashboard
+                                    window.location.href = 'student-dashboard.html';
+                                } else {
+                                    // Initialize the trainer dashboard
+                                    initializeDashboard(user);
+                                }
+                            }
+                        }).catch(error => {
+                            console.error("Error checking user role:", error);
+                        });
+                    } else {
+                        // Not authenticated, redirect to login
+                        window.location.href = 'login.html';
+                    }
+                });
+            }
+            
+            // Logout functionality
+            const logoutLink = document.getElementById('logout-link');
+            if (logoutLink) {
+                logoutLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Clear localStorage
+                    localStorage.removeItem('currentUser');
+                    localStorage.removeItem('userRole');
+                    
+                    // Also sign out from Firebase
+                    signOut(auth).then(() => {
+                        // Sign-out successful
+                        window.location.href = 'login.html';
+                    }).catch((error) => {
+                        // An error happened
+                        console.error("Error signing out:", error);
+                        // Still redirect to login
+                        window.location.href = 'login.html';
+                    });
+                });
+            }
+        });
         
         // Initialize dashboard function
         function initializeDashboard(user) {
@@ -525,11 +539,14 @@
         // Load user information
         async function loadUserInfo(userId) {
             try {
+                const userInfoElement = document.getElementById('user-info');
+                if (!userInfoElement) return;
+                
                 const userDoc = await getDoc(doc(db, 'users', userId));
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
                     
-                    document.getElementById('user-info').innerHTML = `
+                    userInfoElement.innerHTML = `
                         <p><strong>Name:</strong> ${userData.fullName || 'Not provided'}</p>
                         <p><strong>Email:</strong> ${userData.email}</p>
                         <p><strong>Role:</strong> Trainer</p>
@@ -537,9 +554,12 @@
                 }
             } catch (error) {
                 console.error("Error loading user info:", error);
-                document.getElementById('user-info').innerHTML = `
-                    <p class="error">Error loading user information: ${error.message}</p>
-                `;
+                const userInfoElement = document.getElementById('user-info');
+                if (userInfoElement) {
+                    userInfoElement.innerHTML = `
+                        <p class="error">Error loading user information: ${error.message}</p>
+                    `;
+                }
             }
         }
         
@@ -574,11 +594,18 @@
                 
                 const averageGrade = gradeCount > 0 ? Math.round(totalGrades / gradeCount) : 0;
                 
-                // Update the summary cards
-                document.getElementById('total-students').textContent = totalStudents;
-                document.getElementById('pending-assessments').textContent = pendingAssessments;
-                document.getElementById('graded-assessments').textContent = gradedAssessments;
-                document.getElementById('average-grade').textContent = averageGrade;
+                // Update the summary cards - check if elements exist first
+                const totalStudentsElement = document.getElementById('total-students');
+                if (totalStudentsElement) totalStudentsElement.textContent = totalStudents;
+                
+                const pendingAssessmentsElement = document.getElementById('pending-assessments');
+                if (pendingAssessmentsElement) pendingAssessmentsElement.textContent = pendingAssessments;
+                
+                const gradedAssessmentsElement = document.getElementById('graded-assessments');
+                if (gradedAssessmentsElement) gradedAssessmentsElement.textContent = gradedAssessments;
+                
+                const averageGradeElement = document.getElementById('average-grade');
+                if (averageGradeElement) averageGradeElement.textContent = averageGrade;
                 
             } catch (error) {
                 console.error("Error loading dashboard summary:", error);
@@ -589,6 +616,8 @@
         async function loadAllAssessments(filterType = 'all', searchTerm = '', page = 1) {
             try {
                 const assessmentsContainer = document.getElementById('assessments-container');
+                if (!assessmentsContainer) return;
+                
                 assessmentsContainer.innerHTML = '<p class="loading">Loading assessments...</p>';
                 
                 // Build query based on filter
@@ -600,36 +629,32 @@
                     case 'submitted':
                         q = query(
                             collection(db, "assessments"), 
-                            where("status", "!=", "graded"),
-                            orderBy("status"),
-                            orderBy("submittedAt", "desc")
+                            where("status", "!=", "graded")
                         );
                         break;
                     case 'graded':
                         q = query(
                             collection(db, "assessments"), 
-                            where("status", "==", "graded"),
-                            orderBy("submittedAt", "desc")
+                            where("status", "==", "graded")
                         );
                         break;
                     case 'recent':
                         q = query(
                             collection(db, "assessments"), 
-                            where("submittedAt", ">=", sevenDaysAgo),
-                            orderBy("submittedAt", "desc")
+                            where("submittedAt", ">=", sevenDaysAgo)
                         );
                         break;
                     default:
-                        q = query(
-                            collection(db, "assessments"), 
-                            orderBy("submittedAt", "desc")
-                        );
+                        q = query(collection(db, "assessments"));
                 }
                 
                 // Get total count for pagination
                 const countSnapshot = await getDocs(q);
                 const totalAssessments = countSnapshot.size;
-                document.getElementById('assessment-count').textContent = totalAssessments;
+                
+                const assessmentCountElement = document.getElementById('assessment-count');
+                if (assessmentCountElement) assessmentCountElement.textContent = totalAssessments;
+                
                 totalAssessmentPages = Math.ceil(totalAssessments / ITEMS_PER_PAGE);
                 
                 // Apply pagination
@@ -696,9 +721,9 @@
                                 </span>
                             </td>
                             <td class="action-buttons">
-                                <button class="btn-small btn-view" onclick="window.location.href='view-assessment.html?id=${doc.id}'">View</button>
+                                <button class="btn-small btn-view" onclick="viewAssessment('${doc.id}')">View</button>
                                 ${assessment.status !== 'graded' ? 
-                                    `<button class="btn-small btn-grade" onclick="window.location.href='review-assessment.html?id=${doc.id}'">Review</button>` : 
+                                    `<button class="btn-small btn-grade" onclick="reviewAssessment('${doc.id}')">Review</button>` : 
                                     ''}
                             </td>
                         </tr>
@@ -717,9 +742,12 @@
                 
             } catch (error) {
                 console.error("Error loading assessments:", error);
-                document.getElementById('assessments-container').innerHTML = `
-                    <p class="error">Error loading assessments: ${error.message}</p>
-                `;
+                const assessmentsContainer = document.getElementById('assessments-container');
+                if (assessmentsContainer) {
+                    assessmentsContainer.innerHTML = `
+                        <p class="error">Error loading assessments: ${error.message}</p>
+                    `;
+                }
             }
         }
         
@@ -727,6 +755,8 @@
         async function loadAllBudgets(filterType = 'all', searchTerm = '', page = 1) {
             try {
                 const budgetsContainer = document.getElementById('budgets-container');
+                if (!budgetsContainer) return;
+                
                 budgetsContainer.innerHTML = '<p class="loading">Loading budgets...</p>';
                 
                 // Build query based on filter
@@ -738,21 +768,20 @@
                     case 'recent':
                         q = query(
                             collection(db, "budgets"), 
-                            where("createdAt", ">=", sevenDaysAgo),
-                            orderBy("createdAt", "desc")
+                            where("createdAt", ">=", sevenDaysAgo)
                         );
                         break;
                     default:
-                        q = query(
-                            collection(db, "budgets"), 
-                            orderBy("createdAt", "desc")
-                        );
+                        q = query(collection(db, "budgets"));
                 }
                 
                 // Get total count for pagination
                 const countSnapshot = await getDocs(q);
                 const totalBudgets = countSnapshot.size;
-                document.getElementById('budget-count').textContent = totalBudgets;
+                
+                const budgetCountElement = document.getElementById('budget-count');
+                if (budgetCountElement) budgetCountElement.textContent = totalBudgets;
+                
                 totalBudgetPages = Math.ceil(totalBudgets / ITEMS_PER_PAGE);
                 
                 // Apply pagination
@@ -835,9 +864,12 @@
                 
             } catch (error) {
                 console.error("Error loading budgets:", error);
-                document.getElementById('budgets-container').innerHTML = `
-                    <p class="error">Error loading budgets: ${error.message}</p>
-                `;
+                const budgetsContainer = document.getElementById('budgets-container');
+                if (budgetsContainer) {
+                    budgetsContainer.innerHTML = `
+                        <p class="error">Error loading budgets: ${error.message}</p>
+                    `;
+                }
             }
         }
         
@@ -845,6 +877,8 @@
         async function loadAllStudents(filterType = 'all', searchTerm = '', page = 1) {
             try {
                 const studentsContainer = document.getElementById('students-container');
+                if (!studentsContainer) return;
+                
                 studentsContainer.innerHTML = '<p class="loading">Loading students...</p>';
                 
                 // Build query based on filter
@@ -858,30 +892,30 @@
                         // This would require a more complex query in a real app
                         q = query(
                             collection(db, "users"), 
-                            where("role", "==", "student"),
-                            orderBy("createdAt", "desc")
+                            where("role", "==", "student")
                         );
                         break;
                     case 'recent':
                         q = query(
                             collection(db, "users"), 
                             where("role", "==", "student"),
-                            where("createdAt", ">=", sevenDaysAgo),
-                            orderBy("createdAt", "desc")
+                            where("createdAt", ">=", sevenDaysAgo)
                         );
                         break;
                     default:
                         q = query(
                             collection(db, "users"), 
-                            where("role", "==", "student"),
-                            orderBy("createdAt", "desc")
+                            where("role", "==", "student")
                         );
                 }
                 
                 // Get total count for pagination
                 const countSnapshot = await getDocs(q);
                 const totalStudents = countSnapshot.size;
-                document.getElementById('student-count').textContent = totalStudents;
+                
+                const studentCountElement = document.getElementById('student-count');
+                if (studentCountElement) studentCountElement.textContent = totalStudents;
+                
                 totalStudentPages = Math.ceil(totalStudents / ITEMS_PER_PAGE);
                 
                 // Apply pagination
@@ -958,15 +992,19 @@
                 
             } catch (error) {
                 console.error("Error loading students:", error);
-                document.getElementById('students-container').innerHTML = `
-                    <p class="error">Error loading students: ${error.message}</p>
-                `;
+                const studentsContainer = document.getElementById('students-container');
+                if (studentsContainer) {
+                    studentsContainer.innerHTML = `
+                        <p class="error">Error loading students: ${error.message}</p>
+                    `;
+                }
             }
         }
         
         // Update pagination controls
         function updatePagination(tabId, currentPage, totalPages) {
             const paginationContainer = document.getElementById(`${tabId}-pagination`);
+            if (!paginationContainer) return;
             
             if (totalPages <= 1) {
                 paginationContainer.style.display = 'none';
@@ -1030,28 +1068,12 @@
             paginationContainer.innerHTML = paginationHTML;
         }
         
-        // Change page
-        window.changePage = function(tabId, page) {
-            switch (tabId) {
-                case 'assessments':
-                    currentAssessmentsPage = page;
-                    loadAllAssessments(currentAssessmentsFilter, document.getElementById('assessment-search').value, page);
-                    break;
-                case 'budgets':
-                    currentBudgetsPage = page;
-                    loadAllBudgets(currentBudgetsFilter, document.getElementById('budget-search').value, page);
-                    break;
-                case 'students':
-                    currentStudentsPage = page;
-                    loadAllStudents(currentStudentsFilter, document.getElementById('student-search').value, page);
-                    break;
-            }
-        };
-        
         // Set up tab switching
         function setupTabs() {
             const tabButtons = document.querySelectorAll('.tab-button');
             const tabContents = document.querySelectorAll('.tab-content');
+            
+            if (!tabButtons.length || !tabContents.length) return;
             
             tabButtons.forEach(button => {
                 button.addEventListener('click', function() {
@@ -1062,7 +1084,8 @@
                     // Activate the selected tab
                     const tabId = this.getAttribute('data-tab');
                     this.classList.add('active');
-                    document.getElementById(tabId).classList.add('active');
+                    const tabContent = document.getElementById(tabId);
+                    if (tabContent) tabContent.classList.add('active');
                 });
             });
         }
@@ -1070,70 +1093,97 @@
         // Set up search functionality
         function setupSearch() {
             // Assessment search
-            document.getElementById('assessment-search').addEventListener('input', function() {
-                const searchTerm = this.value.toLowerCase();
-                loadAllAssessments(currentAssessmentsFilter, searchTerm, 1);
-            });
+            const assessmentSearch = document.getElementById('assessment-search');
+            if (assessmentSearch) {
+                assessmentSearch.addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase();
+                    loadAllAssessments(currentAssessmentsFilter, searchTerm, 1);
+                });
+            }
             
             // Budget search
-            document.getElementById('budget-search').addEventListener('input', function() {
-                const searchTerm = this.value.toLowerCase();
-                loadAllBudgets(currentBudgetsFilter, searchTerm, 1);
-            });
+            const budgetSearch = document.getElementById('budget-search');
+            if (budgetSearch) {
+                budgetSearch.addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase();
+                    loadAllBudgets(currentBudgetsFilter, searchTerm, 1);
+                });
+            }
             
             // Student search
-            document.getElementById('student-search').addEventListener('input', function() {
-                const searchTerm = this.value.toLowerCase();
-                loadAllStudents(currentStudentsFilter, searchTerm, 1);
-            });
+            const studentSearch = document.getElementById('student-search');
+            if (studentSearch) {
+                studentSearch.addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase();
+                    loadAllStudents(currentStudentsFilter, searchTerm, 1);
+                });
+            }
         }
         
         // Set up filters
         function setupFilters() {
             // Assessment filters
-            document.querySelectorAll('#assessments .filter-option').forEach(option => {
-                option.addEventListener('click', function() {
-                    // Update active state
-                    document.querySelectorAll('#assessments .filter-option').forEach(opt => 
-                        opt.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    // Apply filter
-                    const filterType = this.getAttribute('data-filter');
-                    currentAssessmentsFilter = filterType;
-                    loadAllAssessments(filterType, document.getElementById('assessment-search').value, 1);
+            const assessmentFilters = document.querySelectorAll('#assessments .filter-option');
+            if (assessmentFilters.length) {
+                assessmentFilters.forEach(option => {
+                    option.addEventListener('click', function() {
+                        // Update active state
+                        assessmentFilters.forEach(opt => opt.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        // Apply filter
+                        const filterType = this.getAttribute('data-filter');
+                        currentAssessmentsFilter = filterType;
+                        
+                        const assessmentSearch = document.getElementById('assessment-search');
+                        const searchTerm = assessmentSearch ? assessmentSearch.value : '';
+                        
+                        loadAllAssessments(filterType, searchTerm, 1);
+                    });
                 });
-            });
+            }
             
             // Budget filters
-            document.querySelectorAll('#budgets .filter-option').forEach(option => {
-                option.addEventListener('click', function() {
-                    // Update active state
-                    document.querySelectorAll('#budgets .filter-option').forEach(opt => 
-                        opt.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    // Apply filter
-                    const filterType = this.getAttribute('data-filter');
-                    currentBudgetsFilter = filterType;
-                    loadAllBudgets(filterType, document.getElementById('budget-search').value, 1);
+            const budgetFilters = document.querySelectorAll('#budgets .filter-option');
+            if (budgetFilters.length) {
+                budgetFilters.forEach(option => {
+                    option.addEventListener('click', function() {
+                        // Update active state
+                        budgetFilters.forEach(opt => opt.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        // Apply filter
+                        const filterType = this.getAttribute('data-filter');
+                        currentBudgetsFilter = filterType;
+                        
+                        const budgetSearch = document.getElementById('budget-search');
+                        const searchTerm = budgetSearch ? budgetSearch.value : '';
+                        
+                        loadAllBudgets(filterType, searchTerm, 1);
+                    });
                 });
-            });
+            }
             
             // Student filters
-            document.querySelectorAll('#students .filter-option').forEach(option => {
-                option.addEventListener('click', function() {
-                    // Update active state
-                    document.querySelectorAll('#students .filter-option').forEach(opt => 
-                        opt.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    // Apply filter
-                    const filterType = this.getAttribute('data-filter');
-                    currentStudentsFilter = filterType;
-                    loadAllStudents(filterType, document.getElementById('student-search').value, 1);
+            const studentFilters = document.querySelectorAll('#students .filter-option');
+            if (studentFilters.length) {
+                studentFilters.forEach(option => {
+                    option.addEventListener('click', function() {
+                        // Update active state
+                        studentFilters.forEach(opt => opt.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        // Apply filter
+                        const filterType = this.getAttribute('data-filter');
+                        currentStudentsFilter = filterType;
+                        
+                        const studentSearch = document.getElementById('student-search');
+                        const searchTerm = studentSearch ? studentSearch.value : '';
+                        
+                        loadAllStudents(filterType, searchTerm, 1);
+                    });
                 });
-            });
+            }
         }
         
         // Format currency
@@ -1144,12 +1194,42 @@
             });
         }
         
-        // View budget details
+        // Make these functions available globally
+        window.changePage = function(tabId, page) {
+            switch (tabId) {
+                case 'assessments':
+                    currentAssessmentsPage = page;
+                    const assessmentSearch = document.getElementById('assessment-search');
+                    const assessmentSearchTerm = assessmentSearch ? assessmentSearch.value : '';
+                    loadAllAssessments(currentAssessmentsFilter, assessmentSearchTerm, page);
+                    break;
+                case 'budgets':
+                    currentBudgetsPage = page;
+                    const budgetSearch = document.getElementById('budget-search');
+                    const budgetSearchTerm = budgetSearch ? budgetSearch.value : '';
+                    loadAllBudgets(currentBudgetsFilter, budgetSearchTerm, page);
+                    break;
+                case 'students':
+                    currentStudentsPage = page;
+                    const studentSearch = document.getElementById('student-search');
+                    const studentSearchTerm = studentSearch ? studentSearch.value : '';
+                    loadAllStudents(currentStudentsFilter, studentSearchTerm, page);
+                    break;
+            }
+        };
+        
+        window.viewAssessment = function(assessmentId) {
+            window.location.href = `view-assessment.html?id=${assessmentId}`;
+        };
+        
+        window.reviewAssessment = function(assessmentId) {
+            window.location.href = `review-assessment.html?id=${assessmentId}`;
+        };
+        
         window.viewBudget = function(budgetId) {
             window.location.href = `view-budget.html?id=${budgetId}`;
         };
-    
-        // View student profile
+        
         window.viewStudentProfile = function(studentId) {
             window.location.href = `view-student.html?id=${studentId}`;
         };

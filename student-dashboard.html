@@ -150,78 +150,98 @@
     </footer>
 
     <script type="module">
+        import { checkAuth, getCurrentUser, getUserRole } from './js/auth.js';
         import { auth, onAuthStateChanged, signOut, db, doc, getDoc, collection, query, where, getDocs, orderBy } from './js/firebase-config.js';
         
-        // Check authentication first using localStorage
-        const storedUser = localStorage.getItem('currentUser');
-        if (storedUser) {
-            const user = JSON.parse(storedUser);
-            document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
-            
-            // Check role for appropriate access
-            const storedRole = localStorage.getItem('userRole');
-            if (storedRole === 'trainer') {
-                // Redirect trainers to trainer dashboard
-                window.location.href = 'trainer-dashboard.html';
-            } else {
-                // Initialize the student dashboard
-                initializeDashboard(user);
-            }
-        } else {
-            // If no stored user, check Firebase auth
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
-                    
-                    // Store user in localStorage for persistence
-                    localStorage.setItem('currentUser', JSON.stringify({
-                        uid: user.uid,
-                        email: user.email
-                    }));
-                    
-                    // Check user role
-                    getDoc(doc(db, 'users', user.uid)).then(userDoc => {
-                        if (userDoc.exists()) {
-                            const role = userDoc.data().role;
-                            localStorage.setItem('userRole', role);
-                            
-                            // Check for appropriate access
-                            if (role === 'trainer') {
-                                // Redirect trainers to trainer dashboard
-                                window.location.href = 'trainer-dashboard.html';
-                            } else {
-                                // Initialize the student dashboard
-                                initializeDashboard(user);
-                            }
-                        }
-                    }).catch(error => {
-                        console.error("Error checking user role:", error);
-                    });
-                } else {
-                    // Not authenticated, redirect to login
-                    window.location.href = 'login.html';
+        // Wait for DOM to be fully loaded before accessing elements
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check authentication first using localStorage
+            const storedUser = localStorage.getItem('currentUser');
+            if (storedUser) {
+                const user = JSON.parse(storedUser);
+                
+                // Make sure user-status element exists before setting its content
+                const userStatusElement = document.getElementById('user-status');
+                if (userStatusElement) {
+                    userStatusElement.innerHTML = 'Logged in as: ' + user.email;
                 }
-            });
-        }
-        
-        // Logout functionality
-        document.getElementById('logout-link').addEventListener('click', function(e) {
-            e.preventDefault();
+                
+                // Check role for appropriate access
+                const storedRole = localStorage.getItem('userRole');
+                
+                // Set dashboard link based on role
+                const dashboardLink = document.getElementById('dashboard-link');
+                if (dashboardLink) {
+                    dashboardLink.href = storedRole === 'trainer' ? 'trainer-dashboard.html' : 'student-dashboard.html';
+                }
+                
+                // Initialize the dashboard
+                initializeDashboard(user);
+            } else {
+                // If no stored user, check Firebase auth
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        // Make sure user-status element exists before setting its content
+                        const userStatusElement = document.getElementById('user-status');
+                        if (userStatusElement) {
+                            userStatusElement.innerHTML = 'Logged in as: ' + user.email;
+                        }
+                        
+                        // Store user in localStorage for persistence
+                        localStorage.setItem('currentUser', JSON.stringify({
+                            uid: user.uid,
+                            email: user.email
+                        }));
+                        
+                        // Check user role
+                        getDoc(doc(db, 'users', user.uid)).then(userDoc => {
+                            if (userDoc.exists()) {
+                                const role = userDoc.data().role;
+                                localStorage.setItem('userRole', role);
+                                
+                                // Set dashboard link based on role
+                                const dashboardLink = document.getElementById('dashboard-link');
+                                if (dashboardLink) {
+                                    dashboardLink.href = role === 'trainer' ? 'trainer-dashboard.html' : 'student-dashboard.html';
+                                }
+                            }
+                            
+                            // Initialize the dashboard
+                            initializeDashboard(user);
+                        }).catch(error => {
+                            console.error("Error checking user role:", error);
+                            // Still initialize the dashboard
+                            initializeDashboard(user);
+                        });
+                    } else {
+                        // Not authenticated, redirect to login
+                        window.location.href = 'login.html';
+                    }
+                });
+            }
             
-            // Clear localStorage
-            localStorage.removeItem('currentUser');
-            localStorage.removeItem('userRole');
-            
-            // Also sign out from Firebase
-            signOut(auth).then(() => {
-                // Sign-out successful
-                window.location.href = 'login.html';
-            }).catch((error) => {
-                // An error happened
-                console.error("Error signing out:", error);
-                // Still redirect to login
-                window.location.href = 'login.html';
-            });
+            // Logout functionality
+            const logoutLink = document.getElementById('logout-link');
+            if (logoutLink) {
+                logoutLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Clear localStorage
+                    localStorage.removeItem('currentUser');
+                    localStorage.removeItem('userRole');
+                    
+                    // Also sign out from Firebase
+                    signOut(auth).then(() => {
+                        // Sign-out successful
+                        window.location.href = 'login.html';
+                    }).catch((error) => {
+                        // An error happened
+                        console.error("Error signing out:", error);
+                        // Still redirect to login
+                        window.location.href = 'login.html';
+                    });
+                });
+            }
         });
         
         // Initialize dashboard function
@@ -243,145 +263,175 @@
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
                     
-                    // Update welcome message
-                    const fullName = userData.fullName || 'Student';
-                    document.getElementById('welcome-message').textContent = `Welcome, ${fullName}!`;
+                    // Update welcome message - check if element exists first
+                    const welcomeMessage = document.getElementById('welcome-message');
+                    if (welcomeMessage) {
+                        const fullName = userData.fullName || 'Student';
+                        welcomeMessage.textContent = `Welcome, ${fullName}!`;
+                    }
                     
-                    // Update profile info
-                    document.getElementById('profile-info').innerHTML = `
-                        <p><strong>Name:</strong> ${userData.fullName || 'Not provided'}</p>
-                        <p><strong>Email:</strong> ${userData.email}</p>
-                        <p><strong>Student ID:</strong> ${userData.studentId || 'Not provided'}</p>
-                    `;
+                    // Update profile info - check if element exists first
+                    const profileInfo = document.getElementById('profile-info');
+                    if (profileInfo) {
+                        profileInfo.innerHTML = `
+                            <p><strong>Name:</strong> ${userData.fullName || 'Not provided'}</p>
+                            <p><strong>Email:</strong> ${userData.email}</p>
+                            <p><strong>Student ID:</strong> ${userData.studentId || 'Not provided'}</p>
+                        `;
+                    }
                 }
             } catch (error) {
                 console.error("Error loading user data:", error);
-                document.getElementById('profile-info').innerHTML = `
-                    <p class="error">Error loading profile information: ${error.message}</p>
-                `;
+                // Check if element exists before updating
+                const profileInfo = document.getElementById('profile-info');
+                if (profileInfo) {
+                    profileInfo.innerHTML = `
+                        <p class="error">Error loading profile information: ${error.message}</p>
+                    `;
+                }
             }
         }
         
         // Load assessments
         async function loadAssessments(userId) {
             try {
-                // Query for assessments by this user
-                const q = query(
-                    collection(db, "assessments"), 
-                    where("userId", "==", userId),
-                    orderBy("submittedAt", "desc")
-                );
+                // Check if element exists first
+                const assessmentsList = document.getElementById('assessments-list');
+                if (!assessmentsList) return;
                 
-                const querySnapshot = await getDocs(q);
+                // Show loading state
+                assessmentsList.innerHTML = '<p>Loading assessments...</p>';
                 
-                if (querySnapshot.empty) {
-                    document.getElementById('assessments-list').innerHTML = `
-                        <p>You haven't submitted any assessments yet.</p>
+                try {
+                    // Query for assessments by this user
+                    const q = query(
+                        collection(db, "assessments"), 
+                        where("userId", "==", userId)
+                    );
+                    
+                    const querySnapshot = await getDocs(q);
+                    
+                    if (querySnapshot.empty) {
+                        assessmentsList.innerHTML = `
+                            <p>You haven't submitted any assessments yet.</p>
+                            <p><a href="farm-budget-assessment.html" class="btn">Start Assessment</a></p>
+                        `;
+                        return;
+                    }
+                    
+                    let assessmentsListHTML = '';
+                    
+                    querySnapshot.forEach((doc) => {
+                        const assessment = doc.data();
+                        const submittedDate = assessment.submittedAt ? 
+                            new Date(assessment.submittedAt.seconds * 1000).toLocaleDateString() : 
+                            'Unknown';
+                        
+                        const statusClass = assessment.status === 'graded' ? 'status-graded' : 'status-submitted';
+                        const statusText = assessment.status === 'graded' ? 'Graded' : 'Submitted';
+                        
+                        assessmentsListHTML += `
+                            <li>
+                                <div class="assessment-item">
+                                    <div class="assessment-info">
+                                        <h4>${assessment.unitCode || 'AHCBUS408'}</h4>
+                                        <p>Submitted on: ${submittedDate}</p>
+                                        <p class="status ${statusClass}">${statusText}</p>
+                                        ${assessment.grade ? `<p class="grade">Grade: ${assessment.grade}/100</p>` : ''}
+                                    </div>
+                                    <div class="assessment-actions">
+                                        <a href="view-assessment.html?id=${doc.id}" class="btn">View</a>
+                                    </div>
+                                </div>
+                            </li>
+                        `;
+                    });
+                    
+                    assessmentsList.innerHTML = `
+                        <ul class="assessment-list">
+                            ${assessmentsListHTML}
+                        </ul>
+                        <p><a href="farm-budget-assessment.html" class="btn">Start New Assessment</a></p>
+                    `;
+                } catch (error) {
+                    console.error("Error loading assessments:", error);
+                    assessmentsList.innerHTML = `
+                        <p class="error">Error loading assessments: ${error.message}</p>
                         <p><a href="farm-budget-assessment.html" class="btn">Start Assessment</a></p>
                     `;
-                    return;
                 }
-                
-                let assessmentsList = '';
-                
-                querySnapshot.forEach((doc) => {
-                    const assessment = doc.data();
-                    const submittedDate = assessment.submittedAt ? 
-                        new Date(assessment.submittedAt.seconds * 1000).toLocaleDateString() : 
-                        'Unknown';
-                    
-                    const statusClass = assessment.status === 'graded' ? 'status-graded' : 'status-submitted';
-                    const statusText = assessment.status === 'graded' ? 'Graded' : 'Submitted';
-                    
-                    assessmentsList += `
-                        <li>
-                            <div class="assessment-item">
-                                <div class="assessment-info">
-                                    <h4>${assessment.unitCode || 'AHCBUS408'}</h4>
-                                    <p>Submitted on: ${submittedDate}</p>
-                                    <p class="status ${statusClass}">${statusText}</p>
-                                    ${assessment.grade ? `<p class="grade">Grade: ${assessment.grade}/100</p>` : ''}
-                                </div>
-                                <div class="assessment-actions">
-                                    <a href="view-assessment.html?id=${doc.id}" class="btn">View</a>
-                                </div>
-                            </div>
-                        </li>
-                    `;
-                });
-                
-                document.getElementById('assessments-list').innerHTML = `
-                    <ul class="assessment-list">
-                        ${assessmentsList}
-                    </ul>
-                    <p><a href="farm-budget-assessment.html" class="btn">Start New Assessment</a></p>
-                `;
             } catch (error) {
-                console.error("Error loading assessments:", error);
-                document.getElementById('assessments-list').innerHTML = `
-                    <p class="error">Error loading assessments: ${error.message}</p>
-                    <p><a href="farm-budget-assessment.html" class="btn">Start Assessment</a></p>
-                `;
+                console.error("Error in loadAssessments:", error);
             }
         }
         
         // Load saved budgets
         async function loadSavedBudgets(userId) {
             try {
-                // Query for budgets by this user
-                const q = query(
-                    collection(db, "budgets"), 
-                    where("userId", "==", userId),
-                    orderBy("createdAt", "desc")
-                );
+                // Check if element exists first
+                const budgetsList = document.getElementById('budgets-list');
+                if (!budgetsList) return;
                 
-                const querySnapshot = await getDocs(q);
+                // Show loading state
+                budgetsList.innerHTML = '<p>Loading budgets...</p>';
                 
-                if (querySnapshot.empty) {
-                    document.getElementById('budgets-list').innerHTML = `
-                        <p>You haven't created any budgets yet.</p>
+                try {
+                    // Query for budgets by this user
+                    const q = query(
+                        collection(db, "budgets"), 
+                        where("userId", "==", userId)
+                    );
+                    
+                    const querySnapshot = await getDocs(q);
+                    
+                    if (querySnapshot.empty) {
+                        budgetsList.innerHTML = `
+                            <p>You haven't created any budgets yet.</p>
+                            <p><a href="budget.html" class="btn">Create Budget</a></p>
+                        `;
+                        return;
+                    }
+                    
+                    let budgetsListHTML = '';
+                    
+                    querySnapshot.forEach((doc) => {
+                        const budget = doc.data();
+                        const createdDate = budget.createdAt ? 
+                            new Date(budget.createdAt.seconds * 1000).toLocaleDateString() : 
+                            'Unknown';
+                        
+                        budgetsListHTML += `
+                            <li>
+                                <div class="budget-item">
+                                    <div class="budget-info">
+                                        <h4>${budget.name || 'Untitled Budget'}</h4>
+                                        <p>Farm Type: ${budget.farmType || 'Not specified'}</p>
+                                        <p>Created on: ${createdDate}</p>
+                                        <p>Net Result: ${formatCurrency(budget.netResult || 0)}</p>
+                                    </div>
+                                    <div class="budget-actions">
+                                        <a href="view-budget.html?id=${doc.id}" class="btn">View</a>
+                                    </div>
+                                </div>
+                            </li>
+                        `;
+                    });
+                    
+                    budgetsList.innerHTML = `
+                        <ul class="budget-list">
+                            ${budgetsListHTML}
+                        </ul>
+                        <p><a href="budget.html" class="btn">Create New Budget</a></p>
+                    `;
+                } catch (error) {
+                    console.error("Error loading budgets:", error);
+                    budgetsList.innerHTML = `
+                        <p class="error">Error loading budgets: ${error.message}</p>
                         <p><a href="budget.html" class="btn">Create Budget</a></p>
                     `;
-                    return;
                 }
-                
-                let budgetsList = '';
-                
-                querySnapshot.forEach((doc) => {
-                    const budget = doc.data();
-                    const createdDate = budget.createdAt ? 
-                        new Date(budget.createdAt.seconds * 1000).toLocaleDateString() : 
-                        'Unknown';
-                    
-                    budgetsList += `
-                        <li>
-                            <div class="budget-item">
-                                <div class="budget-info">
-                                    <h4>${budget.name || 'Untitled Budget'}</h4>
-                                    <p>Farm Type: ${budget.farmType || 'Not specified'}</p>
-                                    <p>Created on: ${createdDate}</p>
-                                    <p>Net Result: ${formatCurrency(budget.netResult || 0)}</p>
-                                </div>
-                                <div class="budget-actions">
-                                    <a href="view-budget.html?id=${doc.id}" class="btn">View</a>
-                                </div>
-                            </div>
-                        </li>
-                    `;
-                });
-                
-                document.getElementById('budgets-list').innerHTML = `
-                    <ul class="budget-list">
-                        ${budgetsList}
-                    </ul>
-                    <p><a href="budget.html" class="btn">Create New Budget</a></p>
-                `;
             } catch (error) {
-                console.error("Error loading budgets:", error);
-                document.getElementById('budgets-list').innerHTML = `
-                    <p class="error">Error loading budgets: ${error.message}</p>
-                    <p><a href="budget.html" class="btn">Create Budget</a></p>
-                `;
+                console.error("Error in loadSavedBudgets:", error);
             }
         }
         

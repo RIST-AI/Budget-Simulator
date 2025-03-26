@@ -2,657 +2,333 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>Budget Simulator - RIST Budget Master</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="icon" href="images/RIST Brandmark - Navy Circle.png" type="image/png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Simulator | Farm Budget Assessment System</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/budget.css">
 </head>
 <body>
     <header>
-        <div class="container">
-            <div class="header-content">
-                <div class="logo-container">
-                    <img src="images/RIST - Primary Colour.jpg" alt="RIST - Rural Industries Skill Training" class="rist-logo">
-                </div>
-                <div class="title-container">
-                    <h1>AHCBUS408 Budget Master</h1>
-                    <p>Agricultural Budgeting Training Tool</p>
-                </div>
-                <div id="user-status" class="user-status">
-                    <!-- Login status will be shown here -->
-                </div>
+        <nav>
+            <div class="container">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="budget.html" class="active">Budget Simulator</a></li>
+                    <li><a href="farm-budget-assessment.html">Assessment</a></li>
+                    <li><a href="login.html">Login</a></li>
+                    <li><a href="register.html">Register</a></li>
+                </ul>
             </div>
+        </nav>
+        <div class="container">
+            <h1>Farm Budget Simulator</h1>
         </div>
     </header>
 
-    <nav>
-        <div class="container">
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="budget.html" class="active">Budget Simulator</a></li>
-                <li><a href="farm-budget-assessment.html">Assessment</a></li>
-                <li id="login-nav-item"><a href="login.html">Login</a></li>
-                <li id="dashboard-nav-item" style="display:none;"><a href="#" id="dashboard-link">Dashboard</a></li>
-                <li id="logout-nav-item" style="display:none;"><a href="#" id="logout-link">Logout</a></li>
-            </ul>
-        </div>
-    </nav>
-
     <main class="container">
-        <section class="page-header">
-            <h2>Budget Simulator</h2>
-            <p>Practice creating and managing farm budgets with our interactive simulator.</p>
-        </section>
-
-        <section class="budget-simulator">
-            <div class="budget-controls">
-                <div class="form-group">
-                    <label for="budget-name">Budget Name:</label>
-                    <input type="text" id="budget-name" placeholder="Enter a name for your budget">
-                </div>
-                
-                <div class="form-group">
-                    <label for="budget-period">Budget Period:</label>
-                    <select id="budget-period">
-                        <option value="monthly">Monthly</option>
-                        <option value="quarterly">Quarterly</option>
-                        <option value="annual" selected>Annual</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="farm-type">Farm Type:</label>
-                    <select id="farm-type">
-                        <option value="dairy">Dairy Farm</option>
-                        <option value="crop">Crop Farm</option>
-                        <option value="livestock">Livestock Farm</option>
-                        <option value="mixed">Mixed Farm</option>
-                    </select>
-                </div>
-                
-                <button id="save-budget" class="btn">Save Budget</button>
-                <button id="reset-budget" class="btn btn-secondary">Reset</button>
+        <section class="budget-form">
+            <div class="form-group">
+                <label for="budget-name">Budget Name:</label>
+                <input type="text" id="budget-name" placeholder="Enter a name for this budget">
             </div>
             
-            <div class="budget-workspace">
-                <div class="budget-section">
-                    <h3>Income</h3>
-                    <table class="budget-table" id="income-table">
-                        <thead>
-                            <tr>
-                                <th>Item</th>
-                                <th>Amount ($)</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><input type="text" placeholder="Income item"></td>
-                                <td><input type="number" placeholder="0.00"></td>
-                                <td><button class="btn-small btn-remove">Remove</button></td>
-                            </tr>
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <td colspan="3">
-                                    <button id="add-income" class="btn-small">+ Add Income Item</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><strong>Total Income</strong></td>
-                                <td id="total-income">$0.00</td>
-                                <td></td>
-                            </tr>
-                        </tfoot>
-                    </table>
+            <div class="form-group">
+                <label for="farm-type">Farm Type:</label>
+                <select id="farm-type">
+                    <option value="">Select Farm Type</option>
+                    <option value="dairy">Dairy Farm</option>
+                    <option value="crop">Crop Farm</option>
+                    <option value="livestock">Livestock Farm</option>
+                    <option value="mixed">Mixed Farm</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="budget-period">Budget Period:</label>
+                <select id="budget-period">
+                    <option value="">Select Period</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="quarterly">Quarterly</option>
+                    <option value="annual">Annual</option>
+                </select>
+            </div>
+            
+            <h2>Income Items</h2>
+            <div id="income-items">
+                <div class="budget-item income-item">
+                    <input type="text" class="item-name" placeholder="Item name">
+                    <input type="number" class="item-amount" placeholder="Amount">
+                    <button type="button" class="remove-item">Remove</button>
                 </div>
-                
-                <div class="budget-section">
-                    <h3>Expenses</h3>
-                    <table class="budget-table" id="expense-table">
-                        <thead>
-                            <tr>
-                                <th>Item</th>
-                                <th>Amount ($)</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><input type="text" placeholder="Expense item"></td>
-                                <td><input type="number" placeholder="0.00"></td>
-                                <td><button class="btn-small btn-remove">Remove</button></td>
-                            </tr>
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <td colspan="3">
-                                    <button id="add-expense" class="btn-small">+ Add Expense Item</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><strong>Total Expenses</strong></td>
-                                <td id="total-expenses">$0.00</td>
-                                <td></td>
-                            </tr>
-                        </tfoot>
-                    </table>
+            </div>
+            <button type="button" id="add-income">Add Income Item</button>
+            
+            <h2>Expense Items</h2>
+            <div id="expense-items">
+                <div class="budget-item expense-item">
+                    <input type="text" class="item-name" placeholder="Item name">
+                    <input type="number" class="item-amount" placeholder="Amount">
+                    <button type="button" class="remove-item">Remove</button>
                 </div>
-                
-                <div class="budget-summary">
-                    <h3>Budget Summary</h3>
-                    <table class="summary-table">
-                        <tr>
-                            <td>Total Income:</td>
-                            <td id="summary-income">$0.00</td>
-                        </tr>
-                        <tr>
-                            <td>Total Expenses:</td>
-                            <td id="summary-expenses">$0.00</td>
-                        </tr>
-                        <tr class="net-result">
-                            <td>Net Result:</td>
-                            <td id="net-result">$0.00</td>
-                        </tr>
-                    </table>
+            </div>
+            <button type="button" id="add-expense">Add Expense Item</button>
+            
+            <div class="budget-summary">
+                <div class="summary-item">
+                    <span>Total Income:</span>
+                    <span id="total-income">$0.00</span>
                 </div>
+                <div class="summary-item">
+                    <span>Total Expenses:</span>
+                    <span id="total-expenses">$0.00</span>
+                </div>
+                <div class="summary-item">
+                    <span>Net Result:</span>
+                    <span id="net-result">$0.00</span>
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button type="button" id="save-budget">Save Budget</button>
+                <button type="button" id="clear-budget">Clear Budget</button>
             </div>
         </section>
     </main>
 
     <footer>
         <div class="container">
-            <div class="footer-content">
-                <div class="footer-logo">
-                    <img src="images/RIST Brandmark - Navy Circle.png" alt="RIST" class="rist-logo-footer">
-                </div>
-                <div class="footer-info">
-                    <p>&copy; 2025 RIST - Rural Industries Skill Training</p>
-                    <p>AHCBUS408 Budget Master</p>
-                </div>
-                <div class="footer-contact">
-                    <p>Contact: <a href="mailto:info@rist.com.au">info@rist.com.au</a></p>
-                </div>
-            </div>
+            <p>&copy; 2023 Farm Budget Assessment System</p>
         </div>
     </footer>
 
+    <!-- Firebase Scripts -->
     <script type="module">
-        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, setDoc, addDoc, collection } from './js/firebase-config.js';
-        
-        // Global variables
-        let budgetItems = [];
-        let currentUser = null;
-        let autoSaveTimer = null;
-        
-        // Check authentication first using localStorage
-        const storedUser = localStorage.getItem('currentUser');
-        if (storedUser) {
-            currentUser = JSON.parse(storedUser);
-            document.getElementById('user-status').innerHTML = 'Logged in as: ' + currentUser.email;
-            
-            // Set dashboard link based on role
-            const storedRole = localStorage.getItem('userRole');
-            if (storedRole === 'trainer') {
-                document.getElementById('dashboard-link').href = 'trainer-dashboard.html';
-            } else {
-                document.getElementById('dashboard-link').href = 'student-dashboard.html';
-            }
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+
+        // Your Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDQSMOv3ZuSH-64tYZqr3MG7uO9wHrYd8c",
+            authDomain: "budget-assessment-system-1d840.firebaseapp.com",
+            projectId: "budget-assessment-system-1d840",
+            storageBucket: "budget-assessment-system-1d840.appspot.com",
+            messagingSenderId: "1039430447930",
+            appId: "1:1039430447930:web:b3c3e7a3a2d1c2a2d1c2a3"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Budget simulator accessible without login for testing");
             
             // Initialize the budget simulator
-            initializeBudgetSimulator(currentUser);
-        } else {
-            // If no stored user, check Firebase auth
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    currentUser = user;
-                    document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
-                    
-                    // Store user in localStorage for persistence
-                    localStorage.setItem('currentUser', JSON.stringify({
-                        uid: user.uid,
-                        email: user.email
-                    }));
-                    
-                    // Check user role
-                    getDoc(doc(db, 'users', user.uid)).then(userDoc => {
-                        if (userDoc.exists()) {
-                            const role = userDoc.data().role;
-                            localStorage.setItem('userRole', role);
-                            
-                            // Set dashboard link based on role
-                            if (role === 'trainer') {
-                                document.getElementById('dashboard-link').href = 'trainer-dashboard.html';
-                            } else {
-                                document.getElementById('dashboard-link').href = 'student-dashboard.html';
-                            }
-                        }
-                        
-                        // Initialize the budget simulator
-                        initializeBudgetSimulator(user);
-                    }).catch(error => {
-                        console.error("Error checking user role:", error);
-                        // Still initialize the budget simulator
-                        initializeBudgetSimulator(user);
-                    });
-                } else {
-                    // Not authenticated, redirect to login
-                    window.location.href = 'login.html';
-                }
-            });
-        }
-        
-        // Logout functionality
-        document.getElementById('logout-link').addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            // Clear localStorage
-            localStorage.removeItem('currentUser');
-            localStorage.removeItem('userRole');
-            
-            // Also sign out from Firebase
-            signOut(auth).then(() => {
-                // Sign-out successful
-                window.location.href = 'login.html';
-            }).catch((error) => {
-                // An error happened
-                console.error("Error signing out:", error);
-                // Still redirect to login
-                window.location.href = 'login.html';
-            });
+            initializeBudgetSimulator();
         });
-        
-        // Initialize budget simulator
-        function initializeBudgetSimulator(user) {
-            // Set up budget item form
-            setupBudgetItemForm();
+
+        function initializeBudgetSimulator() {
+            // Add event listeners for budget functionality
+            document.getElementById('add-income').addEventListener('click', function() {
+                addBudgetItem('income-items', 'income-item');
+                updateTotals();
+            });
             
-            // Set up save budget form
-            setupSaveBudgetForm();
+            document.getElementById('add-expense').addEventListener('click', function() {
+                addBudgetItem('expense-items', 'expense-item');
+                updateTotals();
+            });
             
-            // Load saved draft
-            loadSavedDraft();
+            document.getElementById('save-budget').addEventListener('click', saveBudget);
+            document.getElementById('clear-budget').addEventListener('click', clearBudget);
             
-            // Set up auto-save
-            setupAutoSave();
-        }
-        
-        // Set up budget item form
-        function setupBudgetItemForm() {
-            // Populate subcategories based on category selection
-            document.getElementById('item-category').addEventListener('change', function() {
-                const category = this.value;
-                const subcategorySelect = document.getElementById('item-subcategory');
-                
-                // Clear existing options
-                subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
-                
-                // Add new options based on category
-                if (category === 'income') {
-                    const incomeSubcategories = [
-                        'Crop Sales', 'Livestock Sales', 'Milk Sales', 'Wool Sales',
-                        'Government Subsidies', 'Rental Income', 'Other Income'
-                    ];
-                    
-                    incomeSubcategories.forEach(subcategory => {
-                        const option = document.createElement('option');
-                        option.value = subcategory.toLowerCase().replace(/\s+/g, '-');
-                        option.textContent = subcategory;
-                        subcategorySelect.appendChild(option);
-                    });
-                } else if (category === 'expense') {
-                    const expenseSubcategories = [
-                        'Seeds', 'Fertilizers', 'Pesticides', 'Feed', 'Veterinary',
-                        'Fuel', 'Electricity', 'Water', 'Labor', 'Equipment Maintenance',
-                        'Land Lease', 'Insurance', 'Interest', 'Depreciation', 'Other Expenses'
-                    ];
-                    
-                    expenseSubcategories.forEach(subcategory => {
-                        const option = document.createElement('option');
-                        option.value = subcategory.toLowerCase().replace(/\s+/g, '-');
-                        option.textContent = subcategory;
-                        subcategorySelect.appendChild(option);
-                    });
+            // Add event listeners for removing items and updating totals
+            document.addEventListener('click', function(e) {
+                if (e.target && e.target.classList.contains('remove-item')) {
+                    e.target.parentElement.remove();
+                    updateTotals();
                 }
             });
             
-            // Add budget item
-            document.getElementById('add-budget-item').addEventListener('click', function() {
-                addBudgetItem();
-            });
-            
-            // Add budget item on Enter key in amount field
-            document.getElementById('item-amount').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addBudgetItem();
+            document.addEventListener('input', function(e) {
+                if (e.target && e.target.classList.contains('item-amount')) {
+                    updateTotals();
                 }
             });
         }
-        
-        // Add budget item
-        function addBudgetItem() {
-            const itemName = document.getElementById('item-name').value;
-            const itemCategory = document.getElementById('item-category').value;
-            const itemSubcategory = document.getElementById('item-subcategory').value;
-            const itemAmount = parseFloat(document.getElementById('item-amount').value);
-            const itemNotes = document.getElementById('item-notes').value;
-            
-            // Validate inputs
-            if (!itemName || !itemCategory || !itemSubcategory || isNaN(itemAmount)) {
-                alert('Please fill in all required fields.');
-                return;
-            }
-            
-            // Create unique ID for the item
-            const itemId = 'item_' + Date.now();
-            
-            // Add to budget items array
-            const newItem = {
-                id: itemId,
-                name: itemName,
-                category: itemCategory,
-                subcategory: itemSubcategory,
-                subcategoryText: document.getElementById('item-subcategory').options[
-                    document.getElementById('item-subcategory').selectedIndex
-                ].text,
-                amount: itemAmount,
-                notes: itemNotes
-            };
-            
-            budgetItems.push(newItem);
-            
-            // Update the table
-            updateBudgetItemsTable();
-            
-            // Clear the form
-            document.getElementById('item-name').value = '';
-            document.getElementById('item-amount').value = '';
-            document.getElementById('item-notes').value = '';
-            document.getElementById('item-name').focus();
-            
-            // Update budget summary
-            updateBudgetSummary();
-            
-            // Save draft
-            saveDraft();
+
+        function addBudgetItem(containerId, itemClass) {
+            const container = document.getElementById(containerId);
+            const newItem = document.createElement('div');
+            newItem.className = `budget-item ${itemClass}`;
+            newItem.innerHTML = `
+                <input type="text" class="item-name" placeholder="Item name">
+                <input type="number" class="item-amount" placeholder="Amount">
+                <button type="button" class="remove-item">Remove</button>
+            `;
+            container.appendChild(newItem);
         }
-        
-        // Update budget items table
-        function updateBudgetItemsTable() {
-            const tableBody = document.getElementById('budget-items-body');
-            tableBody.innerHTML = '';
-            
-            budgetItems.forEach(item => {
-                const row = document.createElement('tr');
-                row.setAttribute('data-id', item.id);
-                
-                row.innerHTML = `
-                    <td>${item.name}</td>
-                    <td>${item.category === 'income' ? 'Income' : 'Expense'}</td>
-                    <td>${item.subcategoryText}</td>
-                    <td>${formatCurrency(item.amount)}</td>
-                    <td>${item.notes}</td>
-                    <td>
-                        <button class="btn-small btn-edit" onclick="editBudgetItem('${item.id}')">Edit</button>
-                        <button class="btn-small btn-remove" onclick="removeBudgetItem('${item.id}')">Remove</button>
-                    </td>
-                `;
-                
-                tableBody.appendChild(row);
-            });
-        }
-        
-        // Edit budget item
-        window.editBudgetItem = function(itemId) {
-            const item = budgetItems.find(item => item.id === itemId);
-            if (!item) return;
-            
-            // Populate form with item data
-            document.getElementById('item-name').value = item.name;
-            document.getElementById('item-category').value = item.category;
-            
-            // Trigger change event to populate subcategories
-            document.getElementById('item-category').dispatchEvent(new Event('change'));
-            
-            // Set subcategory
-            document.getElementById('item-subcategory').value = item.subcategory;
-            document.getElementById('item-amount').value = item.amount;
-            document.getElementById('item-notes').value = item.notes;
-            
-            // Remove the item from the array
-            removeBudgetItem(itemId);
-            
-            // Focus on the name field
-            document.getElementById('item-name').focus();
-        };
-        
-        // Remove budget item
-        window.removeBudgetItem = function(itemId) {
-            // Remove from array
-            budgetItems = budgetItems.filter(item => item.id !== itemId);
-            
-            // Update the table
-            updateBudgetItemsTable();
-            
-            // Update budget summary
-            updateBudgetSummary();
-            
-            // Save draft
-            saveDraft();
-        };
-        
-        // Update budget summary
-        function updateBudgetSummary() {
-            let totalIncome = 0;
-            let totalExpenses = 0;
-            
-            budgetItems.forEach(item => {
-                if (item.category === 'income') {
-                    totalIncome += item.amount;
-                } else {
-                    totalExpenses += item.amount;
-                }
+
+        function updateTotals() {
+            // Calculate income total
+            let incomeTotal = 0;
+            document.querySelectorAll('.income-item .item-amount').forEach(function(item) {
+                const value = parseFloat(item.value) || 0;
+                incomeTotal += value;
             });
             
-            const netResult = totalIncome - totalExpenses;
+            // Calculate expense total
+            let expenseTotal = 0;
+            document.querySelectorAll('.expense-item .item-amount').forEach(function(item) {
+                const value = parseFloat(item.value) || 0;
+                expenseTotal += value;
+            });
             
-            document.getElementById('total-income').textContent = formatCurrency(totalIncome);
-            document.getElementById('total-expenses').textContent = formatCurrency(totalExpenses);
-            document.getElementById('net-result').textContent = formatCurrency(netResult);
+            // Calculate net result
+            const netResult = incomeTotal - expenseTotal;
+            
+            // Update display
+            document.getElementById('total-income').textContent = '$' + incomeTotal.toFixed(2);
+            document.getElementById('total-expenses').textContent = '$' + expenseTotal.toFixed(2);
+            document.getElementById('net-result').textContent = '$' + netResult.toFixed(2);
             
             // Add color coding for net result
             const netResultElement = document.getElementById('net-result');
             if (netResult > 0) {
-                netResultElement.classList.add('positive');
-                netResultElement.classList.remove('negative');
+                netResultElement.className = 'positive';
             } else if (netResult < 0) {
-                netResultElement.classList.add('negative');
-                netResultElement.classList.remove('positive');
+                netResultElement.className = 'negative';
             } else {
-                netResultElement.classList.remove('positive');
-                netResultElement.classList.remove('negative');
+                netResultElement.className = '';
             }
         }
-        
-        // Set up save budget form
-        function setupSaveBudgetForm() {
-            document.getElementById('save-budget-form').addEventListener('submit', function(e) {
-                e.preventDefault();
-                saveBudget();
-            });
-        }
-        
-        // Save budget
-        async function saveBudget() {
-            try {
-                if (!currentUser) {
-                    alert('You must be logged in to save a budget.');
-                    return;
-                }
-                
-                if (budgetItems.length === 0) {
-                    alert('Please add at least one budget item.');
-                    return;
-                }
-                
-                // Get form values
-                const budgetName = document.getElementById('budget-name').value || 'Untitled Budget';
-                const farmType = document.getElementById('farm-type').value;
-                const budgetPeriod = document.getElementById('budget-period').value;
-                const budgetNotes = document.getElementById('budget-notes').value;
-                
-                // Calculate totals
-                let totalIncome = 0;
-                let totalExpenses = 0;
-                
-                budgetItems.forEach(item => {
-                    if (item.category === 'income') {
-                        totalIncome += item.amount;
-                    } else {
-                        totalExpenses += item.amount;
-                    }
-                });
-                
-                const netResult = totalIncome - totalExpenses;
-                
-                // Create budget object
-                const budgetData = {
-                    name: budgetName,
-                    farmType: farmType,
-                    period: budgetPeriod,
-                    notes: budgetNotes,
-                    items: budgetItems,
-                    totalIncome: totalIncome,
-                    totalExpenses: totalExpenses,
-                    netResult: netResult,
-                    userId: currentUser.uid,
-                    userEmail: currentUser.email,
-                    createdAt: new Date(),
-                    updatedAt: new Date()
-                };
-                
-                // Show loading state
-                const saveButton = document.querySelector('#save-budget-form button[type="submit"]');
-                const originalButtonText = saveButton.textContent;
-                saveButton.disabled = true;
-                saveButton.textContent = 'Saving...';
-                
-                // Save to Firestore
-                const docRef = await addDoc(collection(db, "budgets"), budgetData);
-                console.log("Budget saved with ID:", docRef.id);
-                
-                // Clear draft
-                localStorage.removeItem('budget_draft');
-                
-                // Reset form and budget items
-                document.getElementById('budget-name').value = '';
-                document.getElementById('budget-notes').value = '';
-                budgetItems = [];
-                updateBudgetItemsTable();
-                updateBudgetSummary();
-                
-                // Reset button
-                saveButton.disabled = false;
-                saveButton.textContent = originalButtonText;
-                
-                // Show success message
-                alert('Budget saved successfully!');
-                
-            } catch (error) {
-                console.error("Error saving budget:", error);
-                alert('Error saving budget: ' + error.message);
-                
-                // Reset button
-                const saveButton = document.querySelector('#save-budget-form button[type="submit"]');
-                saveButton.disabled = false;
-                saveButton.textContent = 'Save Budget';
-            }
-        }
-        
-        // Save draft
-        function saveDraft() {
-            if (!currentUser) return;
-            
+
+        function saveBudget() {
             // Get form values
             const budgetName = document.getElementById('budget-name').value;
             const farmType = document.getElementById('farm-type').value;
             const budgetPeriod = document.getElementById('budget-period').value;
-            const budgetNotes = document.getElementById('budget-notes').value;
             
-            // Create draft object
-            const draftData = {
+            // Validate form
+            if (!budgetName || !farmType || !budgetPeriod) {
+                alert('Please fill in all required fields (Budget Name, Farm Type, Budget Period)');
+                return;
+            }
+            
+            // Collect income items
+            const incomeItems = [];
+            document.querySelectorAll('.income-item').forEach(function(item) {
+                const name = item.querySelector('.item-name').value;
+                const amount = parseFloat(item.querySelector('.item-amount').value) || 0;
+                if (name && amount > 0) {
+                    incomeItems.push({ name, amount });
+                }
+            });
+            
+            // Collect expense items
+            const expenseItems = [];
+            document.querySelectorAll('.expense-item').forEach(function(item) {
+                const name = item.querySelector('.item-name').value;
+                const amount = parseFloat(item.querySelector('.item-amount').value) || 0;
+                if (name && amount > 0) {
+                    expenseItems.push({ name, amount });
+                }
+            });
+            
+            // Calculate totals
+            const totalIncome = incomeItems.reduce((sum, item) => sum + item.amount, 0);
+            const totalExpenses = expenseItems.reduce((sum, item) => sum + item.amount, 0);
+            const netResult = totalIncome - totalExpenses;
+            
+            // TESTING MODE: Just show an alert instead of saving to Firestore
+            alert("Save functionality disabled in testing mode. Budget data would be saved to Firestore in production.");
+            
+            // Save to localStorage for testing
+            const budgetData = {
                 name: budgetName,
                 farmType: farmType,
                 period: budgetPeriod,
-                notes: budgetNotes,
-                items: budgetItems,
-                lastSaved: new Date().toISOString()
+                items: {
+                    income: incomeItems,
+                    expenses: expenseItems
+                },
+                totalIncome: totalIncome,
+                totalExpenses: totalExpenses,
+                netResult: netResult,
+                createdAt: new Date().toISOString()
             };
             
-            // Save to localStorage
-            localStorage.setItem('budget_draft', JSON.stringify(draftData));
-            console.log("Draft saved");
+            localStorage.setItem('testBudget', JSON.stringify(budgetData));
+            console.log("Budget saved to localStorage for testing:", budgetData);
+            alert("Budget saved to localStorage for testing");
             
-            // Update save status
-            document.getElementById('save-time').textContent = new Date().toLocaleTimeString();
-            document.getElementById('save-status').style.display = 'block';
-        }
-        
-        // Load saved draft
-        function loadSavedDraft() {
-            if (!currentUser) return;
+            // Commented out Firestore save code
+            /*
+            // Get current user
+            const user = auth.currentUser || JSON.parse(localStorage.getItem('currentUser'));
             
-            const savedDraft = localStorage.getItem('budget_draft');
-            if (savedDraft) {
-                try {
-                    const draftData = JSON.parse(savedDraft);
-                    
-                    // Load form values
-                    document.getElementById('budget-name').value = draftData.name || '';
-                    document.getElementById('farm-type').value = draftData.farmType || 'dairy';
-                    document.getElementById('budget-period').value = draftData.period || 'annual';
-                    document.getElementById('budget-notes').value = draftData.notes || '';
-                    
-                    // Load budget items
-                    if (draftData.items && Array.isArray(draftData.items)) {
-                        budgetItems = draftData.items;
-                        updateBudgetItemsTable();
-                        updateBudgetSummary();
-                    }
-                    
-                    // Update save status
-                    if (draftData.lastSaved) {
-                        document.getElementById('save-time').textContent = new Date(draftData.lastSaved).toLocaleTimeString();
-                        document.getElementById('save-status').style.display = 'block';
-                    }
-                    
-                    console.log("Draft loaded");
-                } catch (error) {
-                    console.error("Error loading draft:", error);
-                }
+            if (!user) {
+                alert('You must be logged in to save a budget');
+                return;
             }
-        }
-        
-        // Set up auto-save
-        function setupAutoSave() {
-            // Clear any existing timer
-            if (autoSaveTimer) clearInterval(autoSaveTimer);
             
-            // Set up auto-save every 30 seconds
-            autoSaveTimer = setInterval(() => {
-                if (currentUser) {
-                    saveDraft();
-                }
-            }, 30000); // 30 seconds
+            // Create budget object
+            const budgetData = {
+                userId: user.uid,
+                userEmail: user.email,
+                name: budgetName,
+                farmType: farmType,
+                period: budgetPeriod,
+                items: {
+                    income: incomeItems,
+                    expenses: expenseItems
+                },
+                totalIncome: totalIncome,
+                totalExpenses: totalExpenses,
+                netResult: netResult,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            };
+            
+            // Save to Firestore
+            addDoc(collection(db, "budgets"), budgetData)
+                .then(() => {
+                    alert('Budget saved successfully!');
+                })
+                .catch((error) => {
+                    console.error("Error saving budget: ", error);
+                    alert('Error saving budget: ' + error.message);
+                });
+            */
         }
-        
-        // Format currency
-        function formatCurrency(amount) {
-            return '$' + Number(amount).toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
+
+        function clearBudget() {
+            if (confirm('Are you sure you want to clear this budget? All data will be lost.')) {
+                document.getElementById('budget-name').value = '';
+                document.getElementById('farm-type').value = '';
+                document.getElementById('budget-period').value = '';
+                
+                // Clear income items except the first one
+                const incomeItems = document.getElementById('income-items');
+                while (incomeItems.children.length > 1) {
+                    incomeItems.removeChild(incomeItems.lastChild);
+                }
+                incomeItems.children[0].querySelector('.item-name').value = '';
+                incomeItems.children[0].querySelector('.item-amount').value = '';
+                
+                // Clear expense items except the first one
+                const expenseItems = document.getElementById('expense-items');
+                while (expenseItems.children.length > 1) {
+                    expenseItems.removeChild(expenseItems.lastChild);
+                }
+                expenseItems.children[0].querySelector('.item-name').value = '';
+                expenseItems.children[0].querySelector('.item-amount').value = '';
+                
+                // Update totals
+                updateTotals();
+            }
         }
     </script>
 </body>

@@ -187,110 +187,130 @@
     <script type="module">
         import { auth, onAuthStateChanged, signOut } from './js/firebase-config.js';
         
-        // Check if user is already logged in
-        const storedUser = localStorage.getItem('currentUser');
-        if (storedUser) {
-            // Get role
-            const storedRole = localStorage.getItem('userRole');
-            
-            // Update login status
-            document.getElementById('user-status').innerHTML = 'Logged in as: ' + JSON.parse(storedUser).email;
-            
-            // Update navigation
-            document.getElementById('login-nav-item').style.display = 'none';
-            document.getElementById('register-nav-item').style.display = 'none';
-            
-            // Show dashboard and logout links
-            const dashboardLink = document.createElement('li');
-            dashboardLink.innerHTML = `<a href="${storedRole === 'trainer' ? 'trainer-dashboard.html' : 'student-dashboard.html'}">Dashboard</a>`;
-            
-            const logoutLink = document.createElement('li');
-            logoutLink.id = 'logout-nav-item';
-            logoutLink.innerHTML = `<a href="#" id="logout-link">Logout</a>`;
-            
-            document.querySelector('nav ul').appendChild(dashboardLink);
-            document.querySelector('nav ul').appendChild(logoutLink);
-            
-            // Add logout functionality
-            document.getElementById('logout-link').addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                // Clear localStorage
-                localStorage.removeItem('currentUser');
-                localStorage.removeItem('userRole');
-                
-                // Also sign out from Firebase
-                signOut(auth).then(() => {
-                    // Sign-out successful
-                    window.location.href = 'login.html';
-                }).catch((error) => {
-                    // An error happened
-                    console.error("Error signing out:", error);
-                    // Still redirect to login
-                    window.location.href = 'login.html';
-                });
-            });
-        } else {
-            // Check Firebase auth
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    // Store in localStorage for future use
-                    localStorage.setItem('currentUser', JSON.stringify({
-                        uid: user.uid,
-                        email: user.email
-                    }));
-                    
-                    // Refresh the page to update navigation
-                    window.location.reload();
-                }
-            });
-        }
-        
-        // Initialize feature carousel
         document.addEventListener('DOMContentLoaded', function() {
-            let currentSlide = 0;
-            const slides = document.querySelectorAll('.feature-slide');
-            const totalSlides = slides.length;
-            const dots = document.querySelectorAll('.dot');
-            
-            // Show initial slide
-            showSlide(currentSlide);
-            
-            // Set up automatic slideshow
-            setInterval(() => {
-                currentSlide = (currentSlide + 1) % totalSlides;
-                showSlide(currentSlide);
-            }, 5000);
-            
-            // Previous button
-            document.querySelector('.prev').addEventListener('click', function() {
-                currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
-                showSlide(currentSlide);
-            });
-            
-            // Next button
-            document.querySelector('.next').addEventListener('click', function() {
-                currentSlide = (currentSlide + 1) % totalSlides;
-                showSlide(currentSlide);
-            });
-            
-            // Dot navigation
-            dots.forEach((dot, index) => {
-                dot.addEventListener('click', function() {
-                    currentSlide = index;
-                    showSlide(currentSlide);
+            // Check if user is already logged in
+            const storedUser = localStorage.getItem('currentUser');
+            if (storedUser) {
+                // Get role
+                const storedRole = localStorage.getItem('userRole');
+                
+                // Update login status
+                const userStatusElement = document.getElementById('user-status');
+                if (userStatusElement) {
+                    userStatusElement.innerHTML = 'Logged in as: ' + JSON.parse(storedUser).email;
+                }
+                
+                // Update navigation
+                const loginNavItem = document.getElementById('login-nav-item');
+                const registerNavItem = document.getElementById('register-nav-item');
+                
+                if (loginNavItem) loginNavItem.style.display = 'none';
+                if (registerNavItem) registerNavItem.style.display = 'none';
+                
+                // Show dashboard and logout links
+                const navUl = document.querySelector('nav ul');
+                if (navUl) {
+                    const dashboardLink = document.createElement('li');
+                    dashboardLink.innerHTML = `<a href="${storedRole === 'trainer' ? 'trainer-dashboard.html' : 'student-dashboard.html'}">Dashboard</a>`;
+                    
+                    const logoutLink = document.createElement('li');
+                    logoutLink.id = 'logout-nav-item';
+                    logoutLink.innerHTML = `<a href="#" id="logout-link">Logout</a>`;
+                    
+                    navUl.appendChild(dashboardLink);
+                    navUl.appendChild(logoutLink);
+                    
+                    // Add logout functionality
+                    const logoutLinkElement = document.getElementById('logout-link');
+                    if (logoutLinkElement) {
+                        logoutLinkElement.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            
+                            // Clear localStorage
+                            localStorage.removeItem('currentUser');
+                            localStorage.removeItem('userRole');
+                            
+                            // Also sign out from Firebase
+                            signOut(auth).then(() => {
+                                // Sign-out successful
+                                window.location.href = 'login.html';
+                            }).catch((error) => {
+                                // An error happened
+                                console.error("Error signing out:", error);
+                                // Still redirect to login
+                                window.location.href = 'login.html';
+                            });
+                        });
+                    }
+                }
+            } else {
+                // Check Firebase auth
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        // Store in localStorage for future use
+                        localStorage.setItem('currentUser', JSON.stringify({
+                            uid: user.uid,
+                            email: user.email
+                        }));
+                        
+                        // Refresh the page to update navigation
+                        window.location.reload();
+                    }
                 });
-            });
+            }
             
-            // Show slide function
-            function showSlide(index) {
-                slides.forEach((slide, i) => {
-                    slide.style.display = i === index ? 'block' : 'none';
+            // Initialize feature carousel if it exists
+            const slides = document.querySelectorAll('.feature-slide');
+            if (slides.length > 0) {
+                let currentSlide = 0;
+                const totalSlides = slides.length;
+                const dots = document.querySelectorAll('.dot');
+                
+                // Show initial slide
+                showSlide(currentSlide);
+                
+                // Set up automatic slideshow
+                setInterval(() => {
+                    currentSlide = (currentSlide + 1) % totalSlides;
+                    showSlide(currentSlide);
+                }, 5000);
+                
+                // Previous button
+                const prevButton = document.querySelector('.prev');
+                if (prevButton) {
+                    prevButton.addEventListener('click', function() {
+                        currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+                        showSlide(currentSlide);
+                    });
+                }
+                
+                // Next button
+                const nextButton = document.querySelector('.next');
+                if (nextButton) {
+                    nextButton.addEventListener('click', function() {
+                        currentSlide = (currentSlide + 1) % totalSlides;
+                        showSlide(currentSlide);
+                    });
+                }
+                
+                // Dot navigation
+                dots.forEach((dot, index) => {
+                    dot.addEventListener('click', function() {
+                        currentSlide = index;
+                        showSlide(currentSlide);
+                    });
                 });
                 
-                dots.forEach((dot, i) => {
-                    dot.classList.toggle('active', i === index);
-                });
+                // Show slide function
+                function showSlide(index) {
+                    slides.forEach((slide, i) => {
+                        slide.style.display = i === index ? 'block' : 'none';
+                    });
+                    
+                    dots.forEach((dot, i) => {
+                        dot.classList.toggle('active', i === index);
+                    });
+                }
             }
         });
     </script>
