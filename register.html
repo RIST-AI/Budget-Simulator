@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="description" content="Register for AHCBUS408 Budget Master - Agricultural Budgeting Training Tool">
     <title>Register - AHCBUS408 Budget Master</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" href="images/RIST Brandmark - Navy Circle.png" type="image/png">
@@ -33,7 +34,9 @@
 
     <main class="container">
         <div class="login-container">
-            <h2>Register</h2>
+            <h2>Student Registration</h2>
+            <p class="registration-intro">Create your student account to access the AHCBUS408 Budget Master tools and assessments.</p>
+            
             <div id="register-error" class="error-message" style="display: none;"></div>
             
             <form id="register-form">
@@ -50,6 +53,7 @@
                 <div class="form-group">
                     <label for="password">Password:</label>
                     <input type="password" id="password" required>
+                    <small class="form-hint">Password must be at least 6 characters long</small>
                 </div>
                 
                 <div class="form-group">
@@ -57,15 +61,15 @@
                     <input type="password" id="confirmPassword" required>
                 </div>
                 
-                <div class="form-group">
-                    <label for="role">Role:</label>
-                    <select id="role" required>
-                        <option value="student">Student</option>
-                        <option value="trainer">Trainer</option>
-                    </select>
+                <!-- Hidden field that always sets role to student -->
+                <input type="hidden" id="role" value="student">
+                
+                <div class="form-group form-checkbox">
+                    <input type="checkbox" id="termsAgreement" required>
+                    <label for="termsAgreement">I agree to the <a href="#" class="terms-link">terms and conditions</a></label>
                 </div>
                 
-                <button type="submit" class="btn">Register</button>
+                <button type="submit" class="btn">Register as Student</button>
             </form>
             
             <div class="login-info">
@@ -105,14 +109,38 @@
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
                 const confirmPassword = document.getElementById('confirmPassword').value;
-                const role = document.getElementById('role').value;
+                const termsAgreement = document.getElementById('termsAgreement').checked;
+                
+                // Always set role to student
+                const role = "student";
                 
                 // Clear previous error
                 registerError.style.display = 'none';
                 
+                // Validate inputs
+                if (!fullName || !email || !password || !confirmPassword) {
+                    registerError.textContent = 'Please fill in all fields.';
+                    registerError.style.display = 'block';
+                    return;
+                }
+                
                 // Validate passwords match
                 if (password !== confirmPassword) {
                     registerError.textContent = 'Passwords do not match.';
+                    registerError.style.display = 'block';
+                    return;
+                }
+                
+                // Validate password length
+                if (password.length < 6) {
+                    registerError.textContent = 'Password must be at least 6 characters long.';
+                    registerError.style.display = 'block';
+                    return;
+                }
+                
+                // Validate terms agreement
+                if (!termsAgreement) {
+                    registerError.textContent = 'You must agree to the terms and conditions.';
                     registerError.style.display = 'block';
                     return;
                 }
@@ -138,8 +166,15 @@
                         });
                     })
                     .then(() => {
-                        // Redirect to home page
-                        window.location.href = 'index.html';
+                        // Show success message
+                        registerError.textContent = 'Registration successful! Redirecting to home page...';
+                        registerError.style.display = 'block';
+                        registerError.className = 'success-message';
+                        
+                        // Redirect to home page after a short delay
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 1500);
                     })
                     .catch((error) => {
                         console.error("Registration error:", error);
@@ -169,5 +204,47 @@
             }
         });
     </script>
+    
+    <style>
+        .registration-intro {
+            margin-bottom: 20px;
+            color: var(--primary-navy);
+        }
+        
+        .form-hint {
+            display: block;
+            color: #6c757d;
+            margin-top: 5px;
+            font-size: 0.85em;
+        }
+        
+        .form-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-checkbox input {
+            width: auto;
+        }
+        
+        .form-checkbox label {
+            display: inline;
+            margin-bottom: 0;
+        }
+        
+        .terms-link {
+            color: var(--primary-orange);
+            text-decoration: underline;
+        }
+        
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+    </style>
 </body>
 </html>

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Student Dashboard - AHCBUS408 Budget Master</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="images/RIST Brandmark - Navy Circle.png" type="image/png">
+    <style>
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .dashboard-card {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .dashboard-card h3 {
+            margin-top: 0;
+            border-bottom: 1px solid #e1e4e8;
+            padding-bottom: 10px;
+        }
+        
+        .assessment-list, .budget-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .assessment-list li, .budget-list li {
+            padding: 10px;
+            border-bottom: 1px solid #e1e4e8;
+        }
+        
+        .assessment-list li:last-child, .budget-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status-submitted {
+            background-color: #e1f5fe;
+            color: #0288d1;
+        }
+        
+        .status-graded {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+        }
+        
+        .user-info {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-container">
+                    <img src="images/RIST - Primary Colour.jpg" alt="RIST - Rural Industries Skill Training" class="rist-logo">
+                </div>
+                <div class="title-container">
+                    <h1>AHCBUS408 Budget Master</h1>
+                    <p>Agricultural Budgeting Training Tool</p>
+                </div>
+                <div id="user-status" class="user-status">
+                    <!-- Login status will be shown here -->
+                </div>
+            </div>
+        </div>
+    </header>
+    <nav>
+        <div class="container">
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="budget.html">Budget Simulator</a></li>
+                <li><a href="farm-budget-assessment.html">Assessment</a></li>
+                <li><a href="student-dashboard.html" class="active">Dashboard</a></li>
+                <li id="logout-nav-item"><a href="#" id="logout-link">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <h2>Student Dashboard</h2>
+        
+        <div id="user-info" class="user-info">
+            <p><strong>Loading user information...</strong></p>
+        </div>
+        
+        <div class="dashboard-grid">
+            <div class="dashboard-card">
+                <h3>My Assessments</h3>
+                <div id="assessments-container">
+                    <p class="loading">Loading assessments...</p>
+                </div>
+                <div class="card-actions">
+                    <a href="farm-budget-assessment.html" class="btn">Start New Assessment</a>
+                </div>
+            </div>
+            
+            <div class="dashboard-card">
+                <h3>My Budgets</h3>
+                <div id="budgets-container">
+                    <p class="loading">Loading budgets...</p>
+                </div>
+                <div class="card-actions">
+                    <a href="budget.html" class="btn">Create New Budget</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <img src="images/RIST Brandmark - Navy Circle.png" alt="RIST" class="rist-logo-footer">
+                </div>
+                <div class="footer-info">
+                    <p>&copy; 2025 RIST - Rural Industries Skill Training</p>
+                    <p>AHCBUS408 Budget Master</p>
+                </div>
+                <div class="footer-contact">
+                    <p>Contact: <a href="mailto:info@rist.com.au">info@rist.com.au</a></p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module">
+        import { checkAuth } from './js/auth.js';
+        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, collection, query, where, getDocs } from './js/firebase-config.js';
+        
+        // Check authentication first
+        checkAuth().then(isAuthenticated => {
+            if (!isAuthenticated) {
+                return; // Stop execution if not authenticated
+            }
+            
+            // Initialize the dashboard
+            document.addEventListener('DOMContentLoaded', function() {
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        // User is signed in
+                        document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
+                        
+                        // Load user info
+                        loadUserInfo(user.uid);
+                        
+                        // Load assessments and budgets
+                        loadAssessments(user.uid);
+                        loadBudgets(user.uid);
+                    }
+                });
+                
+                // Logout functionality
+                document.getElementById('logout-link').addEventListener('click', function(e) {
+                    e.preventDefault();
+                    signOut(auth).then(() => {
+                        // Sign-out successful
+                        window.location.href = 'login.html';
+                    }).catch((error) => {
+                        // An error happened
+                        console.error("Error signing out:", error);
+                    });
+                });
+            });
+        });
+        
+        // Load user information
+        async function loadUserInfo(userId) {
+            try {
+                const userDoc = await getDoc(doc(db, 'users', userId));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    
+                    document.getElementById('user-info').innerHTML = `
+                        <p><strong>Name:</strong> ${userData.fullName || 'Not provided'}</p>
+                        <p><strong>Email:</strong> ${userData.email}</p>
+                        <p><strong>Role:</strong> ${userData.role === 'trainer' ? 'Trainer' : 'Student'}</p>
+                    `;
+                }
+            } catch (error) {
+                console.error("Error loading user info:", error);
+                document.getElementById('user-info').innerHTML = `
+                    <p class="error">Error loading user information: ${error.message}</p>
+                `;
+            }
+        }
+        
+        // Load user's assessments
+        async function loadAssessments(userId) {
+            try {
+                const assessmentsContainer = document.getElementById('assessments-container');
+                
+                // Create a query against the assessments collection
+                const q = query(collection(db, "assessments"), where("userId", "==", userId));
+                const querySnapshot = await getDocs(q);
+                
+                if (querySnapshot.empty) {
+                    assessmentsContainer.innerHTML = `
+                        <div class="empty-state">
+                            <p>You haven't submitted any assessments yet.</p>
+                            <p>Start a new assessment to practice your budgeting skills.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Create list of assessments
+                let assessmentsList = '<ul class="assessment-list">';
+                
+                querySnapshot.forEach((doc) => {
+                    const assessment = doc.data();
+                    const submittedDate = assessment.submittedAt ? new Date(assessment.submittedAt.seconds * 1000).toLocaleDateString() : 'Unknown';
+                    
+                    assessmentsList += `
+                        <li>
+                            <div><strong>${assessment.unitCode}</strong> - ${submittedDate}</div>
+                            <div>${assessment.studentName}</div>
+                            <div>
+                                <span class="status-badge status-${assessment.status || 'submitted'}">${assessment.status || 'Submitted'}</span>
+                            </div>
+                        </li>
+                    `;
+                });
+                
+                assessmentsList += '</ul>';
+                assessmentsContainer.innerHTML = assessmentsList;
+                
+            } catch (error) {
+                console.error("Error loading assessments:", error);
+                document.getElementById('assessments-container').innerHTML = `
+                    <p class="error">Error loading assessments: ${error.message}</p>
+                `;
+            }
+        }
+        
+        // Load user's budgets
+        async function loadBudgets(userId) {
+            try {
+                const budgetsContainer = document.getElementById('budgets-container');
+                
+                // Create a query against the budgets collection
+                const q = query(collection(db, "budgets"), where("userId", "==", userId));
+                const querySnapshot = await getDocs(q);
+                
+                if (querySnapshot.empty) {
+                    budgetsContainer.innerHTML = `
+                        <div class="empty-state">
+                            <p>You haven't created any budgets yet.</p>
+                            <p>Create a new budget to practice your budgeting skills.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Create list of budgets
+                let budgetsList = '<ul class="budget-list">';
+                
+                querySnapshot.forEach((doc) => {
+                    const budget = doc.data();
+                    const createdDate = budget.createdAt ? new Date(budget.createdAt.seconds * 1000).toLocaleDateString() : 'Unknown';
+                    
+                    budgetsList += `
+                        <li>
+                            <div><strong>${budget.name}</strong> - ${createdDate}</div>
+                            <div>${budget.farmType} Farm - ${budget.period} Budget</div>
+                            <div>Net Result: ${formatCurrency(budget.netResult || 0)}</div>
+                        </li>
+                    `;
+                });
+                
+                budgetsList += '</ul>';
+                budgetsContainer.innerHTML = budgetsList;
+                
+            } catch (error) {
+                console.error("Error loading budgets:", error);
+                document.getElementById('budgets-container').innerHTML = `
+                    <p class="error">Error loading budgets: ${error.message}</p>
+                `;
+            }
+        }
+        
+        // Format currency
+        function formatCurrency(amount) {
+            return '$' + Number(amount).toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+    </script>
+</body>
+</html>

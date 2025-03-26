@@ -1114,3 +1114,162 @@ footer a {
     opacity: 0.6;
     cursor: not-allowed;
 }
+/* Modal styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 900px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.close-modal {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-modal:hover,
+.close-modal:focus {
+    color: black;
+    text-decoration: none;
+}
+
+.assessment-details {
+    margin-bottom: 30px;
+}
+
+.assessment-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+.assessment-section h4 {
+    margin-top: 0;
+    border-bottom: 1px solid #e1e4e8;
+    padding-bottom: 10px;
+}
+
+.grading-form {
+    background-color: #f0f7ff;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+.grading-form h3 {
+    margin-top: 0;
+}
+
+.grade-input {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.grade-input label {
+    margin-right: 10px;
+    min-width: 120px;
+}
+
+.grade-input input[type="number"] {
+    width: 80px;
+}
+
+.feedback-section textarea {
+    width: 100%;
+    min-height: 100px;
+    margin-bottom: 15px;
+}
+
+.budget-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.budget-summary-item {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.budget-summary-item .value {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+.positive {
+    color: #2ecc71;
+}
+
+.negative {
+    color: #e74c3c;
+}
+
+.student-profile-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.student-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: #3498db;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2em;
+    margin-right: 20px;
+}
+
+.student-info {
+    flex: 1;
+}
+
+.student-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.student-stat-item {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.student-stat-item .value {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-top: 5px;
+}

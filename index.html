@@ -3,11 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="description" content="AHCBUS408 Budget Master - A comprehensive training tool for agricultural budget management from RIST">
+    <meta name="keywords" content="farm budget, agricultural budgeting, RIST, budget management, AHCBUS408">
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:title" content="RIST - AHCBUS408 Budget Master">
+    <meta property="og:description" content="Master agricultural budgeting with our interactive training tools">
+    <meta property="og:image" content="images/RIST - Primary Colour.jpg">
+    <meta property="og:type" content="website">
+    
     <title>RIST - AHCBUS408 Budget Master</title>
+    
+    <!-- Preload critical assets -->
+    <link rel="preload" href="styles.css" as="style">
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" href="images/RIST Brandmark - Navy Circle.png" type="image/png">
+    
+    <!-- Preconnect to Firebase -->
+    <link rel="preconnect" href="https://www.gstatic.com">
 </head>
 <body>
+    <a href="#main-content" class="skip-link visually-hidden">Skip to main content</a>
+    
     <header>
         <div class="container">
             <div class="header-content">
@@ -25,10 +42,10 @@
         </div>
     </header>
 
-    <nav>
+    <nav aria-label="Main Navigation">
         <div class="container">
             <ul>
-                <li><a href="index.html" class="active">Home</a></li>
+                <li><a href="index.html" class="active" aria-current="page">Home</a></li>
                 <li><a href="budget.html">Budget Simulator</a></li>
                 <li><a href="farm-budget-assessment.html">Assessment</a></li>
                 <li id="login-nav-item"><a href="login.html">Login</a></li>
@@ -38,12 +55,12 @@
         </div>
     </nav>
 
-    <main class="container">
+    <main id="main-content" class="container">
         <section class="hero">
             <h2>Master Farm Budget Management</h2>
             <p>Welcome to AHCBUS408 Budget Master, your comprehensive training tool for agricultural budget management.</p>
             <div class="cta-buttons">
-                <a href="budget.html" class="btn">Try Budget Simulator</a>
+                <a href="budget.html" class="btn btn-primary pulse-animation">Try Budget Simulator</a>
                 <a href="login.html" id="login-cta" class="btn btn-secondary">Login to Access Assessments</a>
                 <a href="#" id="dashboard-cta" style="display:none;" class="btn btn-secondary">Go to Dashboard</a>
             </div>
@@ -54,6 +71,11 @@
                 <div class="feature-icon">💰</div>
                 <h3>Budget Simulator</h3>
                 <p>Practice creating and managing farm budgets with our interactive simulator that provides real-time feedback.</p>
+                <ul class="feature-list">
+                    <li>Create monthly or quarterly budgets</li>
+                    <li>Track income and expenses</li>
+                    <li>Analyze financial performance</li>
+                </ul>
                 <a href="budget.html" class="btn btn-secondary">Open Simulator</a>
             </div>
             
@@ -61,21 +83,82 @@
                 <div class="feature-icon">📝</div>
                 <h3>Budget Assessment</h3>
                 <p>Test your knowledge and skills with a practical assessment that simulates a real-world farm budget scenario.</p>
+                <ul class="feature-list">
+                    <li>Create a farm budget from scratch</li>
+                    <li>Track actual performance</li>
+                    <li>Analyze variances and make recommendations</li>
+                </ul>
                 <a href="farm-budget-assessment.html" class="btn btn-secondary">Take Assessment</a>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Performance Tracking</h3>
+                <p>Monitor your progress and track your assessment results through your personalized dashboard.</p>
+                <ul class="feature-list">
+                    <li>View your submitted assessments</li>
+                    <li>Track your grades and feedback</li>
+                    <li>Access your saved budgets</li>
+                </ul>
+                <a href="#" id="dashboard-feature-link" class="btn btn-secondary">View Dashboard</a>
             </div>
         </section>
 
         <section class="course-info">
-            <h2>About This Course</h2>
-            <p>AHCBUS408 - Operate within a budget framework is designed to provide you with the skills and knowledge to effectively manage agricultural budgets. This course covers:</p>
-            <ul>
-                <li>Understanding budget structures and terminology</li>
-                <li>Monitoring income and expenditure</li>
-                <li>Identifying and reporting variances</li>
-                <li>Recording and reporting budget performance</li>
-                <li>Making recommendations for improving budget performance</li>
-            </ul>
-            <p>By the end of this course, you'll be able to confidently operate within a budget framework in an agricultural context.</p>
+            <div class="course-header">
+                <h2>About This Course</h2>
+                <div class="course-badge">AHCBUS408</div>
+            </div>
+            
+            <p class="course-intro">AHCBUS408 - Operate within a budget framework is designed to provide you with the skills and knowledge to effectively manage agricultural budgets.</p>
+            
+            <div class="course-grid">
+                <div class="course-content">
+                    <h3>What You'll Learn</h3>
+                    <ul class="check-list">
+                        <li>Understanding budget structures and terminology</li>
+                        <li>Monitoring income and expenditure</li>
+                        <li>Identifying and reporting variances</li>
+                        <li>Recording and reporting budget performance</li>
+                        <li>Making recommendations for improving budget performance</li>
+                    </ul>
+                </div>
+                
+                <div class="course-outcomes">
+                    <h3>Learning Outcomes</h3>
+                    <p>By the end of this course, you'll be able to:</p>
+                    <ul class="outcome-list">
+                        <li>Create comprehensive farm budgets</li>
+                        <li>Monitor actual performance against budgets</li>
+                        <li>Analyze variances and identify their causes</li>
+                        <li>Make informed recommendations for budget improvements</li>
+                        <li>Confidently operate within a budget framework in an agricultural context</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="course-cta">
+                <p>Ready to enhance your agricultural budget management skills?</p>
+                <a href="register.html" class="btn">Register Now</a>
+            </div>
+        </section>
+        
+        <section class="testimonials">
+            <h2>What Our Students Say</h2>
+            <div class="testimonial-grid">
+                <div class="testimonial-card">
+                    <div class="testimonial-quote">"This budget simulator helped me understand how to properly manage my farm's finances. The practical approach made learning easy."</div>
+                    <div class="testimonial-author">- James Wilson, Dairy Farmer</div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-quote">"The assessment scenarios are realistic and challenging. I feel much more confident in my budgeting skills now."</div>
+                    <div class="testimonial-author">- Sarah Thompson, Agricultural Student</div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-quote">"As a trainer, I find this platform incredibly useful for teaching budget management concepts to my students."</div>
+                    <div class="testimonial-author">- Dr. Michael Brown, Agricultural Educator</div>
+                </div>
+            </div>
         </section>
     </main>
 
@@ -91,6 +174,11 @@
                 </div>
                 <div class="footer-contact">
                     <p>Contact: <a href="mailto:info@rist.com.au">info@rist.com.au</a></p>
+                    <div class="footer-links">
+                        <a href="#">Privacy Policy</a> | 
+                        <a href="#">Terms of Use</a> | 
+                        <a href="#">Accessibility</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -118,13 +206,12 @@
                         const userDoc = await getDoc(doc(db, 'users', user.uid));
                         if (userDoc.exists()) {
                             const role = userDoc.data().role;
-                            if (role === 'trainer') {
-                                document.getElementById('dashboard-link').href = 'trainer-dashboard.html';
-                                document.getElementById('dashboard-cta').href = 'trainer-dashboard.html';
-                            } else {
-                                document.getElementById('dashboard-link').href = 'student-dashboard.html';
-                                document.getElementById('dashboard-cta').href = 'student-dashboard.html';
-                            }
+                            const dashboardUrl = role === 'trainer' ? 'trainer-dashboard.html' : 'student-dashboard.html';
+                            
+                            // Update all dashboard links
+                            document.getElementById('dashboard-link').href = dashboardUrl;
+                            document.getElementById('dashboard-cta').href = dashboardUrl;
+                            document.getElementById('dashboard-feature-link').href = dashboardUrl;
                         }
                     } catch (error) {
                         console.error("Error checking user role:", error);
@@ -137,6 +224,9 @@
                     document.getElementById('login-cta').style.display = 'inline-block';
                     document.getElementById('dashboard-cta').style.display = 'none';
                     document.getElementById('user-status').innerHTML = '';
+                    
+                    // Update feature dashboard link to point to login
+                    document.getElementById('dashboard-feature-link').href = 'login.html';
                 }
             });
             
@@ -186,6 +276,256 @@
                 });
             }, 200);
         });
+        
+        // Add animation to hero section
+        document.addEventListener('DOMContentLoaded', function() {
+            const hero = document.querySelector('.hero');
+            hero.classList.add('fade-in');
+            
+            // Animate feature cards sequentially
+            const featureCards = document.querySelectorAll('.feature-card');
+            featureCards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.classList.add('slide-in');
+                }, 300 + (index * 150));
+            });
+        });
     </script>
+    
+    <!-- Add these styles inline for the animations -->
+    <style>
+        .skip-link {
+            position: absolute;
+            left: -9999px;
+            top: auto;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+        }
+        
+        .skip-link:focus {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: auto;
+            height: auto;
+            padding: 10px;
+            background: var(--primary-navy);
+            color: white;
+            z-index: 9999;
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(231, 140, 60, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(231, 140, 60, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(231, 140, 60, 0);
+            }
+        }
+        
+        .fade-in {
+            animation: fadeIn 1s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.5s ease-out forwards;
+        }
+        
+        @keyframes slideIn {
+            from { 
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .feature-card {
+            opacity: 0;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding-left: 0;
+            margin-bottom: 20px;
+        }
+        
+        .feature-list li {
+            position: relative;
+            padding-left: 25px;
+            margin-bottom: 8px;
+        }
+        
+        .feature-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--primary-orange);
+            font-weight: bold;
+        }
+        
+        .check-list {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .check-list li {
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 12px;
+        }
+        
+        .check-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--success-color);
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        
+        .outcome-list {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .outcome-list li {
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 12px;
+        }
+        
+        .outcome-list li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--primary-orange);
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        
+        .course-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .course-badge {
+            background-color: var(--primary-orange);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        
+        .course-intro {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            color: var(--primary-navy);
+        }
+        
+        .course-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .course-cta {
+            background-color: var(--secondary-taupe);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 30px;
+        }
+        
+        .course-cta p {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+        }
+        
+        .testimonials {
+            margin-top: 50px;
+            text-align: center;
+        }
+        
+        .testimonial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .testimonial-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 25px;
+            position: relative;
+        }
+        
+        .testimonial-card:before {
+            content: "";
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 60px;
+            color: var(--secondary-taupe);
+            opacity: 0.5;
+            font-family: Georgia, serif;
+            line-height: 1;
+        }
+        
+        .testimonial-quote {
+            font-style: italic;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .testimonial-author {
+            font-weight: bold;
+            color: var(--primary-navy);
+        }
+        
+        .footer-links {
+            margin-top: 10px;
+        }
+        
+        .footer-links a {
+            color: white;
+            text-decoration: none;
+        }
+        
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .course-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .testimonial-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </body>
 </html>

@@ -178,7 +178,7 @@
     </footer>
 
     <script type="module">
-        import { auth, onAuthStateChanged, signOut, db, doc, getDoc } from './js/firebase-config.js';
+        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, collection, addDoc } from './js/firebase-config.js';
         
         // Check authentication status when page loads
         document.addEventListener('DOMContentLoaded', function() {
@@ -330,64 +330,83 @@
             });
             
             // Save button
-            document.getElementById('save-budget').addEventListener('click', function() {
+            // Save button
+            document.getElementById('save-budget').addEventListener('click', async function() {
                 const user = auth.currentUser;
                 if (!user) {
                     alert('You must be logged in to save a budget.');
                     return;
                 }
                 
-                // Collect budget data
-                const budgetData = {
-                    name: document.getElementById('budget-name').value || 'Untitled Budget',
-                    period: document.getElementById('budget-period').value,
-                    farmType: document.getElementById('farm-type').value,
-                    createdAt: new Date(),
-                    userId: user.uid,
-                    income: [],
-                    expenses: []
-                };
+                // Show loading state
+                const saveButton = document.getElementById('save-budget');
+                const originalButtonText = saveButton.textContent;
+                saveButton.disabled = true;
+                saveButton.textContent = 'Saving...';
                 
-                // Collect income items
-                document.querySelectorAll('#income-table tbody tr').forEach(row => {
-                    const itemInput = row.querySelector('input[type="text"]');
-                    const amountInput = row.querySelector('input[type="number"]');
+                try {
+                    // Collect budget data
+                    const budgetData = {
+                        name: document.getElementById('budget-name').value || 'Untitled Budget',
+                        period: document.getElementById('budget-period').value,
+                        farmType: document.getElementById('farm-type').value,
+                        createdAt: new Date(),
+                        userId: user.uid,
+                        userEmail: user.email,
+                        income: [],
+                        expenses: []
+                    };
                     
-                    if (itemInput.value && amountInput.value) {
-                        budgetData.income.push({
-                            item: itemInput.value,
-                            amount: parseFloat(amountInput.value)
-                        });
-                    }
-                });
-                
-                // Collect expense items
-                document.querySelectorAll('#expense-table tbody tr').forEach(row => {
-                    const itemInput = row.querySelector('input[type="text"]');
-                    const amountInput = row.querySelector('input[type="number"]');
+                    // Collect income items
+                    document.querySelectorAll('#income-table tbody tr').forEach(row => {
+                        const itemInput = row.querySelector('input[type="text"]');
+                        const amountInput = row.querySelector('input[type="number"]');
+                        
+                        if (itemInput.value && amountInput.value) {
+                            budgetData.income.push({
+                                item: itemInput.value,
+                                amount: parseFloat(amountInput.value)
+                            });
+                        }
+                    });
                     
-                    if (itemInput.value && amountInput.value) {
-                        budgetData.expenses.push({
-                            item: itemInput.value,
-                            amount: parseFloat(amountInput.value)
-                        });
-                    }
-                });
-                
-                // Calculate totals
-                budgetData.totalIncome = budgetData.income.reduce((sum, item) => sum + item.amount, 0);
-                budgetData.totalExpenses = budgetData.expenses.reduce((sum, item) => sum + item.amount, 0);
-                budgetData.netResult = budgetData.totalIncome - budgetData.totalExpenses;
-                
-                // For now, just show a success message
-                alert('Budget saved successfully!');
-                // In a real implementation, you would save to Firebase:
-                // db.collection('budgets').add(budgetData)
-                //   .then(() => alert('Budget saved successfully!'))
-                //   .catch(error => {
-                //     console.error('Error saving budget:', error);
-                //     alert('Error saving budget: ' + error.message);
-                //   });
+                    // Collect expense items
+                    document.querySelectorAll('#expense-table tbody tr').forEach(row => {
+                        const itemInput = row.querySelector('input[type="text"]');
+                        const amountInput = row.querySelector('input[type="number"]');
+                        
+                        if (itemInput.value && amountInput.value) {
+                            budgetData.expenses.push({
+                                item: itemInput.value,
+                                amount: parseFloat(amountInput.value)
+                            });
+                        }
+                    });
+                    
+                    // Calculate totals
+                    budgetData.totalIncome = budgetData.income.reduce((sum, item) => sum + item.amount, 0);
+                    budgetData.totalExpenses = budgetData.expenses.reduce((sum, item) => sum + item.amount, 0);
+                    budgetData.netResult = budgetData.totalIncome - budgetData.totalExpenses;
+                    
+                    // Save to Firestore
+                    const docRef = await addDoc(collection(db, 'budgets'), budgetData);
+                    console.log("Budget saved with ID:", docRef.id);
+                    
+                    // Show success message
+                    alert(`Budget "${budgetData.name}" saved successfully!`);
+                    
+                    // Reset button
+                    saveButton.disabled = false;
+                    saveButton.textContent = originalButtonText;
+                    
+                } catch (error) {
+                    console.error('Error saving budget:', error);
+                    alert('Error saving budget: ' + error.message);
+                    
+                    // Reset button
+                    saveButton.disabled = false;
+                    saveButton.textContent = originalButtonText;
+                }
             });
             
             // Initial calculation
