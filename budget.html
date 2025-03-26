@@ -178,273 +178,481 @@
     </footer>
 
     <script type="module">
-        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, collection, addDoc } from './js/firebase-config.js';
+        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, setDoc, addDoc, collection } from './js/firebase-config.js';
         
-        // Check authentication status when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            onAuthStateChanged(auth, async (user) => {
+        // Global variables
+        let budgetItems = [];
+        let currentUser = null;
+        let autoSaveTimer = null;
+        
+        // Check authentication first using localStorage
+        const storedUser = localStorage.getItem('currentUser');
+        if (storedUser) {
+            currentUser = JSON.parse(storedUser);
+            document.getElementById('user-status').innerHTML = 'Logged in as: ' + currentUser.email;
+            
+            // Set dashboard link based on role
+            const storedRole = localStorage.getItem('userRole');
+            if (storedRole === 'trainer') {
+                document.getElementById('dashboard-link').href = 'trainer-dashboard.html';
+            } else {
+                document.getElementById('dashboard-link').href = 'student-dashboard.html';
+            }
+            
+            // Initialize the budget simulator
+            initializeBudgetSimulator(currentUser);
+        } else {
+            // If no stored user, check Firebase auth
+            onAuthStateChanged(auth, (user) => {
                 if (user) {
-                    // User is signed in
-                    document.getElementById('login-nav-item').style.display = 'none';
-                    document.getElementById('dashboard-nav-item').style.display = 'inline-block';
-                    document.getElementById('logout-nav-item').style.display = 'inline-block';
+                    currentUser = user;
                     document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
                     
-                    // Check user role for dashboard link
-                    try {
-                        const userDoc = await getDoc(doc(db, 'users', user.uid));
+                    // Store user in localStorage for persistence
+                    localStorage.setItem('currentUser', JSON.stringify({
+                        uid: user.uid,
+                        email: user.email
+                    }));
+                    
+                    // Check user role
+                    getDoc(doc(db, 'users', user.uid)).then(userDoc => {
                         if (userDoc.exists()) {
                             const role = userDoc.data().role;
+                            localStorage.setItem('userRole', role);
+                            
+                            // Set dashboard link based on role
                             if (role === 'trainer') {
                                 document.getElementById('dashboard-link').href = 'trainer-dashboard.html';
                             } else {
                                 document.getElementById('dashboard-link').href = 'student-dashboard.html';
                             }
                         }
-                    } catch (error) {
+                        
+                        // Initialize the budget simulator
+                        initializeBudgetSimulator(user);
+                    }).catch(error => {
                         console.error("Error checking user role:", error);
-                    }
-                    
-                    // Initialize budget simulator
-                    initBudgetSimulator();
+                        // Still initialize the budget simulator
+                        initializeBudgetSimulator(user);
+                    });
                 } else {
-                    // User is not signed in - redirect to login page
+                    // Not authenticated, redirect to login
                     window.location.href = 'login.html';
                 }
             });
+        }
+        
+        // Logout functionality
+        document.getElementById('logout-link').addEventListener('click', function(e) {
+            e.preventDefault();
             
-            // Logout functionality
-            document.getElementById('logout-link').addEventListener('click', function(e) {
-                e.preventDefault();
-                signOut(auth).then(() => {
-                    // Sign-out successful
-                    window.location.href = 'login.html';
-                }).catch((error) => {
-                    // An error happened
-                    console.error("Error signing out:", error);
-                });
+            // Clear localStorage
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('userRole');
+            
+            // Also sign out from Firebase
+            signOut(auth).then(() => {
+                // Sign-out successful
+                window.location.href = 'login.html';
+            }).catch((error) => {
+                // An error happened
+                console.error("Error signing out:", error);
+                // Still redirect to login
+                window.location.href = 'login.html';
             });
         });
         
-        function initBudgetSimulator() {
-            // Add income row
-            document.getElementById('add-income').addEventListener('click', function() {
-                const newRow = document.createElement('tr');
-                newRow.innerHTML = `
-                    <td><input type="text" placeholder="Income item"></td>
-                    <td><input type="number" placeholder="0.00"></td>
-                    <td><button class="btn-small btn-remove">Remove</button></td>
-                `;
-                
-                const tbody = document.querySelector('#income-table tbody');
-                tbody.appendChild(newRow);
-                
-                // Add event listener to the new remove button
-                newRow.querySelector('.btn-remove').addEventListener('click', function() {
-                    tbody.removeChild(newRow);
-                    updateTotals();
-                });
-                
-                // Add event listener to update totals when amount changes
-                newRow.querySelector('input[type="number"]').addEventListener('input', updateTotals);
-            });
+        // Initialize budget simulator
+        function initializeBudgetSimulator(user) {
+            // Set up budget item form
+            setupBudgetItemForm();
             
-            // Add expense row
-            document.getElementById('add-expense').addEventListener('click', function() {
-                const newRow = document.createElement('tr');
-                newRow.innerHTML = `
-                    <td><input type="text" placeholder="Expense item"></td>
-                    <td><input type="number" placeholder="0.00"></td>
-                    <td><button class="btn-small btn-remove">Remove</button></td>
-                `;
-                
-                const tbody = document.querySelector('#expense-table tbody');
-                tbody.appendChild(newRow);
-                
-                // Add event listener to the new remove button
-                newRow.querySelector('.btn-remove').addEventListener('click', function() {
-                    tbody.removeChild(newRow);
-                    updateTotals();
-                });
-                
-                // Add event listener to update totals when amount changes
-                newRow.querySelector('input[type="number"]').addEventListener('input', updateTotals);
-            });
+            // Set up save budget form
+            setupSaveBudgetForm();
             
-            // Add event listeners to existing remove buttons
-            document.querySelectorAll('.btn-remove').forEach(button => {
-                button.addEventListener('click', function() {
-                    const row = button.closest('tr');
-                    row.parentNode.removeChild(row);
-                    updateTotals();
-                });
-            });
+            // Load saved draft
+            loadSavedDraft();
             
-            // Add event listeners to existing number inputs
-            document.querySelectorAll('input[type="number"]').forEach(input => {
-                input.addEventListener('input', updateTotals);
-            });
-            
-            // Reset button
-            document.getElementById('reset-budget').addEventListener('click', function() {
-                if (confirm('Are you sure you want to reset the budget? All data will be lost.')) {
-                    document.getElementById('budget-name').value = '';
-                    document.getElementById('budget-period').value = 'annual';
-                    document.getElementById('farm-type').value = 'dairy';
+            // Set up auto-save
+            setupAutoSave();
+        }
+        
+        // Set up budget item form
+        function setupBudgetItemForm() {
+            // Populate subcategories based on category selection
+            document.getElementById('item-category').addEventListener('change', function() {
+                const category = this.value;
+                const subcategorySelect = document.getElementById('item-subcategory');
+                
+                // Clear existing options
+                subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
+                
+                // Add new options based on category
+                if (category === 'income') {
+                    const incomeSubcategories = [
+                        'Crop Sales', 'Livestock Sales', 'Milk Sales', 'Wool Sales',
+                        'Government Subsidies', 'Rental Income', 'Other Income'
+                    ];
                     
-                    // Reset income table
-                    const incomeBody = document.querySelector('#income-table tbody');
-                    incomeBody.innerHTML = `
-                        <tr>
-                            <td><input type="text" placeholder="Income item"></td>
-                            <td><input type="number" placeholder="0.00"></td>
-                            <td><button class="btn-small btn-remove">Remove</button></td>
-                        </tr>
-                    `;
-                    
-                    // Reset expense table
-                    const expenseBody = document.querySelector('#expense-table tbody');
-                    expenseBody.innerHTML = `
-                        <tr>
-                            <td><input type="text" placeholder="Expense item"></td>
-                            <td><input type="number" placeholder="0.00"></td>
-                            <td><button class="btn-small btn-remove">Remove</button></td>
-                        </tr>
-                    `;
-                    
-                    // Re-add event listeners
-                    document.querySelectorAll('.btn-remove').forEach(button => {
-                        button.addEventListener('click', function() {
-                            const row = button.closest('tr');
-                            row.parentNode.removeChild(row);
-                            updateTotals();
-                        });
+                    incomeSubcategories.forEach(subcategory => {
+                        const option = document.createElement('option');
+                        option.value = subcategory.toLowerCase().replace(/\s+/g, '-');
+                        option.textContent = subcategory;
+                        subcategorySelect.appendChild(option);
                     });
+                } else if (category === 'expense') {
+                    const expenseSubcategories = [
+                        'Seeds', 'Fertilizers', 'Pesticides', 'Feed', 'Veterinary',
+                        'Fuel', 'Electricity', 'Water', 'Labor', 'Equipment Maintenance',
+                        'Land Lease', 'Insurance', 'Interest', 'Depreciation', 'Other Expenses'
+                    ];
                     
-                    document.querySelectorAll('input[type="number"]').forEach(input => {
-                        input.addEventListener('input', updateTotals);
+                    expenseSubcategories.forEach(subcategory => {
+                        const option = document.createElement('option');
+                        option.value = subcategory.toLowerCase().replace(/\s+/g, '-');
+                        option.textContent = subcategory;
+                        subcategorySelect.appendChild(option);
                     });
-                    
-                    updateTotals();
                 }
             });
             
-            // Save button
-            // Save button
-            document.getElementById('save-budget').addEventListener('click', async function() {
-                const user = auth.currentUser;
-                if (!user) {
+            // Add budget item
+            document.getElementById('add-budget-item').addEventListener('click', function() {
+                addBudgetItem();
+            });
+            
+            // Add budget item on Enter key in amount field
+            document.getElementById('item-amount').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addBudgetItem();
+                }
+            });
+        }
+        
+        // Add budget item
+        function addBudgetItem() {
+            const itemName = document.getElementById('item-name').value;
+            const itemCategory = document.getElementById('item-category').value;
+            const itemSubcategory = document.getElementById('item-subcategory').value;
+            const itemAmount = parseFloat(document.getElementById('item-amount').value);
+            const itemNotes = document.getElementById('item-notes').value;
+            
+            // Validate inputs
+            if (!itemName || !itemCategory || !itemSubcategory || isNaN(itemAmount)) {
+                alert('Please fill in all required fields.');
+                return;
+            }
+            
+            // Create unique ID for the item
+            const itemId = 'item_' + Date.now();
+            
+            // Add to budget items array
+            const newItem = {
+                id: itemId,
+                name: itemName,
+                category: itemCategory,
+                subcategory: itemSubcategory,
+                subcategoryText: document.getElementById('item-subcategory').options[
+                    document.getElementById('item-subcategory').selectedIndex
+                ].text,
+                amount: itemAmount,
+                notes: itemNotes
+            };
+            
+            budgetItems.push(newItem);
+            
+            // Update the table
+            updateBudgetItemsTable();
+            
+            // Clear the form
+            document.getElementById('item-name').value = '';
+            document.getElementById('item-amount').value = '';
+            document.getElementById('item-notes').value = '';
+            document.getElementById('item-name').focus();
+            
+            // Update budget summary
+            updateBudgetSummary();
+            
+            // Save draft
+            saveDraft();
+        }
+        
+        // Update budget items table
+        function updateBudgetItemsTable() {
+            const tableBody = document.getElementById('budget-items-body');
+            tableBody.innerHTML = '';
+            
+            budgetItems.forEach(item => {
+                const row = document.createElement('tr');
+                row.setAttribute('data-id', item.id);
+                
+                row.innerHTML = `
+                    <td>${item.name}</td>
+                    <td>${item.category === 'income' ? 'Income' : 'Expense'}</td>
+                    <td>${item.subcategoryText}</td>
+                    <td>${formatCurrency(item.amount)}</td>
+                    <td>${item.notes}</td>
+                    <td>
+                        <button class="btn-small btn-edit" onclick="editBudgetItem('${item.id}')">Edit</button>
+                        <button class="btn-small btn-remove" onclick="removeBudgetItem('${item.id}')">Remove</button>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Edit budget item
+        window.editBudgetItem = function(itemId) {
+            const item = budgetItems.find(item => item.id === itemId);
+            if (!item) return;
+            
+            // Populate form with item data
+            document.getElementById('item-name').value = item.name;
+            document.getElementById('item-category').value = item.category;
+            
+            // Trigger change event to populate subcategories
+            document.getElementById('item-category').dispatchEvent(new Event('change'));
+            
+            // Set subcategory
+            document.getElementById('item-subcategory').value = item.subcategory;
+            document.getElementById('item-amount').value = item.amount;
+            document.getElementById('item-notes').value = item.notes;
+            
+            // Remove the item from the array
+            removeBudgetItem(itemId);
+            
+            // Focus on the name field
+            document.getElementById('item-name').focus();
+        };
+        
+        // Remove budget item
+        window.removeBudgetItem = function(itemId) {
+            // Remove from array
+            budgetItems = budgetItems.filter(item => item.id !== itemId);
+            
+            // Update the table
+            updateBudgetItemsTable();
+            
+            // Update budget summary
+            updateBudgetSummary();
+            
+            // Save draft
+            saveDraft();
+        };
+        
+        // Update budget summary
+        function updateBudgetSummary() {
+            let totalIncome = 0;
+            let totalExpenses = 0;
+            
+            budgetItems.forEach(item => {
+                if (item.category === 'income') {
+                    totalIncome += item.amount;
+                } else {
+                    totalExpenses += item.amount;
+                }
+            });
+            
+            const netResult = totalIncome - totalExpenses;
+            
+            document.getElementById('total-income').textContent = formatCurrency(totalIncome);
+            document.getElementById('total-expenses').textContent = formatCurrency(totalExpenses);
+            document.getElementById('net-result').textContent = formatCurrency(netResult);
+            
+            // Add color coding for net result
+            const netResultElement = document.getElementById('net-result');
+            if (netResult > 0) {
+                netResultElement.classList.add('positive');
+                netResultElement.classList.remove('negative');
+            } else if (netResult < 0) {
+                netResultElement.classList.add('negative');
+                netResultElement.classList.remove('positive');
+            } else {
+                netResultElement.classList.remove('positive');
+                netResultElement.classList.remove('negative');
+            }
+        }
+        
+        // Set up save budget form
+        function setupSaveBudgetForm() {
+            document.getElementById('save-budget-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveBudget();
+            });
+        }
+        
+        // Save budget
+        async function saveBudget() {
+            try {
+                if (!currentUser) {
                     alert('You must be logged in to save a budget.');
                     return;
                 }
                 
+                if (budgetItems.length === 0) {
+                    alert('Please add at least one budget item.');
+                    return;
+                }
+                
+                // Get form values
+                const budgetName = document.getElementById('budget-name').value || 'Untitled Budget';
+                const farmType = document.getElementById('farm-type').value;
+                const budgetPeriod = document.getElementById('budget-period').value;
+                const budgetNotes = document.getElementById('budget-notes').value;
+                
+                // Calculate totals
+                let totalIncome = 0;
+                let totalExpenses = 0;
+                
+                budgetItems.forEach(item => {
+                    if (item.category === 'income') {
+                        totalIncome += item.amount;
+                    } else {
+                        totalExpenses += item.amount;
+                    }
+                });
+                
+                const netResult = totalIncome - totalExpenses;
+                
+                // Create budget object
+                const budgetData = {
+                    name: budgetName,
+                    farmType: farmType,
+                    period: budgetPeriod,
+                    notes: budgetNotes,
+                    items: budgetItems,
+                    totalIncome: totalIncome,
+                    totalExpenses: totalExpenses,
+                    netResult: netResult,
+                    userId: currentUser.uid,
+                    userEmail: currentUser.email,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                };
+                
                 // Show loading state
-                const saveButton = document.getElementById('save-budget');
+                const saveButton = document.querySelector('#save-budget-form button[type="submit"]');
                 const originalButtonText = saveButton.textContent;
                 saveButton.disabled = true;
                 saveButton.textContent = 'Saving...';
                 
-                try {
-                    // Collect budget data
-                    const budgetData = {
-                        name: document.getElementById('budget-name').value || 'Untitled Budget',
-                        period: document.getElementById('budget-period').value,
-                        farmType: document.getElementById('farm-type').value,
-                        createdAt: new Date(),
-                        userId: user.uid,
-                        userEmail: user.email,
-                        income: [],
-                        expenses: []
-                    };
-                    
-                    // Collect income items
-                    document.querySelectorAll('#income-table tbody tr').forEach(row => {
-                        const itemInput = row.querySelector('input[type="text"]');
-                        const amountInput = row.querySelector('input[type="number"]');
-                        
-                        if (itemInput.value && amountInput.value) {
-                            budgetData.income.push({
-                                item: itemInput.value,
-                                amount: parseFloat(amountInput.value)
-                            });
-                        }
-                    });
-                    
-                    // Collect expense items
-                    document.querySelectorAll('#expense-table tbody tr').forEach(row => {
-                        const itemInput = row.querySelector('input[type="text"]');
-                        const amountInput = row.querySelector('input[type="number"]');
-                        
-                        if (itemInput.value && amountInput.value) {
-                            budgetData.expenses.push({
-                                item: itemInput.value,
-                                amount: parseFloat(amountInput.value)
-                            });
-                        }
-                    });
-                    
-                    // Calculate totals
-                    budgetData.totalIncome = budgetData.income.reduce((sum, item) => sum + item.amount, 0);
-                    budgetData.totalExpenses = budgetData.expenses.reduce((sum, item) => sum + item.amount, 0);
-                    budgetData.netResult = budgetData.totalIncome - budgetData.totalExpenses;
-                    
-                    // Save to Firestore
-                    const docRef = await addDoc(collection(db, 'budgets'), budgetData);
-                    console.log("Budget saved with ID:", docRef.id);
-                    
-                    // Show success message
-                    alert(`Budget "${budgetData.name}" saved successfully!`);
-                    
-                    // Reset button
-                    saveButton.disabled = false;
-                    saveButton.textContent = originalButtonText;
-                    
-                } catch (error) {
-                    console.error('Error saving budget:', error);
-                    alert('Error saving budget: ' + error.message);
-                    
-                    // Reset button
-                    saveButton.disabled = false;
-                    saveButton.textContent = originalButtonText;
-                }
-            });
-            
-            // Initial calculation
-            updateTotals();
+                // Save to Firestore
+                const docRef = await addDoc(collection(db, "budgets"), budgetData);
+                console.log("Budget saved with ID:", docRef.id);
+                
+                // Clear draft
+                localStorage.removeItem('budget_draft');
+                
+                // Reset form and budget items
+                document.getElementById('budget-name').value = '';
+                document.getElementById('budget-notes').value = '';
+                budgetItems = [];
+                updateBudgetItemsTable();
+                updateBudgetSummary();
+                
+                // Reset button
+                saveButton.disabled = false;
+                saveButton.textContent = originalButtonText;
+                
+                // Show success message
+                alert('Budget saved successfully!');
+                
+            } catch (error) {
+                console.error("Error saving budget:", error);
+                alert('Error saving budget: ' + error.message);
+                
+                // Reset button
+                const saveButton = document.querySelector('#save-budget-form button[type="submit"]');
+                saveButton.disabled = false;
+                saveButton.textContent = 'Save Budget';
+            }
         }
         
-        function updateTotals() {
-            // Calculate income total
-            let incomeTotal = 0;
-            document.querySelectorAll('#income-table tbody input[type="number"]').forEach(input => {
-                incomeTotal += parseFloat(input.value || 0);
-            });
+        // Save draft
+        function saveDraft() {
+            if (!currentUser) return;
             
-            // Calculate expense total
-            let expenseTotal = 0;
-            document.querySelectorAll('#expense-table tbody input[type="number"]').forEach(input => {
-                expenseTotal += parseFloat(input.value || 0);
-            });
+            // Get form values
+            const budgetName = document.getElementById('budget-name').value;
+            const farmType = document.getElementById('farm-type').value;
+            const budgetPeriod = document.getElementById('budget-period').value;
+            const budgetNotes = document.getElementById('budget-notes').value;
             
-            // Calculate net result
-            const netResult = incomeTotal - expenseTotal;
+            // Create draft object
+            const draftData = {
+                name: budgetName,
+                farmType: farmType,
+                period: budgetPeriod,
+                notes: budgetNotes,
+                items: budgetItems,
+                lastSaved: new Date().toISOString()
+            };
             
-            // Update display
-            document.getElementById('total-income').textContent = '$' + incomeTotal.toFixed(2);
-            document.getElementById('total-expenses').textContent = '$' + expenseTotal.toFixed(2);
-            document.getElementById('summary-income').textContent = '$' + incomeTotal.toFixed(2);
-            document.getElementById('summary-expenses').textContent = '$' + expenseTotal.toFixed(2);
-            document.getElementById('net-result').textContent = '$' + netResult.toFixed(2);
+            // Save to localStorage
+            localStorage.setItem('budget_draft', JSON.stringify(draftData));
+            console.log("Draft saved");
             
-            // Add class based on net result
-            const netResultElement = document.getElementById('net-result');
-            if (netResult > 0) {
-                netResultElement.className = 'positive';
-            } else if (netResult < 0) {
-                netResultElement.className = 'negative';
-            } else {
-                netResultElement.className = '';
+            // Update save status
+            document.getElementById('save-time').textContent = new Date().toLocaleTimeString();
+            document.getElementById('save-status').style.display = 'block';
+        }
+        
+        // Load saved draft
+        function loadSavedDraft() {
+            if (!currentUser) return;
+            
+            const savedDraft = localStorage.getItem('budget_draft');
+            if (savedDraft) {
+                try {
+                    const draftData = JSON.parse(savedDraft);
+                    
+                    // Load form values
+                    document.getElementById('budget-name').value = draftData.name || '';
+                    document.getElementById('farm-type').value = draftData.farmType || 'dairy';
+                    document.getElementById('budget-period').value = draftData.period || 'annual';
+                    document.getElementById('budget-notes').value = draftData.notes || '';
+                    
+                    // Load budget items
+                    if (draftData.items && Array.isArray(draftData.items)) {
+                        budgetItems = draftData.items;
+                        updateBudgetItemsTable();
+                        updateBudgetSummary();
+                    }
+                    
+                    // Update save status
+                    if (draftData.lastSaved) {
+                        document.getElementById('save-time').textContent = new Date(draftData.lastSaved).toLocaleTimeString();
+                        document.getElementById('save-status').style.display = 'block';
+                    }
+                    
+                    console.log("Draft loaded");
+                } catch (error) {
+                    console.error("Error loading draft:", error);
+                }
             }
+        }
+        
+        // Set up auto-save
+        function setupAutoSave() {
+            // Clear any existing timer
+            if (autoSaveTimer) clearInterval(autoSaveTimer);
+            
+            // Set up auto-save every 30 seconds
+            autoSaveTimer = setInterval(() => {
+                if (currentUser) {
+                    saveDraft();
+                }
+            }, 30000); // 30 seconds
+        }
+        
+        // Format currency
+        function formatCurrency(amount) {
+            return '$' + Number(amount).toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
         }
     </script>
 </body>

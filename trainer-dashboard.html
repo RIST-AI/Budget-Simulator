@@ -410,74 +410,77 @@
     </footer>
 
     <script type="module">
-        import { checkAuth } from './js/auth.js';
         import { auth, onAuthStateChanged, signOut, db, doc, getDoc, collection, query, where, getDocs, orderBy, limit, startAfter } from './js/firebase-config.js';
         
-        // Check authentication first
-        checkAuth().then(async (isAuthenticated) => {
-            if (!isAuthenticated) {
-                return; // Stop execution if not authenticated
-            }
+        // Check authentication first using localStorage
+        const storedUser = localStorage.getItem('currentUser');
+        if (storedUser) {
+            const user = JSON.parse(storedUser);
+            document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
             
-            // Check if user is a trainer
-            const user = auth.currentUser;
-            if (user) {
-                try {
-                    const userDoc = await getDoc(doc(db, 'users', user.uid));
-                    if (userDoc.exists() && userDoc.data().role !== 'trainer') {
-                        // Not a trainer, redirect to student dashboard
-                        alert('You do not have permission to access the trainer dashboard.');
-                        window.location.href = 'student-dashboard.html';
-                        return;
-                    }
-                } catch (error) {
-                    console.error("Error checking user role:", error);
-                    alert('Error checking permissions. Please try again later.');
-                    window.location.href = 'index.html';
-                    return;
-                }
+            // Check role for appropriate access
+            const storedRole = localStorage.getItem('userRole');
+            if (storedRole !== 'trainer') {
+                // Redirect students to student dashboard
+                window.location.href = 'student-dashboard.html';
+            } else {
+                // Initialize the trainer dashboard
+                initializeDashboard(user);
             }
-            
-            // Initialize the dashboard
-            document.addEventListener('DOMContentLoaded', function() {
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        // User is signed in
-                        document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
-                        
-                        // Load user info
-                        loadUserInfo(user.uid);
-                        
-                        // Load dashboard summary
-                        loadDashboardSummary();
-                        
-                        // Load data for all tabs
-                        loadAllAssessments();
-                        loadAllBudgets();
-                        loadAllStudents();
-                        
-                        // Set up tab switching
-                        setupTabs();
-                        
-                        // Set up search functionality
-                        setupSearch();
-                        
-                        // Set up filters
-                        setupFilters();
-                    }
-                });
-                
-                // Logout functionality
-                document.getElementById('logout-link').addEventListener('click', function(e) {
-                    e.preventDefault();
-                    signOut(auth).then(() => {
-                        // Sign-out successful
-                        window.location.href = 'login.html';
-                    }).catch((error) => {
-                        // An error happened
-                        console.error("Error signing out:", error);
+        } else {
+            // If no stored user, check Firebase auth
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
+                    
+                    // Store user in localStorage for persistence
+                    localStorage.setItem('currentUser', JSON.stringify({
+                        uid: user.uid,
+                        email: user.email
+                    }));
+                    
+                    // Check user role
+                    getDoc(doc(db, 'users', user.uid)).then(userDoc => {
+                        if (userDoc.exists()) {
+                            const role = userDoc.data().role;
+                            localStorage.setItem('userRole', role);
+                            
+                            // Check for appropriate access
+                            if (role !== 'trainer') {
+                                // Redirect students to student dashboard
+                                window.location.href = 'student-dashboard.html';
+                            } else {
+                                // Initialize the trainer dashboard
+                                initializeDashboard(user);
+                            }
+                        }
+                    }).catch(error => {
+                        console.error("Error checking user role:", error);
                     });
-                });
+                } else {
+                    // Not authenticated, redirect to login
+                    window.location.href = 'login.html';
+                }
+            });
+        }
+        
+        // Logout functionality
+        document.getElementById('logout-link').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Clear localStorage
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('userRole');
+            
+            // Also sign out from Firebase
+            signOut(auth).then(() => {
+                // Sign-out successful
+                window.location.href = 'login.html';
+            }).catch((error) => {
+                // An error happened
+                console.error("Error signing out:", error);
+                // Still redirect to login
+                window.location.href = 'login.html';
             });
         });
         
@@ -495,6 +498,29 @@
         let currentAssessmentsFilter = 'all';
         let currentBudgetsFilter = 'all';
         let currentStudentsFilter = 'all';
+        
+        // Initialize dashboard function
+        function initializeDashboard(user) {
+            // Load user info
+            loadUserInfo(user.uid);
+            
+            // Load dashboard summary
+            loadDashboardSummary();
+            
+            // Load data for all tabs
+            loadAllAssessments();
+            loadAllBudgets();
+            loadAllStudents();
+            
+            // Set up tab switching
+            setupTabs();
+            
+            // Set up search functionality
+            setupSearch();
+            
+            // Set up filters
+            setupFilters();
+        }
         
         // Load user information
         async function loadUserInfo(userId) {
@@ -1119,25 +1145,13 @@
         }
         
         // View budget details
-        window.viewBudget = async function(budgetId) {
-            try {
-                // Redirect to a budget view page
-                window.location.href = `view-budget.html?id=${budgetId}`;
-            } catch (error) {
-                console.error("Error viewing budget:", error);
-                alert("Error loading budget details: " + error.message);
-            }
+        window.viewBudget = function(budgetId) {
+            window.location.href = `view-budget.html?id=${budgetId}`;
         };
-
+    
         // View student profile
-        window.viewStudentProfile = async function(studentId) {
-            try {
-                // Redirect to a student profile view page
-                window.location.href = `view-student.html?id=${studentId}`;
-            } catch (error) {
-                console.error("Error viewing student profile:", error);
-                alert("Error loading student profile: " + error.message);
-            }
+        window.viewStudentProfile = function(studentId) {
+            window.location.href = `view-student.html?id=${studentId}`;
         };
     </script>
 </body>

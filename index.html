@@ -185,110 +185,113 @@
     </footer>
 
     <script type="module">
-        import { auth, onAuthStateChanged, signOut, db, doc, getDoc } from './js/firebase-config.js';
+        import { auth, onAuthStateChanged, signOut } from './js/firebase-config.js';
         
         // Check if user is already logged in
-        document.addEventListener('DOMContentLoaded', function() {
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    // User is signed in - show content and update UI
-                    document.getElementById('login-nav-item').style.display = 'none';
-                    document.getElementById('dashboard-nav-item').style.display = 'inline-block';
-                    document.getElementById('logout-nav-item').style.display = 'inline-block';
-                    document.getElementById('login-cta').style.display = 'none';
-                    document.getElementById('dashboard-cta').style.display = 'inline-block';
-                    
-                    // Set user status
-                    document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
-                    
-                    // Check user role for dashboard link
-                    try {
-                        const userDoc = await getDoc(doc(db, 'users', user.uid));
-                        if (userDoc.exists()) {
-                            const role = userDoc.data().role;
-                            const dashboardUrl = role === 'trainer' ? 'trainer-dashboard.html' : 'student-dashboard.html';
-                            
-                            // Update all dashboard links
-                            document.getElementById('dashboard-link').href = dashboardUrl;
-                            document.getElementById('dashboard-cta').href = dashboardUrl;
-                            document.getElementById('dashboard-feature-link').href = dashboardUrl;
-                        }
-                    } catch (error) {
-                        console.error("Error checking user role:", error);
-                    }
-                } else {
-                    // User is not signed in - show login options
-                    document.getElementById('login-nav-item').style.display = 'inline-block';
-                    document.getElementById('dashboard-nav-item').style.display = 'none';
-                    document.getElementById('logout-nav-item').style.display = 'none';
-                    document.getElementById('login-cta').style.display = 'inline-block';
-                    document.getElementById('dashboard-cta').style.display = 'none';
-                    document.getElementById('user-status').innerHTML = '';
-                    
-                    // Update feature dashboard link to point to login
-                    document.getElementById('dashboard-feature-link').href = 'login.html';
-                }
-            });
+        const storedUser = localStorage.getItem('currentUser');
+        if (storedUser) {
+            // Get role
+            const storedRole = localStorage.getItem('userRole');
             
-            // Logout functionality
+            // Update login status
+            document.getElementById('user-status').innerHTML = 'Logged in as: ' + JSON.parse(storedUser).email;
+            
+            // Update navigation
+            document.getElementById('login-nav-item').style.display = 'none';
+            document.getElementById('register-nav-item').style.display = 'none';
+            
+            // Show dashboard and logout links
+            const dashboardLink = document.createElement('li');
+            dashboardLink.innerHTML = `<a href="${storedRole === 'trainer' ? 'trainer-dashboard.html' : 'student-dashboard.html'}">Dashboard</a>`;
+            
+            const logoutLink = document.createElement('li');
+            logoutLink.id = 'logout-nav-item';
+            logoutLink.innerHTML = `<a href="#" id="logout-link">Logout</a>`;
+            
+            document.querySelector('nav ul').appendChild(dashboardLink);
+            document.querySelector('nav ul').appendChild(logoutLink);
+            
+            // Add logout functionality
             document.getElementById('logout-link').addEventListener('click', function(e) {
                 e.preventDefault();
+                
+                // Clear localStorage
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('userRole');
+                
+                // Also sign out from Firebase
                 signOut(auth).then(() => {
                     // Sign-out successful
                     window.location.href = 'login.html';
                 }).catch((error) => {
                     // An error happened
                     console.error("Error signing out:", error);
+                    // Still redirect to login
+                    window.location.href = 'login.html';
                 });
             });
-
-            // Make navigation more touch-friendly
-            const navItems = document.querySelectorAll('nav a');
-            
-            navItems.forEach(item => {
-                // Add touch area padding
-                item.style.padding = '10px 15px';
-                
-                // Add active state for touch feedback
-                item.addEventListener('touchstart', function() {
-                    this.style.backgroundColor = '#1c638d';
-                });
-                
-                item.addEventListener('touchend', function() {
-                    // Only reset if not the active item
-                    if (!this.classList.contains('active')) {
-                        this.style.backgroundColor = '';
-                    }
-                });
+        } else {
+            // Check Firebase auth
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    // Store in localStorage for future use
+                    localStorage.setItem('currentUser', JSON.stringify({
+                        uid: user.uid,
+                        email: user.email
+                    }));
+                    
+                    // Refresh the page to update navigation
+                    window.location.reload();
+                }
             });
-        });
-
-        // Handle orientation changes
-        window.addEventListener('orientationchange', function() {
-            // Small delay to allow the browser to complete the orientation change
-            setTimeout(function() {
-                // Adjust any scrollable containers
-                const scrollContainers = document.querySelectorAll('.budget-grid, .assessment-filters');
-                scrollContainers.forEach(container => {
-                    if (container) {
-                        container.style.maxWidth = window.innerWidth + 'px';
-                    }
-                });
-            }, 200);
-        });
+        }
         
-        // Add animation to hero section
+        // Initialize feature carousel
         document.addEventListener('DOMContentLoaded', function() {
-            const hero = document.querySelector('.hero');
-            hero.classList.add('fade-in');
+            let currentSlide = 0;
+            const slides = document.querySelectorAll('.feature-slide');
+            const totalSlides = slides.length;
+            const dots = document.querySelectorAll('.dot');
             
-            // Animate feature cards sequentially
-            const featureCards = document.querySelectorAll('.feature-card');
-            featureCards.forEach((card, index) => {
-                setTimeout(() => {
-                    card.classList.add('slide-in');
-                }, 300 + (index * 150));
+            // Show initial slide
+            showSlide(currentSlide);
+            
+            // Set up automatic slideshow
+            setInterval(() => {
+                currentSlide = (currentSlide + 1) % totalSlides;
+                showSlide(currentSlide);
+            }, 5000);
+            
+            // Previous button
+            document.querySelector('.prev').addEventListener('click', function() {
+                currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+                showSlide(currentSlide);
             });
+            
+            // Next button
+            document.querySelector('.next').addEventListener('click', function() {
+                currentSlide = (currentSlide + 1) % totalSlides;
+                showSlide(currentSlide);
+            });
+            
+            // Dot navigation
+            dots.forEach((dot, index) => {
+                dot.addEventListener('click', function() {
+                    currentSlide = index;
+                    showSlide(currentSlide);
+                });
+            });
+            
+            // Show slide function
+            function showSlide(index) {
+                slides.forEach((slide, i) => {
+                    slide.style.display = i === index ? 'block' : 'none';
+                });
+                
+                dots.forEach((dot, i) => {
+                    dot.classList.toggle('active', i === index);
+                });
+            }
         });
     </script>
     

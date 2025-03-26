@@ -397,15 +397,88 @@
     </footer>
 
     <script type="module">
-        import { checkAuth } from './js/auth.js';
-        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, updateDoc } from './js/firebase-config.js';
+        import { auth, onAuthStateChanged, signOut, db, doc, getDoc } from './js/firebase-config.js';
         
-        // Check authentication first
-        checkAuth().then(isAuthenticated => {
-            if (!isAuthenticated) {
-                return; // Stop execution if not authenticated
+        // Check authentication first using localStorage
+        const storedUser = localStorage.getItem('currentUser');
+        if (storedUser) {
+            const user = JSON.parse(storedUser);
+            document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
+            
+            // Check role for appropriate access
+            const storedRole = localStorage.getItem('userRole');
+            
+            // Set dashboard link based on role
+            if (storedRole === 'trainer') {
+                document.getElementById('dashboard-link').href = 'trainer-dashboard.html';
+            } else {
+                document.getElementById('dashboard-link').href = 'student-dashboard.html';
             }
             
+            // Initialize the page
+            initializePage(user);
+        } else {
+            // If no stored user, check Firebase auth
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
+                    
+                    // Store user in localStorage for persistence
+                    localStorage.setItem('currentUser', JSON.stringify({
+                        uid: user.uid,
+                        email: user.email
+                    }));
+                    
+                    // Check user role
+                    getDoc(doc(db, 'users', user.uid)).then(userDoc => {
+                        if (userDoc.exists()) {
+                            const role = userDoc.data().role;
+                            localStorage.setItem('userRole', role);
+                            
+                            // Set dashboard link based on role
+                            if (role === 'trainer') {
+                                document.getElementById('dashboard-link').href = 'trainer-dashboard.html';
+                            } else {
+                                document.getElementById('dashboard-link').href = 'student-dashboard.html';
+                            }
+                        }
+                        
+                        // Initialize the page
+                        initializePage(user);
+                    }).catch(error => {
+                        console.error("Error checking user role:", error);
+                        // Still initialize the page
+                        initializePage(user);
+                    });
+                } else {
+                    // Not authenticated, redirect to login
+                    window.location.href = 'login.html';
+                }
+            });
+        }
+        
+        // Logout functionality
+        document.getElementById('logout-link').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Clear localStorage
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('userRole');
+            
+            // Also sign out from Firebase
+            signOut(auth).then(() => {
+                // Sign-out successful
+                window.location.href = 'login.html';
+            }).catch((error) => {
+                // An error happened
+                console.error("Error signing out:", error);
+                // Still redirect to login
+                window.location.href = 'login.html';
+            });
+        });
+        
+        // Initialize page function
+        function initializePage(user) {
             // Get assessment ID from URL
             const urlParams = new URLSearchParams(window.location.search);
             const assessmentId = urlParams.get('id');
@@ -415,58 +488,12 @@
                 return;
             }
             
-            // Initialize the page
-            document.addEventListener('DOMContentLoaded', function() {
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        // User is signed in
-                        document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
-                        
-                        // Check user role for dashboard link
-                        try {
-                            const userDoc = await getDoc(doc(db, 'users', user.uid));
-                            if (userDoc.exists()) {
-                                const role = userDoc.data().role;
-                                if (role === 'trainer') {
-                                    document.getElementById('dashboard-link').href = 'trainer-dashboard.html';
-                                    document.getElementById('back-link').href = 'trainer-dashboard.html';
-                                } else {
-                                    document.getElementById('dashboard-link').href = 'student-dashboard.html';
-                                    document.getElementById('back-link').href = 'student-dashboard.html';
-                                }
-                                
-                                // Load assessment data
-                                loadAssessment(assessmentId, user.uid, role);
-                            }
-                        } catch (error) {
-                            console.error("Error checking user role:", error);
-                            showError("Error checking user permissions: " + error.message);
-                        }
-                    }
-                });
-                
-                // Logout functionality
-                document.getElementById('logout-link').addEventListener('click', function(e) {
-                    e.preventDefault();
-                    signOut(auth).then(() => {
-                        // Sign-out successful
-                        window.location.href = 'login.html';
-                    }).catch((error) => {
-                        // An error happened
-                        console.error("Error signing out:", error);
-                    });
-                });
-                
-                // Print functionality
-                document.getElementById('print-link').addEventListener('click', function(e) {
-                    e.preventDefault();
-                    window.print();
-                });
-            });
-        });
+            // Load the assessment
+            loadAssessment(assessmentId, user);
+        }
         
         // Load assessment data
-        async function loadAssessment(assessmentId, userId, userRole) {
+        async function loadAssessment(assessmentId, user) {
             try {
                 // Get the assessment document
                 const assessmentDoc = await getDoc(doc(db, "assessments", assessmentId));
@@ -479,13 +506,14 @@
                 const assessment = assessmentDoc.data();
                 
                 // Check if user has permission to view this assessment
-                if (userRole !== 'trainer' && assessment.userId !== userId) {
+                const storedRole = localStorage.getItem('userRole');
+                if (storedRole !== 'trainer' && assessment.userId !== user.uid) {
                     showError("You don't have permission to view this assessment.");
                     return;
                 }
                 
                 // Display assessment data
-                displayAssessment(assessment, assessmentId, userRole);
+                displayAssessment(assessment, assessmentId);
                 
             } catch (error) {
                 console.error("Error loading assessment:", error);
@@ -494,7 +522,7 @@
         }
         
         // Display assessment data
-        function displayAssessment(assessment, assessmentId, userRole) {
+        function displayAssessment(assessment, assessmentId) {
             // Hide loading indicator
             document.getElementById('loading-indicator').style.display = 'none';
             
@@ -512,14 +540,13 @@
             // Set status
             const statusElement = document.getElementById('assessment-status');
             statusElement.textContent = assessment.status ? assessment.status.charAt(0).toUpperCase() + assessment.status.slice(1) : 'Submitted';
-            statusElement.className = 'assessment-status status-' + (assessment.status || 'submitted');
+            statusElement.className = 'status-badge status-' + (assessment.status || 'submitted');
             
             // Set student info
             document.getElementById('student-name').textContent = assessment.studentName || 'Not provided';
             document.getElementById('student-id').textContent = assessment.studentId || 'Not provided';
             document.getElementById('student-email').textContent = assessment.userEmail || 'Not provided';
-            document.getElementById('start-date').textContent = assessment.startDate ? new Date(assessment.startDate).toLocaleDateString() : 'Not provided';
-            document.getElementById('completion-date').textContent = assessment.completionDate ? new Date(assessment.completionDate).toLocaleDateString() : 'Not provided';
+            document.getElementById('unit-code').textContent = assessment.unitCode || 'AHCBUS408';
             
             // Display budget items
             displayBudgetItems(assessment.budgetItems || []);
@@ -533,8 +560,36 @@
             // Display final report
             document.getElementById('final-report').innerHTML = `<p>${assessment.finalReport || 'No final report provided.'}</p>`;
             
-            // Handle grading section
-            handleGradingSection(assessment, assessmentId, userRole);
+            // Display grade if available
+            if (assessment.status === 'graded') {
+                document.getElementById('grade-section').style.display = 'block';
+                document.getElementById('grade-value').textContent = assessment.grade || '0';
+                document.getElementById('feedback').innerHTML = `<p>${assessment.feedback || 'No feedback provided.'}</p>`;
+                
+                // Set grade circle color based on score
+                const gradeCircle = document.getElementById('grade-circle');
+                const grade = assessment.grade || 0;
+                
+                if (grade >= 80) {
+                    gradeCircle.style.backgroundColor = '#2ecc71'; // Green for high grades
+                } else if (grade >= 60) {
+                    gradeCircle.style.backgroundColor = '#3498db'; // Blue for medium grades
+                } else if (grade >= 40) {
+                    gradeCircle.style.backgroundColor = '#f39c12'; // Orange for low grades
+                } else {
+                    gradeCircle.style.backgroundColor = '#e74c3c'; // Red for failing grades
+                }
+            }
+            
+            // Set back link based on user role
+            const storedRole = localStorage.getItem('userRole');
+            document.getElementById('back-link').href = storedRole === 'trainer' ? 'trainer-dashboard.html' : 'student-dashboard.html';
+            
+            // Show review button for trainers if not graded
+            if (storedRole === 'trainer' && assessment.status !== 'graded') {
+                document.getElementById('review-button').style.display = 'inline-block';
+                document.getElementById('review-button').href = `review-assessment.html?id=${assessmentId}`;
+            }
         }
         
         // Display budget items
@@ -652,117 +707,6 @@
                 });
             } else {
                 recommendationItems.innerHTML = '<p>No recommendations provided.</p>';
-            }
-        }
-        
-        // Handle grading section
-        function handleGradingSection(assessment, assessmentId, userRole) {
-            const gradingContainer = document.getElementById('grading-container');
-            const gradeDisplay = document.getElementById('grade-display');
-            const gradeForm = document.getElementById('grade-form');
-            const submitGradeContainer = document.getElementById('submit-grade-container');
-            
-            // Show grading container
-            gradingContainer.style.display = 'block';
-            
-            if (assessment.status === 'graded') {
-                // Show grade display for graded assessments
-                gradeDisplay.style.display = 'block';
-                
-                // Set grade information
-                document.getElementById('grade-circle').textContent = assessment.grade || '0';
-                document.getElementById('grade-feedback').textContent = assessment.feedback || 'No feedback provided.';
-                document.getElementById('graded-by').textContent = assessment.gradedBy || 'Unknown';
-                
-                const gradedDate = assessment.gradedAt ? 
-                    new Date(assessment.gradedAt.seconds * 1000).toLocaleDateString() : 'Unknown';
-                document.getElementById('graded-date').textContent = gradedDate;
-                
-                // Set grade circle color based on score
-                const gradeCircle = document.getElementById('grade-circle');
-                const grade = assessment.grade || 0;
-                
-                if (grade >= 80) {
-                    gradeCircle.style.backgroundColor = '#2ecc71'; // Green for high grades
-                } else if (grade >= 60) {
-                    gradeCircle.style.backgroundColor = '#3498db'; // Blue for medium grades
-                } else if (grade >= 40) {
-                    gradeCircle.style.backgroundColor = '#f39c12'; // Orange for low grades
-                } else {
-                    gradeCircle.style.backgroundColor = '#e74c3c'; // Red for failing grades
-                }
-                
-                // Hide grade form for everyone
-                gradeForm.style.display = 'none';
-                submitGradeContainer.style.display = 'none';
-            } else if (userRole === 'trainer') {
-                // Show grade form for trainers if assessment is not graded
-                gradeDisplay.style.display = 'none';
-                gradeForm.style.display = 'block';
-                submitGradeContainer.style.display = 'block';
-                
-                // Add event listener for submit grade button
-                document.getElementById('submit-grade').addEventListener('click', function() {
-                    submitGrade(assessmentId);
-                });
-            } else {
-                // Hide grading section for students if assessment is not graded
-                gradingContainer.style.display = 'none';
-            }
-        }
-        
-        // Submit grade
-        async function submitGrade(assessmentId) {
-            const grade = parseInt(document.getElementById('grade-score').value);
-            const feedback = document.getElementById('grade-feedback-input').value;
-            
-            // Validate inputs
-            if (isNaN(grade) || grade < 0 || grade > 100) {
-                alert('Please enter a valid grade between 0 and 100.');
-                return;
-            }
-            
-            if (!feedback.trim()) {
-                alert('Please provide feedback for the student.');
-                return;
-            }
-            
-            try {
-                // Get current user
-                const user = auth.currentUser;
-                if (!user) {
-                    alert('You must be logged in to grade assessments.');
-                    return;
-                }
-                
-                // Show loading state
-                const submitButton = document.getElementById('submit-grade');
-                const originalButtonText = submitButton.textContent;
-                submitButton.disabled = true;
-                submitButton.textContent = 'Submitting...';
-                
-                // Update the assessment document
-                await updateDoc(doc(db, "assessments", assessmentId), {
-                    status: 'graded',
-                    grade: grade,
-                    feedback: feedback,
-                    gradedBy: user.email,
-                    gradedAt: new Date()
-                });
-                
-                alert('Assessment graded successfully!');
-                
-                // Reload the page to show the updated grade
-                window.location.reload();
-                
-            } catch (error) {
-                console.error("Error grading assessment:", error);
-                alert('Error submitting grade: ' + error.message);
-                
-                // Reset button
-                const submitButton = document.getElementById('submit-grade');
-                submitButton.disabled = false;
-                submitButton.textContent = originalButtonText;
             }
         }
         

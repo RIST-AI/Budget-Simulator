@@ -98,111 +98,119 @@
     <script type="module">
         import { auth, createUserWithEmailAndPassword, db, doc, setDoc } from './js/firebase-config.js';
         
-        document.addEventListener('DOMContentLoaded', function() {
-            const registerForm = document.getElementById('register-form');
-            const registerError = document.getElementById('register-error');
+        // Check if user is already logged in
+        const storedUser = localStorage.getItem('currentUser');
+        if (storedUser) {
+            // Get role
+            const storedRole = localStorage.getItem('userRole');
             
-            registerForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const fullName = document.getElementById('fullName').value;
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
-                const confirmPassword = document.getElementById('confirmPassword').value;
-                const termsAgreement = document.getElementById('termsAgreement').checked;
-                
-                // Always set role to student
-                const role = "student";
-                
-                // Clear previous error
-                registerError.style.display = 'none';
-                
-                // Validate inputs
-                if (!fullName || !email || !password || !confirmPassword) {
-                    registerError.textContent = 'Please fill in all fields.';
-                    registerError.style.display = 'block';
-                    return;
-                }
-                
-                // Validate passwords match
-                if (password !== confirmPassword) {
-                    registerError.textContent = 'Passwords do not match.';
-                    registerError.style.display = 'block';
-                    return;
-                }
-                
-                // Validate password length
-                if (password.length < 6) {
-                    registerError.textContent = 'Password must be at least 6 characters long.';
-                    registerError.style.display = 'block';
-                    return;
-                }
-                
-                // Validate terms agreement
-                if (!termsAgreement) {
-                    registerError.textContent = 'You must agree to the terms and conditions.';
-                    registerError.style.display = 'block';
-                    return;
-                }
-                
-                // Show loading state
-                const submitButton = registerForm.querySelector('button[type="submit"]');
-                const originalButtonText = submitButton.textContent;
-                submitButton.disabled = true;
-                submitButton.textContent = 'Registering...';
-                
-                createUserWithEmailAndPassword(auth, email, password)
-                    .then((userCredential) => {
-                        // Signed up 
-                        const user = userCredential.user;
-                        console.log("User registered:", user.email);
-                        
-                        // Save additional user data to Firestore
-                        return setDoc(doc(db, 'users', user.uid), {
-                            fullName: fullName,
-                            email: email,
-                            role: role,
-                            createdAt: new Date()
-                        });
-                    })
-                    .then(() => {
-                        // Show success message
-                        registerError.textContent = 'Registration successful! Redirecting to home page...';
-                        registerError.style.display = 'block';
-                        registerError.className = 'success-message';
-                        
-                        // Redirect to home page after a short delay
-                        setTimeout(() => {
-                            window.location.href = 'index.html';
-                        }, 1500);
-                    })
-                    .catch((error) => {
-                        console.error("Registration error:", error);
-                        
-                        // Show error message
-                        registerError.textContent = getErrorMessage(error.code);
-                        registerError.style.display = 'block';
-                        
-                        // Reset button
-                        submitButton.disabled = false;
-                        submitButton.textContent = originalButtonText;
-                    });
-            });
+            // Redirect to appropriate dashboard
+            window.location.href = storedRole === 'trainer' ? 'trainer-dashboard.html' : 'student-dashboard.html';
+        }
+        
+        document.getElementById('register-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
             
-            // Helper function to get user-friendly error messages
-            function getErrorMessage(errorCode) {
-                switch (errorCode) {
-                    case 'auth/email-already-in-use':
-                        return 'This email is already registered.';
-                    case 'auth/invalid-email':
-                        return 'Invalid email address format.';
-                    case 'auth/weak-password':
-                        return 'Password is too weak. Use at least 6 characters.';
-                    default:
-                        return 'An error occurred during registration. Please try again.';
-                }
+            // Get form values
+            const fullName = document.getElementById('full-name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            const studentId = document.getElementById('student-id').value;
+            const role = document.getElementById('role').value;
+            
+            // Validate passwords match
+            if (password !== confirmPassword) {
+                showError('Passwords do not match.');
+                return;
+            }
+            
+            // Validate password strength
+            if (password.length < 6) {
+                showError('Password must be at least 6 characters long.');
+                return;
+            }
+            
+            // Show loading state
+            const submitButton = document.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton.textContent;
+            submitButton.disabled = true;
+            submitButton.textContent = 'Registering...';
+            
+            try {
+                // Create user with email and password
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                // Store additional user data in Firestore
+                await setDoc(doc(db, "users", user.uid), {
+                    fullName: fullName,
+                    email: email,
+                    studentId: studentId,
+                    role: role,
+                    createdAt: new Date()
+                });
+                
+                // Store user in localStorage for persistence
+                localStorage.setItem('currentUser', JSON.stringify({
+                    uid: user.uid,
+                    email: user.email
+                }));
+                
+                // Store role in localStorage
+                localStorage.setItem('userRole', role);
+                
+                // Show success message
+                showSuccess('Registration successful! Redirecting to dashboard...');
+                
+                // Redirect to appropriate dashboard
+                setTimeout(() => {
+                    window.location.href = role === 'trainer' ? 'trainer-dashboard.html' : 'student-dashboard.html';
+                }, 1500);
+                
+            } catch (error) {
+                console.error("Registration error:", error);
+                showError(getErrorMessage(error.code));
+                
+                // Reset button
+                submitButton.disabled = false;
+                submitButton.textContent = originalButtonText;
             }
         });
+        
+        // Show error message
+        function showError(message) {
+            const errorElement = document.getElementById('register-error');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            
+            // Hide success message if shown
+            document.getElementById('register-success').style.display = 'none';
+        }
+        
+        // Show success message
+        function showSuccess(message) {
+            const successElement = document.getElementById('register-success');
+            successElement.textContent = message;
+            successElement.style.display = 'block';
+            
+            // Hide error message if shown
+            document.getElementById('register-error').style.display = 'none';
+        }
+        
+        // Get error message based on Firebase error code
+        function getErrorMessage(errorCode) {
+            switch (errorCode) {
+                case 'auth/email-already-in-use':
+                    return 'This email is already registered. Please use a different email or login.';
+                case 'auth/invalid-email':
+                    return 'Invalid email address.';
+                case 'auth/weak-password':
+                    return 'Password is too weak. Please use a stronger password.';
+                default:
+                    return 'An error occurred during registration. Please try again.';
+            }
+        }
     </script>
     
     <style>

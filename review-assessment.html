@@ -499,34 +499,102 @@
     </footer>
 
     <script type="module">
-        import { checkAuth } from './js/auth.js';
-        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, updateDoc } from './js/firebase-config.js';
+        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, updateDoc, collection, setDoc, deleteDoc } from './js/firebase-config.js';
         
-        // Check authentication first
-        checkAuth().then(async (isAuthenticated) => {
-            if (!isAuthenticated) {
-                return; // Stop execution if not authenticated
+        // Check authentication first using localStorage
+        const storedUser = localStorage.getItem('currentUser');
+        if (storedUser) {
+            const user = JSON.parse(storedUser);
+            document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
+            
+            // Check role for appropriate access
+            const storedRole = localStorage.getItem('userRole');
+            
+            if (storedRole !== 'trainer') {
+                // Not a trainer, redirect to student dashboard
+                alert('You do not have permission to access this page.');
+                window.location.href = 'student-dashboard.html';
+                throw new Error('Access denied');
             }
             
-            // Check if user is a trainer
-            const user = auth.currentUser;
-            if (user) {
-                try {
-                    const userDoc = await getDoc(doc(db, 'users', user.uid));
-                    if (userDoc.exists() && userDoc.data().role !== 'trainer') {
-                        // Not a trainer, redirect to student dashboard
-                        alert('You do not have permission to access this page.');
-                        window.location.href = 'student-dashboard.html';
+            // Set dashboard link
+            document.getElementById('dashboard-link').href = 'trainer-dashboard.html';
+            
+            // Initialize the page
+            initializePage(user);
+        } else {
+            // If no stored user, check Firebase auth
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
+                    
+                    // Store user in localStorage for persistence
+                    localStorage.setItem('currentUser', JSON.stringify({
+                        uid: user.uid,
+                        email: user.email
+                    }));
+                    
+                    // Check user role
+                    try {
+                        const userDoc = await getDoc(doc(db, 'users', user.uid));
+                        if (userDoc.exists()) {
+                            const role = userDoc.data().role;
+                            localStorage.setItem('userRole', role);
+                            
+                            if (role !== 'trainer') {
+                                // Not a trainer, redirect to student dashboard
+                                alert('You do not have permission to access this page.');
+                                window.location.href = 'student-dashboard.html';
+                                return;
+                            }
+                        } else {
+                            // Default to student if role not found
+                            localStorage.setItem('userRole', 'student');
+                            alert('You do not have permission to access this page.');
+                            window.location.href = 'student-dashboard.html';
+                            return;
+                        }
+                    } catch (error) {
+                        console.error("Error checking user role:", error);
+                        alert('Error checking permissions. Please try again later.');
+                        window.location.href = 'index.html';
                         return;
                     }
-                } catch (error) {
-                    console.error("Error checking user role:", error);
-                    alert('Error checking permissions. Please try again later.');
-                    window.location.href = 'index.html';
-                    return;
+                    
+                    // Set dashboard link
+                    document.getElementById('dashboard-link').href = 'trainer-dashboard.html';
+                    
+                    // Initialize the page
+                    initializePage(user);
+                } else {
+                    // Not authenticated, redirect to login
+                    window.location.href = 'login.html';
                 }
-            }
+            });
+        }
+        
+        // Logout functionality
+        document.getElementById('logout-link').addEventListener('click', function(e) {
+            e.preventDefault();
             
+            // Clear localStorage
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('userRole');
+            
+            // Also sign out from Firebase
+            signOut(auth).then(() => {
+                // Sign-out successful
+                window.location.href = 'login.html';
+            }).catch((error) => {
+                // An error happened
+                console.error("Error signing out:", error);
+                // Still redirect to login
+                window.location.href = 'login.html';
+            });
+        });
+        
+        // Initialize page function
+        function initializePage(user) {
             // Get assessment ID from URL
             const urlParams = new URLSearchParams(window.location.search);
             const assessmentId = urlParams.get('id');
@@ -536,62 +604,40 @@
                 return;
             }
             
-            // Initialize the page
-            document.addEventListener('DOMContentLoaded', function() {
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        // User is signed in
-                        document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
-                        
-                        // Load assessment data
-                        loadAssessment(assessmentId);
+            // Load assessment data
+            loadAssessment(assessmentId);
+            
+            // Set up toggle annotations button
+            document.getElementById('toggle-annotations-btn').addEventListener('click', function() {
+                const annotationPanels = document.querySelectorAll('.annotation-panel');
+                const isShowing = annotationPanels[0].classList.contains('active');
+                
+                annotationPanels.forEach(panel => {
+                    if (isShowing) {
+                        panel.classList.remove('active');
+                        this.textContent = 'Show Annotation Panels';
+                    } else {
+                        panel.classList.add('active');
+                        this.textContent = 'Hide Annotation Panels';
                     }
                 });
-                
-                // Logout functionality
-                document.getElementById('logout-link').addEventListener('click', function(e) {
-                    e.preventDefault();
-                    signOut(auth).then(() => {
-                        // Sign-out successful
-                        window.location.href = 'login.html';
-                    }).catch((error) => {
-                        // An error happened
-                        console.error("Error signing out:", error);
-                    });
-                });
-                
-                // Toggle annotation panels
-                document.getElementById('toggle-annotations-btn').addEventListener('click', function() {
-                    const annotationPanels = document.querySelectorAll('.annotation-panel');
-                    const isShowing = annotationPanels[0].classList.contains('active');
-                    
-                    annotationPanels.forEach(panel => {
-                        if (isShowing) {
-                            panel.classList.remove('active');
-                            this.textContent = 'Show Annotation Panels';
-                        } else {
-                            panel.classList.add('active');
-                            this.textContent = 'Hide Annotation Panels';
-                        }
-                    });
-                });
-                
-                // Calculate total score when individual scores change
-                document.querySelectorAll('.score-input').forEach(input => {
-                    input.addEventListener('change', calculateTotalScore);
-                });
-                
-                // Save draft button
-                document.getElementById('save-draft-btn').addEventListener('click', function() {
-                    saveDraft(assessmentId);
-                });
-                
-                // Submit grade button
-                document.getElementById('submit-grade-btn').addEventListener('click', function() {
-                    submitGrade(assessmentId);
-                });
             });
-        });
+            
+            // Calculate total score when individual scores change
+            document.querySelectorAll('.score-input').forEach(input => {
+                input.addEventListener('change', calculateTotalScore);
+            });
+            
+            // Save draft button
+            document.getElementById('save-draft-btn').addEventListener('click', function() {
+                saveDraft(assessmentId);
+            });
+            
+            // Submit grade button
+            document.getElementById('submit-grade-btn').addEventListener('click', function() {
+                submitGrade(assessmentId);
+            });
+        }
         
         // Load assessment data
         async function loadAssessment(assessmentId) {
@@ -610,9 +656,13 @@
                 displayAssessment(assessment, assessmentId);
                 
                 // Check if there's a draft grading
-                const draftGradingDoc = await getDoc(doc(db, "draftGradings", assessmentId));
-                if (draftGradingDoc.exists()) {
-                    loadDraftGrading(draftGradingDoc.data());
+                try {
+                    const draftGradingDoc = await getDoc(doc(db, "draftGradings", assessmentId));
+                    if (draftGradingDoc.exists()) {
+                        loadDraftGrading(draftGradingDoc.data());
+                    }
+                } catch (error) {
+                    console.error("Error checking for draft grading:", error);
                 }
                 
             } catch (error) {
@@ -646,8 +696,8 @@
             document.getElementById('student-name').textContent = assessment.studentName || 'Not provided';
             document.getElementById('student-id').textContent = assessment.studentId || 'Not provided';
             document.getElementById('student-email').textContent = assessment.userEmail || 'Not provided';
-            document.getElementById('start-date').textContent = assessment.startDate ? new Date(assessment.startDate).toLocaleDateString() : 'Not provided';
-            document.getElementById('completion-date').textContent = assessment.completionDate ? new Date(assessment.completionDate).toLocaleDateString() : 'Not provided';
+            document.getElementById('start-date').textContent = assessment.startDate ? new Date(assessment.startDate.seconds * 1000).toLocaleDateString() : 'Not provided';
+            document.getElementById('completion-date').textContent = assessment.completionDate ? new Date(assessment.completionDate.seconds * 1000).toLocaleDateString() : 'Not provided';
             
             // Display budget items
             displayBudgetItems(assessment.budgetItems || []);
@@ -670,6 +720,27 @@
                 document.getElementById('grade-description').textContent = `Graded by ${assessment.gradedBy || 'Unknown'} on ${assessment.gradedAt ? new Date(assessment.gradedAt.seconds * 1000).toLocaleDateString() : 'Unknown'}`;
                 document.getElementById('overall-feedback').value = assessment.feedback || '';
                 document.getElementById('overall-feedback').disabled = true;
+                
+                // Set individual scores if available
+                if (assessment.gradingDetails && assessment.gradingDetails.scores) {
+                    const scores = assessment.gradingDetails.scores;
+                    document.getElementById('score-budget').value = scores.budget || 0;
+                    document.getElementById('score-variance').value = scores.variance || 0;
+                    document.getElementById('score-recommendations').value = scores.recommendations || 0;
+                    document.getElementById('score-report').value = scores.report || 0;
+                    
+                    // Update total score
+                    calculateTotalScore();
+                }
+                
+                // Set annotations if available
+                if (assessment.gradingDetails && assessment.gradingDetails.annotations) {
+                    const annotations = assessment.gradingDetails.annotations;
+                    document.getElementById('budget-annotation').value = annotations.budget || '';
+                    document.getElementById('variance-annotation').value = annotations.variance || '';
+                    document.getElementById('recommendations-annotation').value = annotations.recommendations || '';
+                    document.getElementById('report-annotation').value = annotations.report || '';
+                }
                 
                 // Set grade circle color based on score
                 const gradeCircle = document.getElementById('grade-circle');
@@ -869,11 +940,14 @@
         // Save draft grading
         async function saveDraft(assessmentId) {
             try {
-                const user = auth.currentUser;
-                if (!user) {
+                // Get current user from localStorage
+                const storedUser = localStorage.getItem('currentUser');
+                if (!storedUser) {
                     alert('You must be logged in to save a draft.');
                     return;
                 }
+                
+                const user = JSON.parse(storedUser);
                 
                 // Show loading state
                 const saveButton = document.getElementById('save-draft-btn');
@@ -925,11 +999,14 @@
         // Submit grade
         async function submitGrade(assessmentId) {
             try {
-                const user = auth.currentUser;
-                if (!user) {
+                // Get current user from localStorage
+                const storedUser = localStorage.getItem('currentUser');
+                if (!storedUser) {
                     alert('You must be logged in to submit a grade.');
                     return;
                 }
+                
+                const user = JSON.parse(storedUser);
                 
                 // Validate inputs
                 const totalScore = parseInt(document.getElementById('total-score').textContent) || 0;

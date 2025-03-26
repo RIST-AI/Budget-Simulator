@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="description" content="Login to AHCBUS408 Budget Master - Agricultural Budgeting Training Tool">
     <title>Login - AHCBUS408 Budget Master</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" href="images/RIST Brandmark - Navy Circle.png" type="image/png">
@@ -26,14 +27,19 @@
             <ul>
                 <li><a href="index.html">Home</a></li>
                 <li><a href="login.html" class="active">Login</a></li>
+                <li><a href="register.html">Register</a></li>
             </ul>
         </div>
     </nav>
 
     <main class="container">
-        <div class="login-container">
+        <div class="auth-container">
             <h2>Login</h2>
-            <div id="login-error" class="error-message" style="display: none;"></div>
+            <p>Please enter your credentials to access the Budget Master tool.</p>
+            
+            <div id="login-error" class="feedback error" style="display: none;">
+                <!-- Error messages will be shown here -->
+            </div>
             
             <form id="login-form">
                 <div class="form-group">
@@ -46,10 +52,12 @@
                     <input type="password" id="password" required>
                 </div>
                 
-                <button type="submit" class="btn">Login</button>
+                <div class="form-group">
+                    <button type="submit">Login</button>
+                </div>
             </form>
             
-            <div class="login-info">
+            <div class="auth-links">
                 <p>Don't have an account? <a href="register.html">Register here</a></p>
             </div>
         </div>
@@ -73,65 +81,84 @@
     </footer>
 
     <script type="module">
-        import { auth, signInWithEmailAndPassword } from './js/firebase-config.js';
+        import { auth, signInWithEmailAndPassword, db, doc, getDoc } from './js/firebase-config.js';
         
-        document.addEventListener('DOMContentLoaded', function() {
-            const loginForm = document.getElementById('login-form');
-            const loginError = document.getElementById('login-error');
+        // Check if user is already logged in
+        const storedUser = localStorage.getItem('currentUser');
+        if (storedUser) {
+            const storedRole = localStorage.getItem('userRole');
+            if (storedRole === 'trainer') {
+                window.location.href = 'trainer-dashboard.html';
+            } else {
+                window.location.href = 'student-dashboard.html';
+            }
+        }
+        
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
             
-            loginForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
-                
-                // Clear previous error
-                loginError.style.display = 'none';
-                
-                // Show loading state
-                const submitButton = loginForm.querySelector('button[type="submit"]');
-                const originalButtonText = submitButton.textContent;
-                submitButton.disabled = true;
-                submitButton.textContent = 'Logging in...';
-                
-                signInWithEmailAndPassword(auth, email, password)
-                    .then((userCredential) => {
-                        // Signed in 
-                        const user = userCredential.user;
-                        console.log("User logged in:", user.email);
-                        
-                        // Redirect to home page
-                        window.location.href = 'index.html';
-                    })
-                    .catch((error) => {
-                        console.error("Login error:", error);
-                        
-                        // Show error message
-                        loginError.textContent = getErrorMessage(error.code);
-                        loginError.style.display = 'block';
-                        
-                        // Reset button
-                        submitButton.disabled = false;
-                        submitButton.textContent = originalButtonText;
-                    });
-            });
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
             
-            // Helper function to get user-friendly error messages
-            function getErrorMessage(errorCode) {
-                switch (errorCode) {
-                    case 'auth/invalid-email':
-                        return 'Invalid email address format.';
-                    case 'auth/user-disabled':
-                        return 'This account has been disabled.';
-                    case 'auth/user-not-found':
-                        return 'No account found with this email.';
-                    case 'auth/wrong-password':
-                        return 'Incorrect password.';
-                    default:
-                        return 'An error occurred during login. Please try again.';
+            // Show loading state
+            const submitButton = document.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton.textContent;
+            submitButton.disabled = true;
+            submitButton.textContent = 'Logging in...';
+            
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                // Store user in localStorage for persistence
+                localStorage.setItem('currentUser', JSON.stringify({
+                    uid: user.uid,
+                    email: user.email
+                }));
+                
+                // Get and store user role
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (userDoc.exists()) {
+                    const role = userDoc.data().role;
+                    localStorage.setItem('userRole', role);
+                    
+                    // Redirect based on role
+                    if (role === 'trainer') {
+                        window.location.href = 'trainer-dashboard.html';
+                    } else {
+                        window.location.href = 'student-dashboard.html';
+                    }
+                } else {
+                    // Default to student if role not found
+                    localStorage.setItem('userRole', 'student');
+                    window.location.href = 'student-dashboard.html';
                 }
+            } catch (error) {
+                console.error("Login error:", error);
+                document.getElementById('login-error').textContent = getErrorMessage(error.code);
+                document.getElementById('login-error').style.display = 'block';
+                
+                // Reset button
+                submitButton.disabled = false;
+                submitButton.textContent = originalButtonText;
             }
         });
+
+        // Helper function for error messages
+        function getErrorMessage(errorCode) {
+            switch (errorCode) {
+                case 'auth/wrong-password':
+                    return 'Incorrect password. Please try again.';
+                case 'auth/user-not-found':
+                    return 'No account found with this email.';
+                case 'auth/invalid-email':
+                    return 'Invalid email address.';
+                case 'auth/too-many-requests':
+                    return 'Too many failed login attempts. Please try again later.';
+                default:
+                    return 'An error occurred. Please try again.';
+            }
+        }
     </script>
 </body>
 </html>

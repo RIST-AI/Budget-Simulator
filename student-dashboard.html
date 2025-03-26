@@ -150,156 +150,237 @@
     </footer>
 
     <script type="module">
-        import { checkAuth } from './js/auth.js';
-        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, collection, query, where, getDocs } from './js/firebase-config.js';
+        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, collection, query, where, getDocs, orderBy } from './js/firebase-config.js';
         
-        // Check authentication first
-        checkAuth().then(isAuthenticated => {
-            if (!isAuthenticated) {
-                return; // Stop execution if not authenticated
-            }
+        // Check authentication first using localStorage
+        const storedUser = localStorage.getItem('currentUser');
+        if (storedUser) {
+            const user = JSON.parse(storedUser);
+            document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
             
-            // Initialize the dashboard
-            document.addEventListener('DOMContentLoaded', function() {
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        // User is signed in
-                        document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
-                        
-                        // Load user info
-                        loadUserInfo(user.uid);
-                        
-                        // Load assessments and budgets
-                        loadAssessments(user.uid);
-                        loadBudgets(user.uid);
-                    }
-                });
-                
-                // Logout functionality
-                document.getElementById('logout-link').addEventListener('click', function(e) {
-                    e.preventDefault();
-                    signOut(auth).then(() => {
-                        // Sign-out successful
-                        window.location.href = 'login.html';
-                    }).catch((error) => {
-                        // An error happened
-                        console.error("Error signing out:", error);
+            // Check role for appropriate access
+            const storedRole = localStorage.getItem('userRole');
+            if (storedRole === 'trainer') {
+                // Redirect trainers to trainer dashboard
+                window.location.href = 'trainer-dashboard.html';
+            } else {
+                // Initialize the student dashboard
+                initializeDashboard(user);
+            }
+        } else {
+            // If no stored user, check Firebase auth
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
+                    
+                    // Store user in localStorage for persistence
+                    localStorage.setItem('currentUser', JSON.stringify({
+                        uid: user.uid,
+                        email: user.email
+                    }));
+                    
+                    // Check user role
+                    getDoc(doc(db, 'users', user.uid)).then(userDoc => {
+                        if (userDoc.exists()) {
+                            const role = userDoc.data().role;
+                            localStorage.setItem('userRole', role);
+                            
+                            // Check for appropriate access
+                            if (role === 'trainer') {
+                                // Redirect trainers to trainer dashboard
+                                window.location.href = 'trainer-dashboard.html';
+                            } else {
+                                // Initialize the student dashboard
+                                initializeDashboard(user);
+                            }
+                        }
+                    }).catch(error => {
+                        console.error("Error checking user role:", error);
                     });
-                });
+                } else {
+                    // Not authenticated, redirect to login
+                    window.location.href = 'login.html';
+                }
+            });
+        }
+        
+        // Logout functionality
+        document.getElementById('logout-link').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Clear localStorage
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('userRole');
+            
+            // Also sign out from Firebase
+            signOut(auth).then(() => {
+                // Sign-out successful
+                window.location.href = 'login.html';
+            }).catch((error) => {
+                // An error happened
+                console.error("Error signing out:", error);
+                // Still redirect to login
+                window.location.href = 'login.html';
             });
         });
         
-        // Load user information
-        async function loadUserInfo(userId) {
+        // Initialize dashboard function
+        function initializeDashboard(user) {
+            // Load student data
+            loadStudentData(user.uid);
+            
+            // Load assessments
+            loadAssessments(user.uid);
+            
+            // Load saved budgets
+            loadSavedBudgets(user.uid);
+        }
+        
+        // Load student data
+        async function loadStudentData(userId) {
             try {
                 const userDoc = await getDoc(doc(db, 'users', userId));
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
                     
-                    document.getElementById('user-info').innerHTML = `
+                    // Update welcome message
+                    const fullName = userData.fullName || 'Student';
+                    document.getElementById('welcome-message').textContent = `Welcome, ${fullName}!`;
+                    
+                    // Update profile info
+                    document.getElementById('profile-info').innerHTML = `
                         <p><strong>Name:</strong> ${userData.fullName || 'Not provided'}</p>
                         <p><strong>Email:</strong> ${userData.email}</p>
-                        <p><strong>Role:</strong> ${userData.role === 'trainer' ? 'Trainer' : 'Student'}</p>
+                        <p><strong>Student ID:</strong> ${userData.studentId || 'Not provided'}</p>
                     `;
                 }
             } catch (error) {
-                console.error("Error loading user info:", error);
-                document.getElementById('user-info').innerHTML = `
-                    <p class="error">Error loading user information: ${error.message}</p>
+                console.error("Error loading user data:", error);
+                document.getElementById('profile-info').innerHTML = `
+                    <p class="error">Error loading profile information: ${error.message}</p>
                 `;
             }
         }
         
-        // Load user's assessments
+        // Load assessments
         async function loadAssessments(userId) {
             try {
-                const assessmentsContainer = document.getElementById('assessments-container');
+                // Query for assessments by this user
+                const q = query(
+                    collection(db, "assessments"), 
+                    where("userId", "==", userId),
+                    orderBy("submittedAt", "desc")
+                );
                 
-                // Create a query against the assessments collection
-                const q = query(collection(db, "assessments"), where("userId", "==", userId));
                 const querySnapshot = await getDocs(q);
                 
                 if (querySnapshot.empty) {
-                    assessmentsContainer.innerHTML = `
-                        <div class="empty-state">
-                            <p>You haven't submitted any assessments yet.</p>
-                            <p>Start a new assessment to practice your budgeting skills.</p>
-                        </div>
+                    document.getElementById('assessments-list').innerHTML = `
+                        <p>You haven't submitted any assessments yet.</p>
+                        <p><a href="farm-budget-assessment.html" class="btn">Start Assessment</a></p>
                     `;
                     return;
                 }
                 
-                // Create list of assessments
-                let assessmentsList = '<ul class="assessment-list">';
+                let assessmentsList = '';
                 
                 querySnapshot.forEach((doc) => {
                     const assessment = doc.data();
-                    const submittedDate = assessment.submittedAt ? new Date(assessment.submittedAt.seconds * 1000).toLocaleDateString() : 'Unknown';
+                    const submittedDate = assessment.submittedAt ? 
+                        new Date(assessment.submittedAt.seconds * 1000).toLocaleDateString() : 
+                        'Unknown';
+                    
+                    const statusClass = assessment.status === 'graded' ? 'status-graded' : 'status-submitted';
+                    const statusText = assessment.status === 'graded' ? 'Graded' : 'Submitted';
                     
                     assessmentsList += `
                         <li>
-                            <div><strong>${assessment.unitCode}</strong> - ${submittedDate}</div>
-                            <div>${assessment.studentName}</div>
-                            <div>
-                                <span class="status-badge status-${assessment.status || 'submitted'}">${assessment.status || 'Submitted'}</span>
+                            <div class="assessment-item">
+                                <div class="assessment-info">
+                                    <h4>${assessment.unitCode || 'AHCBUS408'}</h4>
+                                    <p>Submitted on: ${submittedDate}</p>
+                                    <p class="status ${statusClass}">${statusText}</p>
+                                    ${assessment.grade ? `<p class="grade">Grade: ${assessment.grade}/100</p>` : ''}
+                                </div>
+                                <div class="assessment-actions">
+                                    <a href="view-assessment.html?id=${doc.id}" class="btn">View</a>
+                                </div>
                             </div>
                         </li>
                     `;
                 });
                 
-                assessmentsList += '</ul>';
-                assessmentsContainer.innerHTML = assessmentsList;
-                
+                document.getElementById('assessments-list').innerHTML = `
+                    <ul class="assessment-list">
+                        ${assessmentsList}
+                    </ul>
+                    <p><a href="farm-budget-assessment.html" class="btn">Start New Assessment</a></p>
+                `;
             } catch (error) {
                 console.error("Error loading assessments:", error);
-                document.getElementById('assessments-container').innerHTML = `
+                document.getElementById('assessments-list').innerHTML = `
                     <p class="error">Error loading assessments: ${error.message}</p>
+                    <p><a href="farm-budget-assessment.html" class="btn">Start Assessment</a></p>
                 `;
             }
         }
         
-        // Load user's budgets
-        async function loadBudgets(userId) {
+        // Load saved budgets
+        async function loadSavedBudgets(userId) {
             try {
-                const budgetsContainer = document.getElementById('budgets-container');
+                // Query for budgets by this user
+                const q = query(
+                    collection(db, "budgets"), 
+                    where("userId", "==", userId),
+                    orderBy("createdAt", "desc")
+                );
                 
-                // Create a query against the budgets collection
-                const q = query(collection(db, "budgets"), where("userId", "==", userId));
                 const querySnapshot = await getDocs(q);
                 
                 if (querySnapshot.empty) {
-                    budgetsContainer.innerHTML = `
-                        <div class="empty-state">
-                            <p>You haven't created any budgets yet.</p>
-                            <p>Create a new budget to practice your budgeting skills.</p>
-                        </div>
+                    document.getElementById('budgets-list').innerHTML = `
+                        <p>You haven't created any budgets yet.</p>
+                        <p><a href="budget.html" class="btn">Create Budget</a></p>
                     `;
                     return;
                 }
                 
-                // Create list of budgets
-                let budgetsList = '<ul class="budget-list">';
+                let budgetsList = '';
                 
                 querySnapshot.forEach((doc) => {
                     const budget = doc.data();
-                    const createdDate = budget.createdAt ? new Date(budget.createdAt.seconds * 1000).toLocaleDateString() : 'Unknown';
+                    const createdDate = budget.createdAt ? 
+                        new Date(budget.createdAt.seconds * 1000).toLocaleDateString() : 
+                        'Unknown';
                     
                     budgetsList += `
                         <li>
-                            <div><strong>${budget.name}</strong> - ${createdDate}</div>
-                            <div>${budget.farmType} Farm - ${budget.period} Budget</div>
-                            <div>Net Result: ${formatCurrency(budget.netResult || 0)}</div>
+                            <div class="budget-item">
+                                <div class="budget-info">
+                                    <h4>${budget.name || 'Untitled Budget'}</h4>
+                                    <p>Farm Type: ${budget.farmType || 'Not specified'}</p>
+                                    <p>Created on: ${createdDate}</p>
+                                    <p>Net Result: ${formatCurrency(budget.netResult || 0)}</p>
+                                </div>
+                                <div class="budget-actions">
+                                    <a href="view-budget.html?id=${doc.id}" class="btn">View</a>
+                                </div>
+                            </div>
                         </li>
                     `;
                 });
                 
-                budgetsList += '</ul>';
-                budgetsContainer.innerHTML = budgetsList;
-                
+                document.getElementById('budgets-list').innerHTML = `
+                    <ul class="budget-list">
+                        ${budgetsList}
+                    </ul>
+                    <p><a href="budget.html" class="btn">Create New Budget</a></p>
+                `;
             } catch (error) {
                 console.error("Error loading budgets:", error);
-                document.getElementById('budgets-container').innerHTML = `
+                document.getElementById('budgets-list').innerHTML = `
                     <p class="error">Error loading budgets: ${error.message}</p>
+                    <p><a href="budget.html" class="btn">Create Budget</a></p>
                 `;
             }
         }

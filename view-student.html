@@ -268,59 +268,106 @@
     </footer>
 
     <script type="module">
-        import { checkAuth } from './js/auth.js';
-        import { 
-            auth, 
-            onAuthStateChanged, 
-            signOut, 
-            db, 
-            doc, 
-            getDoc, 
-            collection, 
-            query, 
-            where, 
-            getDocs,
-            setPersistence,
-            browserLocalPersistence
-        } from './js/firebase-config.js';
+        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, collection, query, where, getDocs } from './js/firebase-config.js';
         
-        // Set persistence to LOCAL (survives browser restarts)
-        setPersistence(auth, browserLocalPersistence)
-          .then(() => {
-            console.log("Persistence set to LOCAL");
-          })
-          .catch((error) => {
-            console.error("Error setting persistence:", error);
-          });
-        
-        // Global variables
-        let currentUser = null;
-        
-        // Check authentication first
-        checkAuth().then(async (isAuthenticated) => {
-            if (!isAuthenticated) {
-                return; // Stop execution if not authenticated
+        // Check authentication first using localStorage
+        const storedUser = localStorage.getItem('currentUser');
+        if (storedUser) {
+            const user = JSON.parse(storedUser);
+            document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
+            
+            // Check role for appropriate access
+            const storedRole = localStorage.getItem('userRole');
+            
+            if (storedRole !== 'trainer') {
+                // Not a trainer, redirect to student dashboard
+                alert('You do not have permission to access this page.');
+                window.location.href = 'student-dashboard.html';
+                throw new Error('Access denied');
             }
             
-            // Check if user is a trainer
-            const user = auth.currentUser;
-            if (user) {
-                try {
-                    const userDoc = await getDoc(doc(db, 'users', user.uid));
-                    if (userDoc.exists() && userDoc.data().role !== 'trainer') {
-                        // Not a trainer, redirect to student dashboard
-                        alert('You do not have permission to access this page.');
-                        window.location.href = 'student-dashboard.html';
+            // Set dashboard link
+            document.getElementById('dashboard-link').href = 'trainer-dashboard.html';
+            document.getElementById('back-link').href = 'trainer-dashboard.html';
+            document.getElementById('trainer-actions').style.display = 'block';
+            
+            // Initialize the page
+            initializePage(user);
+        } else {
+            // If no stored user, check Firebase auth
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
+                    
+                    // Store user in localStorage for persistence
+                    localStorage.setItem('currentUser', JSON.stringify({
+                        uid: user.uid,
+                        email: user.email
+                    }));
+                    
+                    // Check user role
+                    try {
+                        const userDoc = await getDoc(doc(db, 'users', user.uid));
+                        if (userDoc.exists()) {
+                            const role = userDoc.data().role;
+                            localStorage.setItem('userRole', role);
+                            
+                            if (role !== 'trainer') {
+                                // Not a trainer, redirect to student dashboard
+                                alert('You do not have permission to access this page.');
+                                window.location.href = 'student-dashboard.html';
+                                return;
+                            }
+                        } else {
+                            // Default to student if role not found
+                            localStorage.setItem('userRole', 'student');
+                            alert('You do not have permission to access this page.');
+                            window.location.href = 'student-dashboard.html';
+                            return;
+                        }
+                    } catch (error) {
+                        console.error("Error checking user role:", error);
+                        alert('Error checking permissions. Please try again later.');
+                        window.location.href = 'index.html';
                         return;
                     }
-                } catch (error) {
-                    console.error("Error checking user role:", error);
-                    alert('Error checking permissions. Please try again later.');
-                    window.location.href = 'index.html';
-                    return;
+                    
+                    // Set dashboard link
+                    document.getElementById('dashboard-link').href = 'trainer-dashboard.html';
+                    document.getElementById('back-link').href = 'trainer-dashboard.html';
+                    document.getElementById('trainer-actions').style.display = 'block';
+                    
+                    // Initialize the page
+                    initializePage(user);
+                } else {
+                    // Not authenticated, redirect to login
+                    window.location.href = 'login.html';
                 }
-            }
+            });
+        }
+        
+        // Logout functionality
+        document.getElementById('logout-link').addEventListener('click', function(e) {
+            e.preventDefault();
             
+            // Clear localStorage
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('userRole');
+            
+            // Also sign out from Firebase
+            signOut(auth).then(() => {
+                // Sign-out successful
+                window.location.href = 'login.html';
+            }).catch((error) => {
+                // An error happened
+                console.error("Error signing out:", error);
+                // Still redirect to login
+                window.location.href = 'login.html';
+            });
+        });
+        
+        // Initialize page function
+        function initializePage(user) {
             // Get student ID from URL
             const urlParams = new URLSearchParams(window.location.search);
             const studentId = urlParams.get('id');
@@ -330,54 +377,17 @@
                 return;
             }
             
-            // Initialize the page
-            document.addEventListener('DOMContentLoaded', function() {
-                // Set up a single auth state observer
-                const unsubscribe = onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        currentUser = user;
-                        document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
-                        
-                        // Set dashboard link
-                        document.getElementById('dashboard-link').href = 'trainer-dashboard.html';
-                        document.getElementById('back-link').href = 'trainer-dashboard.html';
-                        document.getElementById('trainer-actions').style.display = 'block';
-                        
-                        // Load student profile
-                        loadStudentProfile(studentId);
-                    } else {
-                        // Only redirect if we previously had a user and now don't
-                        if (currentUser) {
-                            alert("Your session has expired. Please log in again.");
-                            window.location.href = 'login.html';
-                        }
-                    }
-                });
-                
-                // Clean up the observer when the page is unloaded
-                window.addEventListener('beforeunload', () => unsubscribe());
-                
-                // Logout functionality
-                document.getElementById('logout-link').addEventListener('click', function(e) {
-                    e.preventDefault();
-                    signOut(auth).then(() => {
-                        // Sign-out successful
-                        window.location.href = 'login.html';
-                    }).catch((error) => {
-                        // An error happened
-                        console.error("Error signing out:", error);
-                    });
-                });
-                
-                // Send message functionality
-                document.getElementById('send-message').addEventListener('click', function() {
-                    const message = prompt("Enter message to send to student:");
-                    if (message) {
-                        sendMessage(studentId, message);
-                    }
-                });
+            // Load student profile
+            loadStudentProfile(studentId);
+            
+            // Send message functionality
+            document.getElementById('send-message').addEventListener('click', function() {
+                const message = prompt("Enter message to send to student:");
+                if (message) {
+                    sendMessage(studentId, message);
+                }
             });
-        });
+        }
         
         // Load student profile
         async function loadStudentProfile(studentId) {
@@ -611,16 +621,18 @@
         // Send message to student
         async function sendMessage(studentId, message) {
             try {
-                // Get current user
-                const user = auth.currentUser;
-                if (!user) {
+                // Get current user from localStorage
+                const storedUser = localStorage.getItem('currentUser');
+                if (!storedUser) {
                     alert('You must be logged in to send messages.');
                     return;
                 }
                 
+                const user = JSON.parse(storedUser);
+                
                 // Get user role
-                const userDoc = await getDoc(doc(db, 'users', user.uid));
-                if (!userDoc.exists() || userDoc.data().role !== 'trainer') {
+                const storedRole = localStorage.getItem('userRole');
+                if (storedRole !== 'trainer') {
                     alert('Only trainers can send messages to students.');
                     return;
                 }
