@@ -930,3 +930,187 @@ footer a {
 .mb-20 {
     margin-bottom: 20px;
 }
+
+/* User status styles */
+.user-status {
+    font-size: 0.9rem;
+    color: #333;
+    margin-left: auto;
+    text-align: right;
+}
+
+/* Login form styles */
+.login-container {
+    max-width: 500px;
+    margin: 50px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.error-message {
+    color: #dc3545;
+    margin-bottom: 15px;
+}
+
+.login-info {
+    margin-top: 20px;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+/* Assessment page styles */
+.assessment-card {
+    background: white;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.assessment-card h3 {
+    margin-top: 0;
+}
+
+.assessment-instructions {
+    background: white;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.scenario-details {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 15px 0;
+}
+
+.scenario-details h4 {
+    margin-top: 0;
+}
+
+/* Budget simulator styles */
+.budget-simulator {
+    background: white;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.budget-controls {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: flex-end;
+}
+
+.budget-controls .form-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+.budget-section {
+    margin-bottom: 30px;
+}
+
+.budget-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.budget-table th,
+.budget-table td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+}
+
+.budget-table input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.btn-small {
+    padding: 5px 10px;
+    font-size: 14px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-small:hover {
+    background: #45a049;
+}
+
+.btn-remove {
+    background: #dc3545;
+}
+
+.btn-remove:hover {
+    background: #c82333;
+}
+
+.summary-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.summary-table td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.summary-table tr:last-child td {
+    border-bottom: none;
+    font-weight: bold;
+}
+
+.net-result {
+    font-size: 1.1em;
+}
+
+.positive {
+    color: #28a745;
+}
+
+.negative {
+    color: #dc3545;
+}
+
+.budget-explanation {
+    margin-top: 30px;
+}
+
+.budget-explanation textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    resize: vertical;
+}
+
+.form-actions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}

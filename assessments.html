@@ -27,7 +27,6 @@
         <div class="container">
             <ul>
                 <li><a href="index.html">Home</a></li>
-                <li><a href="lessons.html">Lessons</a></li>
                 <li><a href="budget.html">Budget Simulator</a></li>
                 <li><a href="assessments.html" class="active">Assessments</a></li>
             </ul>
@@ -36,13 +35,7 @@
 
     <main class="container">
         <h2>Budget Management Assessments</h2>
-        <p>Test your knowledge and skills with these practical assessments on farm budget management.</p>
-        
-        <div class="lesson-filters">
-            <button class="filter-btn active" data-filter="all">All Assessments</button>
-            <button class="filter-btn" data-filter="summative">Summative</button>
-            <button class="filter-btn" data-filter="formative">Formative</button>
-        </div>
+        <p>Test your knowledge and skills with this practical assessment on farm budget management.</p>
         
         <div class="assessments-grid">
             <!-- Assessment 1 - Farm Budget Management -->
@@ -60,22 +53,6 @@
                     <li>Performance reporting</li>
                 </ul>
                 <a href="farm-budget-assessment.html" class="btn">Start Assessment</a>
-            </div>
-            
-            <!-- Assessment 2 - Quiz -->
-            <div class="assessment-card" data-category="formative">
-                <div class="assessment-card-header">
-                    <span class="assessment-type">Formative Assessment</span>
-                    <span class="assessment-duration">30 minutes</span>
-                </div>
-                <h3>Budget Terminology Quiz</h3>
-                <p>Test your understanding of key budget terminology and concepts.</p>
-                <ul class="assessment-details">
-                    <li>20 multiple-choice questions</li>
-                    <li>Covers basic budget concepts</li>
-                    <li>Immediate feedback provided</li>
-                </ul>
-                <a href="#" class="btn">Start Assessment</a>
             </div>
         </div>
     </main>
@@ -106,52 +83,6 @@
         // 4. Load any saved bookmark or suspend data
         
         document.addEventListener('DOMContentLoaded', function() {
-            // Assessment filtering functionality with error handling
-            const filterButtons = document.querySelectorAll('.filter-btn');
-            const assessmentCards = document.querySelectorAll('.assessment-card');
-            
-            filterButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    // Update active button
-                    filterButtons.forEach(btn => btn.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    // Filter assessments
-                    const filter = this.getAttribute('data-filter');
-                    let visibleCount = 0;
-                    
-                    assessmentCards.forEach(card => {
-                        if (filter === 'all' || card.getAttribute('data-category') === filter) {
-                            card.style.display = 'block';
-                            visibleCount++;
-                        } else {
-                            card.style.display = 'none';
-                        }
-                    });
-                    
-                    // Show message if no items match the filter
-                    let noResultsMessage = document.getElementById('no-results-message');
-                    
-                    if (visibleCount === 0) {
-                        if (!noResultsMessage) {
-                            noResultsMessage = document.createElement('div');
-                            noResultsMessage.id = 'no-results-message';
-                            noResultsMessage.className = 'feedback info';
-                            noResultsMessage.textContent = 'No assessments match the selected filter.';
-                            
-                            // Insert after the filter buttons
-                            const container = document.querySelector('.assessments-grid');
-                            container.parentNode.insertBefore(noResultsMessage, container);
-                        }
-                        
-                        // Scroll to the message
-                        noResultsMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    } else if (noResultsMessage) {
-                        noResultsMessage.remove();
-                    }
-                });
-            });
-
             // Add event listeners to assessment buttons
             document.querySelectorAll('.assessment-card .btn').forEach(button => {
                 button.addEventListener('click', function(e) {

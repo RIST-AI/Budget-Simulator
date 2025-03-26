@@ -5,7 +5,6 @@ This package contains a complete web-based training module for AHCBUS408 Budget 
 
 ## File Structure
 - `index.html`: Main entry point and course overview
-- `lessons.html`: Contains all lesson content organized by categories
 - `budget.html`: Interactive budget simulator for practice
 - `assessments.html`: List of available assessments
 - `farm-budget-assessment.html`: Main comprehensive assessment

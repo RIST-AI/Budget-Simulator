@@ -226,6 +226,9 @@
                     <h1>AHCBUS408 Budget Master</h1>
                     <p>Agricultural Budgeting Training Tool</p>
                 </div>
+                <div id="user-status" class="user-status">
+                    <!-- Login status will be shown here -->
+                </div>
             </div>
         </div>
     </header>
@@ -233,9 +236,11 @@
         <div class="container">
             <ul>
                 <li><a href="index.html">Home</a></li>
-                <li><a href="lessons.html">Lessons</a></li>
                 <li><a href="budget.html">Budget Simulator</a></li>
-                <li><a href="assessments.html" class="active">Assessments</a></li>
+                <li><a href="farm-budget-assessment.html" class="active">Assessment</a></li>
+                <li id="login-nav-item"><a href="login.html">Login</a></li>
+                <li id="dashboard-nav-item" style="display:none;"><a href="#" id="dashboard-link">Dashboard</a></li>
+                <li id="logout-nav-item" style="display:none;"><a href="#" id="logout-link">Logout</a></li>
             </ul>
         </div>
     </nav>
@@ -648,28 +653,94 @@
         </div>
     </footer>
     
+    <script type="module">
+        import { checkAuth } from './js/auth.js';
+        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, collection, addDoc } from './js/firebase-config.js';
+        
+        // Check authentication first before doing anything else
+        checkAuth().then(isAuthenticated => {
+            if (!isAuthenticated) {
+                return; // Stop execution if not authenticated
+            }
+            
+            // Continue with page initialization
+            document.addEventListener('DOMContentLoaded', function() {
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        // User is signed in
+                        document.getElementById('login-nav-item').style.display = 'none';
+                        document.getElementById('dashboard-nav-item').style.display = 'inline-block';
+                        document.getElementById('logout-nav-item').style.display = 'inline-block';
+                        document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
+                        
+                        // Initialize the page
+                        initializePage();
+                        
+                        // Set up event listeners
+                        document.getElementById('item-category').addEventListener('change', updateSubcategories);
+                        document.getElementById('add-budget-item').addEventListener('click', addBudgetItem);
+                        
+                        // Set today's date as the default start date
+                        document.getElementById('start-date').valueAsDate = new Date();
+                        
+                        // Prefill student name if available
+                        loadUserData(user.uid);
+                    }
+                });
+                
+                // Logout functionality
+                document.getElementById('logout-link').addEventListener('click', function(e) {
+                    e.preventDefault();
+                    signOut(auth).then(() => {
+                        // Sign-out successful
+                        window.location.href = 'login.html';
+                    }).catch((error) => {
+                        // An error happened
+                        console.error("Error signing out:", error);
+                    });
+                });
+            });
+            
+            // Function to load user data
+            async function loadUserData(userId) {
+                try {
+                    const userDoc = await getDoc(doc(db, 'users', userId));
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        
+                        // Prefill student name field if it exists
+                        if (document.getElementById('student-name') && userData.fullName) {
+                            document.getElementById('student-name').value = userData.fullName;
+                        }
+                        
+                        // Check user role for dashboard link
+                        const role = userData.role;
+                        if (role === 'trainer') {
+                            document.getElementById('dashboard-link').href = 'trainer-dashboard.html';
+                        } else {
+                            document.getElementById('dashboard-link').href = 'student-dashboard.html';
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error checking user data:", error);
+                }
+            }
+            
+            // Make the original script functions available globally
+            window.validateStudentInfo = validateStudentInfo;
+            window.validateBudgetSetup = validateBudgetSetup;
+            window.validateActuals = validateActuals;
+            window.validateVarianceAnalysis = validateVarianceAnalysis;
+            window.submitAssessment = submitAssessment;
+            window.nextTab = nextTab;
+            window.prevTab = prevTab;
+            window.openTab = openTab;
+        });
+    </script>
+    
     <script>
         // Global variables
         let budgetItems = [];
-        
-        // SCORM INTEGRATION POINT: Initialize SCORM API connection
-        // Add code here to:
-        // 1. Detect SCORM API
-        // 2. Initialize connection
-        // 3. Set lesson status to "incomplete" if not already started
-        // 4. Load any saved bookmark or suspend data
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize the page
-            initializePage();
-            
-            // Set up event listeners
-            document.getElementById('item-category').addEventListener('change', updateSubcategories);
-            document.getElementById('add-budget-item').addEventListener('click', addBudgetItem);
-            
-            // Set today's date as the default start date
-            document.getElementById('start-date').valueAsDate = new Date();
-        });
         
         // Function to initialize the page
         function initializePage() {
@@ -925,16 +996,6 @@
                     errorElement.textContent = 'Please enter a start date.';
                     document.getElementById('start-date').parentNode.insertBefore(errorElement, document.getElementById('start-date').nextSibling);
                 }
-            }
-            
-            if (isValid) {
-                // SCORM INTEGRATION POINT: Save student information
-                // Add code here to:
-                // 1. Save student name and ID to SCORM data model if appropriate
-                // 2. Record assessment start time
-                
-                // For demonstration purposes only:
-                console.log(`Student info validated: ${studentName}, ${studentId}`);
             }
             
             return isValid;
@@ -1456,7 +1517,7 @@
         }
         
         // Function to submit the assessment
-        function submitAssessment() {
+        async function submitAssessment() {
             // First validate student information
             if (!validateStudentInfo()) {
                 return false;
@@ -1525,108 +1586,88 @@
             }
             
             if (isValid) {
-                // Calculate final score
-                const finalScore = calculateFinalScore();
-                const maxScore = 100;
-                const scaledScore = (finalScore / maxScore) * 100;
-                
-                // SCORM INTEGRATION POINT: Report assessment results
-                // Add code here to:
-                // 1. Set cmi.core.score.raw to the raw score
-                // 2. Set cmi.core.score.min to 0
-                // 3. Set cmi.core.score.max to 100
-                // 4. Set cmi.core.lesson_status to "completed"
-                // 5. If using SCORM 2004, set cmi.success_status based on passing score
-                
-                // For demonstration purposes only:
-                console.log(`Assessment submitted with score: ${scaledScore}%`);
-                
-                // Show success message
-                const feedbackContainer = document.getElementById('adjustments-feedback');
-                feedbackContainer.className = 'feedback success';
-                feedbackContainer.textContent = 'Assessment completed successfully! Your responses have been submitted.';
-                feedbackContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                
-                // Set completion date
-                document.getElementById('completion-date').valueAsDate = new Date();
-                
-                // Disable submit button
-                document.querySelector('button.btn-success').disabled = true;
-                
-                // SCORM INTEGRATION POINT: Mark course as complete
-                // Add code here to:
-                // 1. Set cmi.core.lesson_status to "completed" or "passed"
-                // 2. Call Terminate() or Commit() as appropriate
-                
-                // For demonstration purposes only:
-                console.log("Course completed successfully");
-                
-                // In a real application, this would submit the assessment to a server
-                // including the student information
-                const assessmentData = {
-                    studentName: document.getElementById('student-name').value,
-                    studentId: document.getElementById('student-id').value,
-                    startDate: document.getElementById('start-date').value,
-                    completionDate: document.getElementById('completion-date').value,
-                    unitCode: document.getElementById('unit-code').textContent,
-                    unitName: document.getElementById('unit-name').textContent,
-                    // Add other assessment data here
-                };
-                
-                console.log('Assessment data:', assessmentData);
-                
-                setTimeout(() => {
-                    alert('Assessment submitted successfully!');
-                }, 1000);
+                try {
+                    // Get current user
+                    const user = auth.currentUser;
+                    
+                    if (!user) {
+                        throw new Error("You must be logged in to submit an assessment.");
+                    }
+                    
+                    // Prepare assessment data
+                    const assessmentData = {
+                        userId: user.uid,
+                        studentName: document.getElementById('student-name').value,
+                        studentId: document.getElementById('student-id').value,
+                        startDate: document.getElementById('start-date').value,
+                        completionDate: new Date().toISOString(),
+                        unitCode: document.getElementById('unit-code').textContent,
+                        unitName: document.getElementById('unit-name').textContent,
+                        status: 'submitted',
+                        submittedAt: new Date(),
+                        budgetItems: budgetItems,
+                        variances: [
+                            {
+                                itemId: document.getElementById('variance-1').value,
+                                cause: document.getElementById('variance-1-cause').value,
+                                explanation: document.getElementById('variance-1-explanation').value
+                            },
+                            {
+                                itemId: document.getElementById('variance-2').value,
+                                cause: document.getElementById('variance-2-cause').value,
+                                explanation: document.getElementById('variance-2-explanation').value
+                            },
+                            {
+                                itemId: document.getElementById('variance-3').value,
+                                cause: document.getElementById('variance-3-cause').value,
+                                explanation: document.getElementById('variance-3-explanation').value
+                            }
+                        ],
+                        overallAssessment: document.getElementById('overall-assessment').value,
+                        recommendations: [
+                            {
+                                title: document.getElementById('recommendation-1-title').textContent,
+                                details: document.getElementById('recommendation-1-details').value
+                            },
+                            {
+                                title: document.getElementById('recommendation-2-title').textContent,
+                                details: document.getElementById('recommendation-2-details').value
+                            },
+                            {
+                                title: document.getElementById('recommendation-3-title').textContent,
+                                details: document.getElementById('recommendation-3-details').value
+                            }
+                        ],
+                        finalReport: document.getElementById('final-report').value
+                    };
+                    
+                    // Submit to Firebase
+                    // In a real implementation, you would do:
+                    // const docRef = await addDoc(collection(db, "assessments"), assessmentData);
+                    
+                    // For now, just show success message
+                    const feedbackContainer = document.getElementById('adjustments-feedback');
+                    feedbackContainer.className = 'feedback success';
+                    feedbackContainer.textContent = 'Assessment completed successfully! Your responses have been submitted.';
+                    feedbackContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    // Set completion date
+                    document.getElementById('completion-date').valueAsDate = new Date();
+                    
+                    // Disable submit button
+                    document.querySelector('button.btn-success').disabled = true;
+                    
+                    setTimeout(() => {
+                        alert('Assessment submitted successfully!');
+                    }, 1000);
+                    
+                } catch (error) {
+                    console.error("Error submitting assessment:", error);
+                    alert('Error submitting assessment: ' + error.message);
+                }
             }
             
             return isValid;
-        }
-        
-        // Function to calculate the final assessment score
-        function calculateFinalScore() {
-            // This function would implement your scoring logic
-            // For example:
-            let score = 0;
-            
-            // Check budget setup (25 points)
-            if (budgetItems.length >= 5) score += 15;
-            if (hasRequiredCategories()) score += 10;
-            
-            // Check variance analysis (25 points)
-            if (document.getElementById('variance-1').value) score += 5;
-            if (document.getElementById('variance-2').value) score += 5;
-            if (document.getElementById('variance-3').value) score += 5;
-            if (document.getElementById('overall-assessment').value.length > 50) score += 10;
-            
-            // Check recommendations (25 points)
-            if (document.getElementById('recommendation-1-details').value.length > 30) score += 8;
-            if (document.getElementById('recommendation-2-details').value.length > 30) score += 8;
-            if (document.getElementById('recommendation-3-details').value.length > 30) score += 9;
-            
-            // Check final report (25 points)
-            const finalReport = document.getElementById('final-report').value;
-            if (finalReport.length > 200) score += 25;
-            else if (finalReport.length > 100) score += 15;
-            
-            return score;
-        }
-        
-        // Function to check if required categories are included
-        function hasRequiredCategories() {
-            // Check for required income categories
-            const requiredIncomeCategories = ['crop-sales', 'livestock-sales'];
-            const hasRequiredIncome = requiredIncomeCategories.every(
-                category => budgetItems.some(item => item.subcategory === category)
-            );
-            
-            // Check for required expense categories
-            const requiredExpenseCategories = ['seeds-plants', 'fertilizer-chemicals', 'labor-wages'];
-            const hasRequiredExpenses = requiredExpenseCategories.every(
-                category => budgetItems.some(item => item.subcategory === category)
-            );
-            
-            return hasRequiredIncome && hasRequiredExpenses;
         }
         
         // Function to show error and scroll to it
@@ -1703,14 +1744,6 @@
             // Activate the selected tab button
             document.querySelector(`.tab-button[data-tab="${tabId}"]`).classList.add('active');
             
-            // SCORM INTEGRATION POINT: Save bookmark/position
-            // Add code here to:
-            // 1. Save current tab as bookmark in suspend_data
-            // 2. Record progress percentage based on tab position
-            
-            // For demonstration purposes only:
-            console.log(`Navigation to tab: ${tabId}`);
-            
             // Update progress steps
             updateProgressSteps(tabId);
         }
@@ -1740,16 +1773,6 @@
                 }
             });
         }
-        
-        // SCORM INTEGRATION POINT: Save session state on exit
-        // Add code here to:
-        // 1. Save current state to suspend_data if needed
-        // 2. Call Commit() to ensure data is saved
-        // 3. If user is completely exiting, call Terminate()
-        window.addEventListener('beforeunload', function() {
-            // For demonstration purposes only:
-            console.log("Page unloading, session data would be saved here");
-        });
     </script>
 </body>
 </html>

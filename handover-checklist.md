@@ -2,7 +2,6 @@
 
 ## Files Included
 - [x] index.html - Main landing page and course overview
-- [x] lessons.html - Interactive lessons on budget management
 - [x] budget.html - Interactive budget simulator
 - [x] assessments.html - Assessment overview page
 - [x] farm-budget-assessment.html - Main comprehensive assessment
@@ -50,12 +49,11 @@
 
 ## Key Integration Points
 1. **Course Initialization**: At the beginning of each HTML file
-2. **Lesson Tracking**: In lessons.html for tracking lesson completion
-3. **Budget Simulator Tracking**: In budget.html for tracking simulator usage
-4. **Assessment Navigation**: In farm-budget-assessment.html for tracking progress
-5. **Student Information**: In farm-budget-assessment.html for collecting student data
-6. **Assessment Submission**: In farm-budget-assessment.html for reporting scores
-7. **Session Management**: In all HTML files for handling page unload events
+2. **Budget Simulator Tracking**: In budget.html for tracking simulator usage
+3. **Assessment Navigation**: In farm-budget-assessment.html for tracking progress
+4. **Student Information**: In farm-budget-assessment.html for collecting student data
+5. **Assessment Submission**: In farm-budget-assessment.html for reporting scores
+6. **Session Management**: In all HTML files for handling page unload events
 
 ## Technical Requirements
 - The SCORM package should support both SCORM 1.2 and SCORM 2004 if possible

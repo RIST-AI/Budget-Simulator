@@ -5,7 +5,6 @@ AHCBUS408 Budget Master is a comprehensive web-based training tool for agricultu
 
 ## File Structure
 - `index.html` - Main landing page and course overview
-- `lessons.html` - Interactive lessons on budget management
 - `budget.html` - Interactive budget simulator
 - `assessments.html` - Assessment overview page
 - `farm-budget-assessment.html` - Main comprehensive assessment

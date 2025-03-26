@@ -18,6 +18,9 @@
                     <h1>AHCBUS408 Budget Master</h1>
                     <p>Agricultural Budgeting Training Tool</p>
                 </div>
+                <div id="user-status" class="user-status">
+                    <!-- Login status will be shown here -->
+                </div>
             </div>
         </div>
     </header>
@@ -26,9 +29,11 @@
         <div class="container">
             <ul>
                 <li><a href="index.html" class="active">Home</a></li>
-                <li><a href="lessons.html">Lessons</a></li>
                 <li><a href="budget.html">Budget Simulator</a></li>
-                <li><a href="assessments.html">Assessments</a></li>
+                <li><a href="farm-budget-assessment.html">Assessment</a></li>
+                <li id="login-nav-item"><a href="login.html">Login</a></li>
+                <li id="dashboard-nav-item" style="display:none;"><a href="#" id="dashboard-link">Dashboard</a></li>
+                <li id="logout-nav-item" style="display:none;"><a href="#" id="logout-link">Logout</a></li>
             </ul>
         </div>
     </nav>
@@ -38,19 +43,13 @@
             <h2>Master Farm Budget Management</h2>
             <p>Welcome to AHCBUS408 Budget Master, your comprehensive training tool for agricultural budget management.</p>
             <div class="cta-buttons">
-                <a href="lessons.html" class="btn">Start Learning</a>
                 <a href="budget.html" class="btn">Try Budget Simulator</a>
+                <a href="login.html" id="login-cta" class="btn btn-secondary">Login to Access Assessments</a>
+                <a href="#" id="dashboard-cta" style="display:none;" class="btn btn-secondary">Go to Dashboard</a>
             </div>
         </section>
 
         <section class="features">
-            <div class="feature-card">
-                <div class="feature-icon">📚</div>
-                <h3>Interactive Lessons</h3>
-                <p>Learn budget management concepts through structured, interactive lessons designed for agricultural contexts.</p>
-                <a href="lessons.html" class="btn btn-secondary">View Lessons</a>
-            </div>
-            
             <div class="feature-card">
                 <div class="feature-icon">💰</div>
                 <h3>Budget Simulator</h3>
@@ -60,9 +59,9 @@
             
             <div class="feature-card">
                 <div class="feature-icon">📝</div>
-                <h3>Assessments</h3>
-                <p>Test your knowledge and skills with practical assessments that simulate real-world farm budget scenarios.</p>
-                <a href="assessments.html" class="btn btn-secondary">Take Assessment</a>
+                <h3>Budget Assessment</h3>
+                <p>Test your knowledge and skills with a practical assessment that simulates a real-world farm budget scenario.</p>
+                <a href="farm-budget-assessment.html" class="btn btn-secondary">Take Assessment</a>
             </div>
         </section>
 
@@ -97,15 +96,62 @@
         </div>
     </footer>
 
-    <script>
-        // SCORM INTEGRATION POINT: Initialize SCORM API connection
-        // Add code here to:
-        // 1. Detect SCORM API
-        // 2. Initialize connection
-        // 3. Set lesson status to "incomplete" if not already started
-        // 4. Load any saved bookmark or suspend data
+    <script type="module">
+        import { auth, onAuthStateChanged, signOut, db, doc, getDoc } from './js/firebase-config.js';
         
+        // Check if user is already logged in
         document.addEventListener('DOMContentLoaded', function() {
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    // User is signed in - show content and update UI
+                    document.getElementById('login-nav-item').style.display = 'none';
+                    document.getElementById('dashboard-nav-item').style.display = 'inline-block';
+                    document.getElementById('logout-nav-item').style.display = 'inline-block';
+                    document.getElementById('login-cta').style.display = 'none';
+                    document.getElementById('dashboard-cta').style.display = 'inline-block';
+                    
+                    // Set user status
+                    document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
+                    
+                    // Check user role for dashboard link
+                    try {
+                        const userDoc = await getDoc(doc(db, 'users', user.uid));
+                        if (userDoc.exists()) {
+                            const role = userDoc.data().role;
+                            if (role === 'trainer') {
+                                document.getElementById('dashboard-link').href = 'trainer-dashboard.html';
+                                document.getElementById('dashboard-cta').href = 'trainer-dashboard.html';
+                            } else {
+                                document.getElementById('dashboard-link').href = 'student-dashboard.html';
+                                document.getElementById('dashboard-cta').href = 'student-dashboard.html';
+                            }
+                        }
+                    } catch (error) {
+                        console.error("Error checking user role:", error);
+                    }
+                } else {
+                    // User is not signed in - show login options
+                    document.getElementById('login-nav-item').style.display = 'inline-block';
+                    document.getElementById('dashboard-nav-item').style.display = 'none';
+                    document.getElementById('logout-nav-item').style.display = 'none';
+                    document.getElementById('login-cta').style.display = 'inline-block';
+                    document.getElementById('dashboard-cta').style.display = 'none';
+                    document.getElementById('user-status').innerHTML = '';
+                }
+            });
+            
+            // Logout functionality
+            document.getElementById('logout-link').addEventListener('click', function(e) {
+                e.preventDefault();
+                signOut(auth).then(() => {
+                    // Sign-out successful
+                    window.location.href = 'login.html';
+                }).catch((error) => {
+                    // An error happened
+                    console.error("Error signing out:", error);
+                });
+            });
+
             // Make navigation more touch-friendly
             const navItems = document.querySelectorAll('nav a');
             
@@ -132,23 +178,13 @@
             // Small delay to allow the browser to complete the orientation change
             setTimeout(function() {
                 // Adjust any scrollable containers
-                const scrollContainers = document.querySelectorAll('.budget-grid, .lesson-filters, .assessment-filters');
+                const scrollContainers = document.querySelectorAll('.budget-grid, .assessment-filters');
                 scrollContainers.forEach(container => {
                     if (container) {
                         container.style.maxWidth = window.innerWidth + 'px';
                     }
                 });
             }, 200);
-        });
-        
-        // SCORM INTEGRATION POINT: Save session state on exit
-        // Add code here to:
-        // 1. Save current state to suspend_data if needed
-        // 2. Call Commit() to ensure data is saved
-        // 3. If user is completely exiting, call Terminate()
-        window.addEventListener('beforeunload', function() {
-            // For demonstration purposes only:
-            console.log("Page unloading, session data would be saved here");
         });
     </script>
 </body>
