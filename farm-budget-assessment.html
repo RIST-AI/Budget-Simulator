@@ -266,6 +266,11 @@
                 grid-template-columns: 1fr;
             }
         }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -301,7 +306,7 @@
     <main class="container">
         <div class="assessment-header">
             <h2>Farm Budget Management Assessment</h2>
-            <p>Apply your knowledge to create, monitor, analyze, and adjust a farm budget based on a comprehensive case scenario.</p>
+            <p>Apply your knowledge to create, monitor, analyse, and adjust a farm budget based on a comprehensive case scenario.</p>
             
             <div class="assessment-info">
                 <div>
@@ -336,7 +341,7 @@
                 </div>
                 <div class="progress-step" data-step="3">
                     3
-                    <span class="step-label">Analyze Variances</span>
+                    <span class="step-label">Analyse Variances</span>
                 </div>
                 <div class="progress-step" data-step="4">
                     4
@@ -354,16 +359,16 @@
             
             <div id="instructions" class="tab-content active">
                 <h3>Assessment Instructions</h3>
-                <p>Welcome to the Farm Budget Management Assessment. In this assessment, you will demonstrate your ability to create, monitor, analyze, and adjust a farm budget.</p>
+                <p>Welcome to the Farm Budget Management Assessment. In this assessment, you will demonstrate your ability to create, monitor, analyse, and adjust a farm budget.</p>
                 
                 <h4>Scenario</h4>
-                <p>You are the manager of Green Valley Farm, a mixed farming operation that produces crops (wheat, corn, and soybeans) and raises livestock (beef cattle). The farm owner has asked you to prepare a quarterly budget, track actual performance, analyze variances, and make recommendations for improvements.</p>
+                <p>You are the manager of Green Valley Farm, a mixed farming operation that produces crops (wheat, corn, and soybeans) and raises livestock (beef cattle). The farm owner has asked you to prepare a quarterly budget, track actual performance, analyse variances, and make recommendations for improvements.</p>
                 
                 <h4>Assessment Tasks</h4>
                 <ol>
                     <li><strong>Budget Setup:</strong> Create a quarterly budget for the farm with appropriate income and expense categories.</li>
                     <li><strong>Track Actuals:</strong> Record the actual income and expenses for the quarter.</li>
-                    <li><strong>Variance Analysis:</strong> Analyze the variances between budgeted and actual figures.</li>
+                    <li><strong>Variance Analysis:</strong> Analyse the variances between budgeted and actual figures.</li>
                     <li><strong>Adjustments:</strong> Make recommendations for improving budget performance in future periods.</li>
                 </ol>
                 
@@ -471,7 +476,7 @@
                 </table>
                 
                 <div id="budget-setup-feedback" class="feedback info">
-                    <p>Your budget should include at least 5 items, with both income and expense categories. Be sure to include key farm income sources (crops, livestock) and major expense categories (seeds, fertilizer, labor, etc.).</p>
+                    <p>Your budget should include at least 5 items, with both income and expense categories. Consider including key farm income sources (crops, livestock) and major expense categories (seeds, fertiliser, labour, etc.).</p>
                 </div>
                 
                 <div class="btn-group">
@@ -532,7 +537,7 @@
             
             <div id="variance-analysis" class="tab-content">
                 <h3>Variance Analysis</h3>
-                <p>Analyze the variances between your budgeted and actual figures. Identify the most significant variances and explain their causes.</p>
+                <p>Analyse the variances between your budgeted and actual figures. Identify the most significant variances and explain their causes.</p>
                 
                 <h4>Variance Summary</h4>
                 <div id="variance-summary" class="feedback info">
@@ -540,7 +545,7 @@
                 </div>
                 
                 <h4>Significant Variances</h4>
-                <p>Select the three most significant variances and analyze their causes:</p>
+                <p>Select the three most significant variances and analyse their causes:</p>
                 
                 <div class="variance-selection">
                     <div class="variance-item">
@@ -638,7 +643,7 @@
                 </div>
                 
                 <div id="variance-analysis-feedback" class="feedback info">
-                    <p>Analyze the most significant variances and provide thoughtful explanations for their causes. Your analysis should consider both internal and external factors that may have affected the budget performance.</p>
+                    <p>Analyse the most significant variances and provide thoughtful explanations for their causes. Your analysis should consider both internal and external factors that may have affected the budget performance.</p>
                 </div>
                 
                 <div class="btn-group">
@@ -681,7 +686,7 @@
                 <h4>Final Budget Report</h4>
                 <div class="form-group">
                     <label for="final-report">Prepare a final budget report for the farm owner:</label>
-                    <textarea id="final-report" rows="8" placeholder="Summarize the budget performance, key variances, and your recommendations for future budget periods. This should be a comprehensive report that the farm owner can use to make informed decisions."></textarea>
+                    <textarea id="final-report" rows="8" placeholder="Summarise the budget performance, key variances, and your recommendations for future budget periods. This should be a comprehensive report that the farm owner can use to make informed decisions."></textarea>
                 </div>
                 
                 <div id="adjustments-feedback" class="feedback info">
@@ -784,7 +789,7 @@
         
         // Function to initialize the page
         function initializePage() {
-            console.log("Initializing assessment page");
+            console.log("Initialising assessment page");
             
             // Set up subcategory options
             incomeSubcategories = [
@@ -797,12 +802,12 @@
             
             expenseSubcategories = [
                 { value: 'seeds-plants', label: 'Seeds & Plants' },
-                { value: 'fertilizer-chemicals', label: 'Fertilizer & Chemicals' },
+                { value: 'fertiliser-chemicals', label: 'Fertiliser & Chemicals' },
                 { value: 'feed', label: 'Animal Feed' },
                 { value: 'veterinary', label: 'Veterinary & Medicine' },
                 { value: 'fuel', label: 'Fuel & Utilities' },
                 { value: 'repairs', label: 'Repairs & Maintenance' },
-                { value: 'labor-wages', label: 'Labor & Wages' },
+                { value: 'labour-wages', label: 'Labour & Wages' },
                 { value: 'rent-lease', label: 'Rent & Leases' },
                 { value: 'insurance', label: 'Insurance' },
                 { value: 'taxes', label: 'Taxes' },
@@ -1078,9 +1083,9 @@
             // Check if at least 5 budget items have been added
             if (budgetItems.length < 5) {
                 feedbackContainer.className = 'feedback warning';
-                feedbackContainer.textContent = 'You should include at least 5 budget items to continue. Remember to include all major income and expense categories.';
+                feedbackContainer.textContent = 'It is recommended to include at least 5 budget items. Consider adding more items before continuing.';
                 feedbackContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                isValid = false;
+                // Not setting isValid to false, making it a recommendation only
             }
             
             // Check if both income and expense items are included
@@ -1088,40 +1093,46 @@
             const hasExpense = budgetItems.some(item => item.category === 'expense');
             
             if (!hasIncome || !hasExpense) {
-                feedbackContainer.className = 'feedback error';
-                feedbackContainer.textContent = 'Your budget must include both income and expense items.';
+                feedbackContainer.className = 'feedback warning';
+                feedbackContainer.textContent = 'Your budget should include both income and expense items for a complete assessment.';
                 feedbackContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                isValid = false;
+                // Not setting isValid to false, making it a recommendation only
             }
             
-            // Check for required income categories
-            const requiredIncomeCategories = ['crop-sales', 'livestock-sales'];
-            const missingIncomeCategories = requiredIncomeCategories.filter(
+            // Check for recommended income categories
+            const recommendedIncomeCategories = ['crop-sales', 'livestock-sales'];
+            const missingIncomeCategories = recommendedIncomeCategories.filter(
                 category => !budgetItems.some(item => item.subcategory === category)
             );
             
             if (missingIncomeCategories.length > 0) {
-                feedbackContainer.className = 'feedback warning';
-                feedbackContainer.textContent = `Remember to include all key income sources. Missing: ${missingIncomeCategories.map(c => c.replace('-', ' ')).join(', ')}.`;
+                feedbackContainer.className = 'feedback info';
+                feedbackContainer.textContent = `Consider including these key income sources: ${missingIncomeCategories.map(c => c.replace('-', ' ')).join(', ')}.`;
                 feedbackContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                isValid = false;
+                // Not setting isValid to false, making it a recommendation only
             }
             
-            // Check for required expense categories
-            const requiredExpenseCategories = ['seeds-plants', 'fertilizer-chemicals', 'labor-wages'];
-            const missingExpenseCategories = requiredExpenseCategories.filter(
+            // Check for recommended expense categories
+            const recommendedExpenseCategories = ['seeds-plants', 'fertiliser-chemicals', 'labour-wages'];
+            const missingExpenseCategories = recommendedExpenseCategories.filter(
                 category => !budgetItems.some(item => item.subcategory === category)
             );
             
             if (missingExpenseCategories.length > 0) {
-                feedbackContainer.className = 'feedback warning';
-                feedbackContainer.textContent = `Remember to include all key expense categories. Missing: ${missingExpenseCategories.map(c => c.replace('-', ' ')).join(', ')}.`;
+                feedbackContainer.className = 'feedback info';
+                feedbackContainer.textContent = `Consider including these key expense categories: ${missingExpenseCategories.map(c => c.replace('-', ' ')).join(', ')}.`;
                 feedbackContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                isValid = false;
+                // Not setting isValid to false, making it a recommendation only
             }
             
-            // If valid, proceed to next tab and populate actuals table
-            if (isValid) {
+            // Minimum requirement: at least one budget item
+            if (budgetItems.length === 0) {
+                feedbackContainer.className = 'feedback error';
+                feedbackContainer.textContent = 'You must add at least one budget item to continue.';
+                feedbackContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                isValid = false;
+            } else {
+                // If valid, proceed to next tab and populate actuals table
                 populateActualsTable();
                 nextTab('track-actuals');
             }
@@ -1397,7 +1408,7 @@
                 const varianceDirection = item.variance >= 0 ? 'positive' : 'negative';
                 const impact = (item.category === 'income' && item.variance >= 0) || 
                               (item.category === 'expense' && item.variance >= 0) ? 
-                              'favorable' : 'unfavorable';
+                              'favourable' : 'unfavourable';
                 
                 summaryText += `<li><strong>${item.name}:</strong> ${varianceDirection} variance of ${Math.abs(item.variancePercent).toFixed(1)}% (${formatCurrency(Math.abs(item.variance))}), which has an ${impact} impact on the budget.</li>`;
             }
@@ -1424,95 +1435,19 @@
             clearError('variance-3-explanation');
             clearError('overall-assessment');
             
-            // Check if all variance items are selected
+            // Check if at least one variance item is selected and explained
             const variance1 = document.getElementById('variance-1').value;
-            const variance2 = document.getElementById('variance-2').value;
-            const variance3 = document.getElementById('variance-3').value;
-            
-            if (!variance1) {
-                isValid = false;
-                showErrorAndScrollTo('variance-1', 'Please select the most significant variance.');
-            }
-            
-            if (!variance2) {
-                isValid = false;
-                if (isValid) { // Only scroll to this if it's the first error
-                    showErrorAndScrollTo('variance-2', 'Please select the second most significant variance.');
-                } else {
-                    document.getElementById('variance-2').classList.add('error-input');
-                }
-            }
-            
-            if (!variance3) {
-                isValid = false;
-                if (isValid) { // Only scroll to this if it's the first error
-                    showErrorAndScrollTo('variance-3', 'Please select the third most significant variance.');
-                } else {
-                    document.getElementById('variance-3').classList.add('error-input');
-                }
-            }
-            
-            // Check if all causes are selected
             const cause1 = document.getElementById('variance-1-cause').value;
-            const cause2 = document.getElementById('variance-2-cause').value;
-            const cause3 = document.getElementById('variance-3-cause').value;
+            const explanation1 = document.getElementById('variance-1-explanation').value;
             
-            if (!cause1) {
+            if (!variance1 || !cause1 || !explanation1) {
                 isValid = false;
-                if (isValid) { // Only scroll to this if it's the first error
+                if (!variance1) {
+                    showErrorAndScrollTo('variance-1', 'Please select at least one significant variance.');
+                } else if (!cause1) {
                     showErrorAndScrollTo('variance-1-cause', 'Please select a cause for this variance.');
                 } else {
-                    document.getElementById('variance-1-cause').classList.add('error-input');
-                }
-            }
-            
-            if (!cause2) {
-                isValid = false;
-                if (isValid) { // Only scroll to this if it's the first error
-                    showErrorAndScrollTo('variance-2-cause', 'Please select a cause for this variance.');
-                } else {
-                    document.getElementById('variance-2-cause').classList.add('error-input');
-                }
-            }
-            
-            if (!cause3) {
-                isValid = false;
-                if (isValid) { // Only scroll to this if it's the first error
-                    showErrorAndScrollTo('variance-3-cause', 'Please select a cause for this variance.');
-                } else {
-                    document.getElementById('variance-3-cause').classList.add('error-input');
-                }
-            }
-            
-            // Check if all explanations are provided
-            const explanation1 = document.getElementById('variance-1-explanation').value;
-            const explanation2 = document.getElementById('variance-2-explanation').value;
-            const explanation3 = document.getElementById('variance-3-explanation').value;
-            
-            if (!explanation1) {
-                isValid = false;
-                if (isValid) { // Only scroll to this if it's the first error
                     showErrorAndScrollTo('variance-1-explanation', 'Please provide an explanation for this variance.');
-                } else {
-                    document.getElementById('variance-1-explanation').classList.add('error-input');
-                }
-            }
-            
-            if (!explanation2) {
-                isValid = false;
-                if (isValid) { // Only scroll to this if it's the first error
-                    showErrorAndScrollTo('variance-2-explanation', 'Please provide an explanation for this variance.');
-                } else {
-                    document.getElementById('variance-2-explanation').classList.add('error-input');
-                }
-            }
-            
-            if (!explanation3) {
-                isValid = false;
-                if (isValid) { // Only scroll to this if it's the first error
-                    showErrorAndScrollTo('variance-3-explanation', 'Please provide an explanation for this variance.');
-                } else {
-                    document.getElementById('variance-3-explanation').classList.add('error-input');
                 }
             }
             
@@ -1527,18 +1462,30 @@
                 }
             }
             
-            // Check for duplicate selections
-            if (variance1 && (variance1 === variance2 || variance1 === variance3)) {
+            // Check for duplicate selections (only if multiple selections are made)
+            const variance2 = document.getElementById('variance-2').value;
+            const variance3 = document.getElementById('variance-3').value;
+            
+            if (variance1 && variance2 && variance1 === variance2) {
                 isValid = false;
-                showErrorAndScrollTo('variance-1', 'Please select different variances for each item.');
+                showErrorAndScrollTo('variance-2', 'Please select different variances for each item.');
             }
             
-            if (variance2 && variance2 === variance3) {
+            if (variance1 && variance3 && variance1 === variance3) {
                 isValid = false;
                 if (isValid) { // Only scroll to this if it's the first error
-                    showErrorAndScrollTo('variance-2', 'Please select different variances for each item.');
+                    showErrorAndScrollTo('variance-3', 'Please select different variances for each item.');
                 } else {
-                    document.getElementById('variance-2').classList.add('error-input');
+                    document.getElementById('variance-3').classList.add('error-input');
+                }
+            }
+            
+            if (variance2 && variance3 && variance2 === variance3) {
+                isValid = false;
+                if (isValid) { // Only scroll to this if it's the first error
+                    showErrorAndScrollTo('variance-3', 'Please select different variances for each item.');
+                } else {
+                    document.getElementById('variance-3').classList.add('error-input');
                 }
             }
             
@@ -1593,39 +1540,17 @@
             
             let isValid = true;
             
-            // Check if all recommendation details are provided
+            // Check if at least one recommendation is provided
             const details1 = document.getElementById('recommendation-1-details').value;
-            const details2 = document.getElementById('recommendation-2-details').value;
-            const details3 = document.getElementById('recommendation-3-details').value;
             
             // Clear previous errors
             clearError('recommendation-1-details');
-            clearError('recommendation-2-details');
-            clearError('recommendation-3-details');
             clearError('final-report');
             
-            // Validate recommendations
+            // Validate at least one recommendation
             if (!details1) {
                 isValid = false;
-                showErrorAndScrollTo('recommendation-1-details', 'Please provide details for this recommendation.');
-            }
-            
-            if (!details2) {
-                isValid = false;
-                if (isValid) {
-                    showErrorAndScrollTo('recommendation-2-details', 'Please provide details for this recommendation.');
-                } else {
-                    document.getElementById('recommendation-2-details').classList.add('error-input');
-                }
-            }
-            
-            if (!details3) {
-                isValid = false;
-                if (isValid) {
-                    showErrorAndScrollTo('recommendation-3-details', 'Please provide details for this recommendation.');
-                } else {
-                    document.getElementById('recommendation-3-details').classList.add('error-input');
-                }
+                showErrorAndScrollTo('recommendation-1-details', 'Please provide at least one recommendation.');
             }
             
             // Validate final report
@@ -1869,12 +1794,5 @@
         window.showErrorAndScrollTo = showErrorAndScrollTo;
         window.clearError = clearError;
     </script>
-    
-    <style>
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-    </style>
 </body>
 </html>
