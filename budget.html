@@ -178,5 +178,21 @@
     </footer>
 
     <script type="module" src="js/budget.js"></script>
+    <script type="module">
+        // Add this to your page for debugging
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const { getCurrentUser } = await import('./js/auth.js');
+                const user = await getCurrentUser();
+                console.log("Current user:", user);
+                if (user) {
+                    console.log("User role:", user.role);
+                    console.log("User roles array:", user.roles);
+                }
+            } catch (error) {
+                console.error("Debug error:", error);
+            }
+        });
+    </script>
 </body>
 </html>
