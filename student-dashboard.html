@@ -172,16 +172,24 @@
     <script type="module">
         import { requireRole, initAuth } from './js/auth.js';
         
-        // Initialize authentication
-        initAuth();
-        
-        // Ensure user is authenticated and has student role
+        // Initialize authentication with error handling
         document.addEventListener('DOMContentLoaded', async () => {
-          const user = await requireRole('student');
-          if (user) {
-            // User is authenticated and has student role
-            console.log("Student authenticated:", user.email);
-            // Initialize student dashboard functionality here
+          try {
+            // First ensure navigation elements are properly set up
+            initAuth();
+            
+            // Then check role authorization
+            const user = await requireRole('student');
+            if (user) {
+              // User is authenticated and has student role
+              console.log("Student authenticated:", user.email);
+              
+              // Initialize student dashboard functionality here
+              // For example, load student data, assessments, etc.
+            }
+          } catch (error) {
+            console.error("Authentication error:", error);
+            // Handle error appropriately
           }
         });
       </script>
@@ -208,16 +216,16 @@
         <div class="container">
           <ul>
             <li><a href="index.html">Home</a></li>
-            <li class="auth-required" style="display:none;"><a href="budget.html">Budget Simulator</a></li>
-            <li class="auth-required" style="display:none;"><a href="farm-budget-assessment.html">Assessment</a></li>
+            <li class="auth-required"><a href="budget.html">Budget Simulator</a></li>
+            <li class="auth-required"><a href="farm-budget-assessment.html">Assessment</a></li>
             
             <!-- Student-specific navigation -->
-            <li class="student-only" style="display:none;"><a href="student-dashboard.html">My Dashboard</a></li>
-            <li class="student-only" style="display:none;"><a href="my-assessments.html">My Assessments</a></li>
+            <li class="student-only"><a href="student-dashboard.html">My Dashboard</a></li>
+            <li class="student-only"><a href="view-assessment.html">My Assessments</a></li>
             
             <!-- Trainer-specific navigation -->
-            <li class="trainer-only" style="display:none;"><a href="trainer-dashboard.html">Trainer Dashboard</a></li>
-            <li class="trainer-only" style="display:none;"><a href="review-assessments.html">Review Assessments</a></li>
+            <li class="trainer-only"><a href="trainer-dashboard.html">Trainer Dashboard</a></li>
+            <li class="trainer-only"><a href="review-assessment.html">Review Assessments</a></li>
             
             <!-- Authentication links -->
             <li id="login-nav-item"><a href="login.html">Login</a></li>

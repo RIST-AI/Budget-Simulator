@@ -80,49 +80,50 @@ function logoutUser() {
 }
 
 // Update UI based on authentication state
+// Update UI based on authentication state
 async function updateNavigation() {
-  const user = await getCurrentUser();
-  
-  const loginItem = document.getElementById('login-nav-item');
-  const logoutItem = document.getElementById('logout-nav-item');
-  const userStatus = document.getElementById('user-status');
-  const studentItems = document.querySelectorAll('.student-only');
-  const trainerItems = document.querySelectorAll('.trainer-only');
-  const dashboardLink = document.getElementById('dashboard-link');
-  const authRequiredItems = document.querySelectorAll('.auth-required');
-  
-  if (user) {
-    // User is logged in
-    if (loginItem) loginItem.style.display = 'none';
-    if (logoutItem) logoutItem.style.display = 'inline-block';
-    if (userStatus) userStatus.innerHTML = `Logged in as: ${user.email}`;
+    const user = await getCurrentUser();
     
-    // Show all auth-required elements
-    authRequiredItems.forEach(item => item.style.display = '');
+    const loginItem = document.getElementById('login-nav-item');
+    const logoutItem = document.getElementById('logout-nav-item');
+    const userStatus = document.getElementById('user-status');
+    const studentItems = document.querySelectorAll('.student-only');
+    const trainerItems = document.querySelectorAll('.trainer-only');
+    const dashboardLink = document.getElementById('dashboard-link');
+    const authRequiredItems = document.querySelectorAll('.auth-required');
     
-    if (user.role === 'student') {
-      // Show student items, hide trainer items
-      studentItems.forEach(item => item.style.display = '');
-      trainerItems.forEach(item => item.style.display = 'none');
-      if (dashboardLink) dashboardLink.href = 'student-dashboard.html';
-    } else if (user.role === 'trainer') {
-      // Show trainer items, hide student items
-      trainerItems.forEach(item => item.style.display = '');
+    if (user) {
+      // User is logged in
+      if (loginItem) loginItem.style.display = 'none';
+      if (logoutItem) logoutItem.style.display = 'inline-block';
+      if (userStatus) userStatus.innerHTML = `Logged in as: ${user.email}`;
+      
+      // Show all auth-required elements
+      authRequiredItems.forEach(item => item.style.display = '');
+      
+      if (user.role === 'student') {
+        // Show student items, hide trainer items
+        studentItems.forEach(item => item.style.display = '');
+        trainerItems.forEach(item => item.style.display = 'none');
+        if (dashboardLink) dashboardLink.href = 'student-dashboard.html';
+      } else if (user.role === 'trainer') {
+        // Show trainer items, hide student items
+        trainerItems.forEach(item => item.style.display = '');
+        studentItems.forEach(item => item.style.display = 'none');
+        if (dashboardLink) dashboardLink.href = 'trainer-dashboard.html';
+      }
+    } else {
+      // User is not logged in
+      if (loginItem) loginItem.style.display = '';
+      if (logoutItem) logoutItem.style.display = 'none';
+      if (userStatus) userStatus.innerHTML = '';
+      
+      // Hide role-specific and auth-required items
       studentItems.forEach(item => item.style.display = 'none');
-      if (dashboardLink) dashboardLink.href = 'trainer-dashboard.html';
+      trainerItems.forEach(item => item.style.display = 'none');
+      authRequiredItems.forEach(item => item.style.display = 'none');
     }
-  } else {
-    // User is not logged in
-    if (loginItem) loginItem.style.display = '';
-    if (logoutItem) logoutItem.style.display = 'none';
-    if (userStatus) userStatus.innerHTML = '';
-    
-    // Hide role-specific and auth-required items
-    studentItems.forEach(item => item.style.display = 'none');
-    trainerItems.forEach(item => item.style.display = 'none');
-    authRequiredItems.forEach(item => item.style.display = 'none');
   }
-}
 
 // Initialize authentication on page load
 function initAuth() {
