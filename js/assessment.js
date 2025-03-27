@@ -1,7 +1,7 @@
 // js/assessment.js
 
-// Import Firebase modules
-import { auth, onAuthStateChanged, signOut, db, doc, getDoc, setDoc, collection, addDoc, serverTimestamp } from './firebase-config.js';
+// Import Firebase modules - removed serverTimestamp
+import { auth, onAuthStateChanged, signOut, db, doc, getDoc, setDoc, collection, addDoc } from './firebase-config.js';
 import { getCurrentUser, updateNavigation } from './auth.js';
 
 // Global variables
@@ -405,7 +405,7 @@ async function saveAssessment() {
             scenario: userScenario,
             budget: budget,
             answers: answers,
-            lastSaved: serverTimestamp(),
+            lastSaved: new Date(), // Changed from serverTimestamp()
             submitted: false
         };
         
@@ -458,7 +458,7 @@ async function submitAssessment() {
             scenario: userScenario,
             budget: budget,
             answers: answers,
-            submittedAt: serverTimestamp(),
+            submittedAt: new Date(), // Changed from serverTimestamp()
             submitted: true,
             status: 'submitted',
             feedback: null,
