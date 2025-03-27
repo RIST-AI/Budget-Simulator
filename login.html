@@ -3,10 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <meta name="description" content="Login to AHCBUS408 Budget Master - Agricultural Budgeting Training Tool">
-    <title>Login - AHCBUS408 Budget Master</title>
+    <title>Login - RIST Budget Master</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" href="images/RIST Brandmark - Navy Circle.png" type="image/png">
+    <style>
+        .login-container {
+            max-width: 400px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .remember-me {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .remember-me input {
+            margin-right: 10px;
+        }
+        
+        .btn-login {
+            background-color: #1a3a5f;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        
+        .btn-login:hover {
+            background-color: #0f2a4a;
+        }
+        
+        .login-error {
+            color: red;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+    </style>
+    <script type="module">
+      import { redirectIfLoggedIn } from './js/auth.js';
+      
+      document.addEventListener('DOMContentLoaded', async () => {
+        // Check if already logged in
+        await redirectIfLoggedIn();
+      });
+    </script>
 </head>
 <body>
     <header>
@@ -22,58 +89,42 @@
             </div>
         </div>
     </header>
+
     <nav>
         <div class="container">
-          <ul>
-            <li><a href="index.html">Home</a></li>
-            <li class="auth-required" style="display:none;"><a href="budget.html">Budget Simulator</a></li>
-            <li class="auth-required" style="display:none;"><a href="farm-budget-assessment.html">Assessment</a></li>
-            
-            <!-- Student-specific navigation -->
-            <li class="student-only" style="display:none;"><a href="student-dashboard.html">My Dashboard</a></li>
-            <li class="student-only" style="display:none;"><a href="my-assessments.html">My Assessments</a></li>
-            
-            <!-- Trainer-specific navigation -->
-            <li class="trainer-only" style="display:none;"><a href="trainer-dashboard.html">Trainer Dashboard</a></li>
-            <li class="trainer-only" style="display:none;"><a href="review-assessments.html">Review Assessments</a></li>
-            
-            <!-- Authentication links -->
-            <li id="login-nav-item"><a href="login.html">Login</a></li>
-            <li id="logout-nav-item" style="display:none;"><a href="#" id="logout-link">Logout</a></li>
-          </ul>
-          <div id="user-status" class="user-status"></div>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li id="login-nav-item"><a href="login.html">Login</a></li>
+            </ul>
         </div>
-      </nav>
+    </nav>
 
     <main class="container">
-        <div class="auth-container">
+        <section class="login-container">
             <h2>Login</h2>
             <p>Please enter your credentials to access the Budget Master tool.</p>
             
-            <div id="login-error" class="feedback error" style="display: none;">
-                <!-- Error messages will be shown here -->
-            </div>
-            
             <form id="login-form">
                 <div class="form-group">
-                    <label for="email">Email:</label>
-                    <input type="email" id="email" required>
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="password">Password:</label>
-                    <input type="password" id="password" required>
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
                 </div>
                 
-                <div class="form-group">
-                    <button type="submit">Login</button>
+                <div class="remember-me">
+                    <input type="checkbox" id="remember-me" name="remember-me">
+                    <label for="remember-me">Remember me</label>
                 </div>
+                
+                <button type="submit" class="btn-login">Login</button>
+                
+                <div id="login-error" class="login-error"></div>
             </form>
-            
-            <div class="auth-links">
-                <p>Don't have an account? <a href="register.html">Register here</a></p>
-            </div>
-        </div>
+        </section>
     </main>
 
     <footer>
@@ -94,63 +145,56 @@
     </footer>
 
     <script type="module">
-        import { auth, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, db, doc, getDoc } from './js/firebase-config.js';
-        import { redirectIfLoggedIn } from './js/auth.js';
+    import { auth, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, db, doc, getDoc } from './js/firebase-config.js';
+    
+    document.getElementById('login-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
         
-        document.addEventListener('DOMContentLoaded', async () => {
-          // Check if already logged in
-          const alreadyLoggedIn = await redirectIfLoggedIn();
-          if (alreadyLoggedIn) return;
-          
-          // Set up login form
-          document.getElementById('login-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const rememberMe = document.getElementById('remember-me').checked;
-            
-            try {
-              // Set persistence based on remember me checkbox
-              if (rememberMe) {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const rememberMeElement = document.getElementById('remember-me');
+        const rememberMe = rememberMeElement ? rememberMeElement.checked : false;
+        
+        try {
+            // Set persistence based on remember me checkbox
+            if (rememberMe) {
                 await setPersistence(auth, browserLocalPersistence);
-              }
-              
-              // Sign in user
-              const userCredential = await signInWithEmailAndPassword(auth, email, password);
-              const user = userCredential.user;
-              
-              // Get user role from Firestore
-              const userDoc = await getDoc(doc(db, 'users', user.uid));
-              
-              if (userDoc.exists()) {
+            }
+            
+            // Sign in user
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+            
+            // Get user role from Firestore
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            
+            if (userDoc.exists()) {
                 const userData = userDoc.data();
                 const role = userData.role;
                 
                 // Check if there's a redirect URL stored
                 const redirectUrl = sessionStorage.getItem('redirectUrl');
                 if (redirectUrl) {
-                  sessionStorage.removeItem('redirectUrl');
-                  window.location.href = redirectUrl;
+                    sessionStorage.removeItem('redirectUrl');
+                    window.location.href = redirectUrl;
                 } else {
-                  // No redirect URL, go to dashboard based on role
-                  if (role === 'student') {
-                    window.location.href = 'student-dashboard.html';
-                  } else if (role === 'trainer') {
-                    window.location.href = 'trainer-dashboard.html';
-                  } else {
-                    window.location.href = 'index.html';
-                  }
+                    // No redirect URL, go to dashboard based on role
+                    if (role === 'student') {
+                        window.location.href = 'student-dashboard.html';
+                    } else if (role === 'trainer') {
+                        window.location.href = 'trainer-dashboard.html';
+                    } else {
+                        window.location.href = 'index.html';
+                    }
                 }
-              } else {
+            } else {
                 document.getElementById('login-error').textContent = "Account setup incomplete. Please contact support.";
-              }
-            } catch (error) {
-              console.error("Login error:", error);
-              document.getElementById('login-error').textContent = "Invalid email or password. Please try again.";
             }
-          });
-        });
-      </script>
+        } catch (error) {
+            console.error("Login error:", error);
+            document.getElementById('login-error').textContent = "Invalid email or password. Please try again.";
+        }
+    });
+    </script>
 </body>
 </html>
