@@ -24,13 +24,26 @@
     </header>
     <nav>
         <div class="container">
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="login.html" class="active">Login</a></li>
-                <li><a href="register.html">Register</a></li>
-            </ul>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li class="auth-required" style="display:none;"><a href="budget.html">Budget Simulator</a></li>
+            <li class="auth-required" style="display:none;"><a href="farm-budget-assessment.html">Assessment</a></li>
+            
+            <!-- Student-specific navigation -->
+            <li class="student-only" style="display:none;"><a href="student-dashboard.html">My Dashboard</a></li>
+            <li class="student-only" style="display:none;"><a href="my-assessments.html">My Assessments</a></li>
+            
+            <!-- Trainer-specific navigation -->
+            <li class="trainer-only" style="display:none;"><a href="trainer-dashboard.html">Trainer Dashboard</a></li>
+            <li class="trainer-only" style="display:none;"><a href="review-assessments.html">Review Assessments</a></li>
+            
+            <!-- Authentication links -->
+            <li id="login-nav-item"><a href="login.html">Login</a></li>
+            <li id="logout-nav-item" style="display:none;"><a href="#" id="logout-link">Logout</a></li>
+          </ul>
+          <div id="user-status" class="user-status"></div>
         </div>
-    </nav>
+      </nav>
 
     <main class="container">
         <div class="auth-container">
@@ -81,84 +94,63 @@
     </footer>
 
     <script type="module">
-        import { auth, signInWithEmailAndPassword, db, doc, getDoc } from './js/firebase-config.js';
+        import { auth, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, db, doc, getDoc } from './js/firebase-config.js';
+        import { redirectIfLoggedIn } from './js/auth.js';
         
-        // Check if user is already logged in
-        const storedUser = localStorage.getItem('currentUser');
-        if (storedUser) {
-            const storedRole = localStorage.getItem('userRole');
-            if (storedRole === 'trainer') {
-                window.location.href = 'trainer-dashboard.html';
-            } else {
-                window.location.href = 'student-dashboard.html';
-            }
-        }
-        
-        document.getElementById('login-form').addEventListener('submit', async function(e) {
+        document.addEventListener('DOMContentLoaded', async () => {
+          // Check if already logged in
+          const alreadyLoggedIn = await redirectIfLoggedIn();
+          if (alreadyLoggedIn) return;
+          
+          // Set up login form
+          document.getElementById('login-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            
-            // Show loading state
-            const submitButton = document.querySelector('button[type="submit"]');
-            const originalButtonText = submitButton.textContent;
-            submitButton.disabled = true;
-            submitButton.textContent = 'Logging in...';
+            const rememberMe = document.getElementById('remember-me').checked;
             
             try {
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
+              // Set persistence based on remember me checkbox
+              if (rememberMe) {
+                await setPersistence(auth, browserLocalPersistence);
+              }
+              
+              // Sign in user
+              const userCredential = await signInWithEmailAndPassword(auth, email, password);
+              const user = userCredential.user;
+              
+              // Get user role from Firestore
+              const userDoc = await getDoc(doc(db, 'users', user.uid));
+              
+              if (userDoc.exists()) {
+                const userData = userDoc.data();
+                const role = userData.role;
                 
-                // Store user in localStorage for persistence
-                localStorage.setItem('currentUser', JSON.stringify({
-                    uid: user.uid,
-                    email: user.email
-                }));
-                
-                // Get and store user role
-                const userDoc = await getDoc(doc(db, 'users', user.uid));
-                if (userDoc.exists()) {
-                    const role = userDoc.data().role;
-                    localStorage.setItem('userRole', role);
-                    
-                    // Redirect based on role
-                    if (role === 'trainer') {
-                        window.location.href = 'trainer-dashboard.html';
-                    } else {
-                        window.location.href = 'student-dashboard.html';
-                    }
+                // Check if there's a redirect URL stored
+                const redirectUrl = sessionStorage.getItem('redirectUrl');
+                if (redirectUrl) {
+                  sessionStorage.removeItem('redirectUrl');
+                  window.location.href = redirectUrl;
                 } else {
-                    // Default to student if role not found
-                    localStorage.setItem('userRole', 'student');
+                  // No redirect URL, go to dashboard based on role
+                  if (role === 'student') {
                     window.location.href = 'student-dashboard.html';
+                  } else if (role === 'trainer') {
+                    window.location.href = 'trainer-dashboard.html';
+                  } else {
+                    window.location.href = 'index.html';
+                  }
                 }
+              } else {
+                document.getElementById('login-error').textContent = "Account setup incomplete. Please contact support.";
+              }
             } catch (error) {
-                console.error("Login error:", error);
-                document.getElementById('login-error').textContent = getErrorMessage(error.code);
-                document.getElementById('login-error').style.display = 'block';
-                
-                // Reset button
-                submitButton.disabled = false;
-                submitButton.textContent = originalButtonText;
+              console.error("Login error:", error);
+              document.getElementById('login-error').textContent = "Invalid email or password. Please try again.";
             }
+          });
         });
-
-        // Helper function for error messages
-        function getErrorMessage(errorCode) {
-            switch (errorCode) {
-                case 'auth/wrong-password':
-                    return 'Incorrect password. Please try again.';
-                case 'auth/user-not-found':
-                    return 'No account found with this email.';
-                case 'auth/invalid-email':
-                    return 'Invalid email address.';
-                case 'auth/too-many-requests':
-                    return 'Too many failed login attempts. Please try again later.';
-                default:
-                    return 'An error occurred. Please try again.';
-            }
-        }
-    </script>
+      </script>
 </body>
 </html>

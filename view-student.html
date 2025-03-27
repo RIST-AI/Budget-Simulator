@@ -154,6 +154,22 @@
             }
         }
     </style>
+    <script type="module">
+        import { requireRole, initAuth } from './js/auth.js';
+        
+        // Initialize authentication
+        initAuth();
+        
+        // Ensure user is authenticated and has trainer role
+        document.addEventListener('DOMContentLoaded', async () => {
+          const user = await requireRole('trainer');
+          if (user) {
+            // User is authenticated and has trainer role
+            console.log("Trainer authenticated:", user.email);
+            // Initialize trainer-specific functionality here
+          }
+        });
+      </script>
 </head>
 <body>
     <header>
@@ -174,15 +190,26 @@
     </header>
     <nav>
         <div class="container">
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="budget.html">Budget Simulator</a></li>
-                <li><a href="farm-budget-assessment.html">Assessment</a></li>
-                <li id="dashboard-nav-item"><a href="#" id="dashboard-link">Dashboard</a></li>
-                <li id="logout-nav-item"><a href="#" id="logout-link">Logout</a></li>
-            </ul>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li class="auth-required" style="display:none;"><a href="budget.html">Budget Simulator</a></li>
+            <li class="auth-required" style="display:none;"><a href="farm-budget-assessment.html">Assessment</a></li>
+            
+            <!-- Student-specific navigation -->
+            <li class="student-only" style="display:none;"><a href="student-dashboard.html">My Dashboard</a></li>
+            <li class="student-only" style="display:none;"><a href="my-assessments.html">My Assessments</a></li>
+            
+            <!-- Trainer-specific navigation -->
+            <li class="trainer-only" style="display:none;"><a href="trainer-dashboard.html">Trainer Dashboard</a></li>
+            <li class="trainer-only" style="display:none;"><a href="review-assessments.html">Review Assessments</a></li>
+            
+            <!-- Authentication links -->
+            <li id="login-nav-item"><a href="login.html">Login</a></li>
+            <li id="logout-nav-item" style="display:none;"><a href="#" id="logout-link">Logout</a></li>
+          </ul>
+          <div id="user-status" class="user-status"></div>
         </div>
-    </nav>
+      </nav>
 
     <main class="container">
         <div id="loading-indicator" class="text-center">

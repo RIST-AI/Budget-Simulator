@@ -1,84 +1,167 @@
 // js/auth.js
 
-import { auth, onAuthStateChanged } from './firebase-config.js';
+import { auth, onAuthStateChanged, signOut, db, doc, getDoc } from './firebase-config.js';
 
-// Simple authentication check that uses localStorage as backup
-export function checkAuth() {
-  return new Promise((resolve) => {
-    // First check localStorage for a stored user
-    const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
-      console.log("Using stored user from localStorage");
-      resolve(true);
-      return;
-    }
-
-    // If no stored user, check Firebase auth
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      unsubscribe(); // Unsubscribe immediately
+// Check if user is logged in and get their role
+async function getCurrentUser() {
+  return new Promise((resolve, reject) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      unsubscribe(); // Stop listening immediately
       
       if (user) {
-        console.log("User is authenticated via Firebase:", user.email);
-        // Store user in localStorage for backup
-        localStorage.setItem('currentUser', JSON.stringify({
-          uid: user.uid,
-          email: user.email
-        }));
-        resolve(true);
-      } else {
-        console.log("User is not authenticated, redirecting to login");
-        
-        // Check if we're already on the login page to prevent redirect loops
-        if (!window.location.href.includes('login.html')) {
-          window.location.href = 'login.html';
+        try {
+          // Get user role from Firestore
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            resolve({
+              uid: user.uid,
+              email: user.email,
+              role: userData.role,
+              fullName: userData.fullName || '',
+              studentId: userData.studentId || '',
+              // Add any other user properties you need
+            });
+          } else {
+            resolve({ uid: user.uid, email: user.email, role: 'unknown' });
+          }
+        } catch (error) {
+          console.error("Error getting user data:", error);
+          resolve({ uid: user.uid, email: user.email, role: 'unknown' });
         }
-        resolve(false);
+      } else {
+        resolve(null); // Not logged in
       }
     });
   });
 }
 
-// Get current user with localStorage fallback
-export function getCurrentUser() {
-  // First try Firebase auth
-  if (auth.currentUser) {
-    return auth.currentUser;
+// Redirect to login if not authenticated
+async function requireAuth() {
+  const user = await getCurrentUser();
+  if (!user) {
+    // Save the current URL to redirect back after login
+    sessionStorage.setItem('redirectUrl', window.location.href);
+    window.location.href = 'login.html';
+    return null;
   }
-  
-  // Fall back to localStorage
-  const storedUser = localStorage.getItem('currentUser');
-  if (storedUser) {
-    return JSON.parse(storedUser);
-  }
-  
-  return null;
+  return user;
 }
 
-// Simple function to get user role
-export async function getUserRole() {
-  const user = getCurrentUser();
-  if (!user) return null;
+// Check if user has specific role and redirect if not
+async function requireRole(requiredRoles) {
+  const user = await requireAuth();
+  if (!user) return null; // Already redirected to login
   
-  // Check localStorage first for role
-  const storedRole = localStorage.getItem('userRole');
-  if (storedRole) {
-    return storedRole;
+  if (!Array.isArray(requiredRoles)) {
+    requiredRoles = [requiredRoles]; // Convert to array if single role
   }
   
-  try {
-    // If no stored role, fetch from Firestore
-    const { db, doc, getDoc } = await import('./firebase-config.js');
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
-    
-    if (userDoc.exists()) {
-      const role = userDoc.data().role;
-      // Store for future use
-      localStorage.setItem('userRole', role);
-      return role;
+  if (!requiredRoles.includes(user.role)) {
+    // User doesn't have required role, redirect to appropriate dashboard
+    if (user.role === 'student') {
+      window.location.href = 'student-dashboard.html';
+    } else if (user.role === 'trainer') {
+      window.location.href = 'trainer-dashboard.html';
+    } else {
+      window.location.href = 'index.html';
     }
-  } catch (error) {
-    console.error("Error getting user role:", error);
+    return null;
   }
   
-  return null;
+  return user;
 }
+
+// Handle logout
+function logoutUser() {
+  return signOut(auth).then(() => {
+    window.location.href = 'login.html';
+  });
+}
+
+// Update UI based on authentication state
+async function updateNavigation() {
+  const user = await getCurrentUser();
+  
+  const loginItem = document.getElementById('login-nav-item');
+  const logoutItem = document.getElementById('logout-nav-item');
+  const userStatus = document.getElementById('user-status');
+  const studentItems = document.querySelectorAll('.student-only');
+  const trainerItems = document.querySelectorAll('.trainer-only');
+  const dashboardLink = document.getElementById('dashboard-link');
+  const authRequiredItems = document.querySelectorAll('.auth-required');
+  
+  if (user) {
+    // User is logged in
+    if (loginItem) loginItem.style.display = 'none';
+    if (logoutItem) logoutItem.style.display = 'inline-block';
+    if (userStatus) userStatus.innerHTML = `Logged in as: ${user.email}`;
+    
+    // Show all auth-required elements
+    authRequiredItems.forEach(item => item.style.display = '');
+    
+    if (user.role === 'student') {
+      // Show student items, hide trainer items
+      studentItems.forEach(item => item.style.display = '');
+      trainerItems.forEach(item => item.style.display = 'none');
+      if (dashboardLink) dashboardLink.href = 'student-dashboard.html';
+    } else if (user.role === 'trainer') {
+      // Show trainer items, hide student items
+      trainerItems.forEach(item => item.style.display = '');
+      studentItems.forEach(item => item.style.display = 'none');
+      if (dashboardLink) dashboardLink.href = 'trainer-dashboard.html';
+    }
+  } else {
+    // User is not logged in
+    if (loginItem) loginItem.style.display = '';
+    if (logoutItem) logoutItem.style.display = 'none';
+    if (userStatus) userStatus.innerHTML = '';
+    
+    // Hide role-specific and auth-required items
+    studentItems.forEach(item => item.style.display = 'none');
+    trainerItems.forEach(item => item.style.display = 'none');
+    authRequiredItems.forEach(item => item.style.display = 'none');
+  }
+}
+
+// Initialize authentication on page load
+function initAuth() {
+  document.addEventListener('DOMContentLoaded', async () => {
+    await updateNavigation();
+    
+    // Set up logout functionality
+    const logoutLink = document.getElementById('logout-link');
+    if (logoutLink) {
+      logoutLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        logoutUser();
+      });
+    }
+  });
+}
+
+// Auto-redirect to dashboard if already logged in (for login page)
+async function redirectIfLoggedIn() {
+  const user = await getCurrentUser();
+  if (user) {
+    if (user.role === 'student') {
+      window.location.href = 'student-dashboard.html';
+    } else if (user.role === 'trainer') {
+      window.location.href = 'trainer-dashboard.html';
+    } else {
+      window.location.href = 'index.html';
+    }
+    return true;
+  }
+  return false;
+}
+
+export { 
+  getCurrentUser, 
+  requireAuth, 
+  requireRole,
+  logoutUser, 
+  updateNavigation,
+  initAuth,
+  redirectIfLoggedIn
+};

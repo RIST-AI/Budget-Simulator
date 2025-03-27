@@ -26,7 +26,8 @@ import {
     getDocs,
     orderBy,
     limit,
-    startAfter
+    startAfter,
+    Timestamp
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
 // Your web app's Firebase configuration
@@ -67,5 +68,6 @@ export {
   getDocs,
   orderBy,
   limit,
-  startAfter
+  startAfter,
+  Timestamp
 };

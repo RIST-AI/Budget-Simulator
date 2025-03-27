@@ -21,6 +21,17 @@
     
     <!-- Preconnect to Firebase -->
     <link rel="preconnect" href="https://www.gstatic.com">
+    <script type="module">
+        import { initAuth, redirectIfLoggedIn } from './js/auth.js';
+        
+        // Initialize authentication
+        initAuth();
+        
+        // If user is already logged in, redirect to their dashboard
+        document.addEventListener('DOMContentLoaded', async () => {
+          await redirectIfLoggedIn();
+        });
+      </script>
 </head>
 <body>
     <a href="#main-content" class="skip-link visually-hidden">Skip to main content</a>
@@ -42,18 +53,28 @@
         </div>
     </header>
 
-    <nav aria-label="Main Navigation">
+    <nav>
         <div class="container">
-            <ul>
-                <li><a href="index.html" class="active" aria-current="page">Home</a></li>
-                <li><a href="budget.html">Budget Simulator</a></li>
-                <li><a href="farm-budget-assessment.html">Assessment</a></li>
-                <li id="login-nav-item"><a href="login.html">Login</a></li>
-                <li id="dashboard-nav-item" style="display:none;"><a href="#" id="dashboard-link">Dashboard</a></li>
-                <li id="logout-nav-item" style="display:none;"><a href="#" id="logout-link">Logout</a></li>
-            </ul>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li class="auth-required" style="display:none;"><a href="budget.html">Budget Simulator</a></li>
+            <li class="auth-required" style="display:none;"><a href="farm-budget-assessment.html">Assessment</a></li>
+            
+            <!-- Student-specific navigation -->
+            <li class="student-only" style="display:none;"><a href="student-dashboard.html">My Dashboard</a></li>
+            <li class="student-only" style="display:none;"><a href="my-assessments.html">My Assessments</a></li>
+            
+            <!-- Trainer-specific navigation -->
+            <li class="trainer-only" style="display:none;"><a href="trainer-dashboard.html">Trainer Dashboard</a></li>
+            <li class="trainer-only" style="display:none;"><a href="review-assessments.html">Review Assessments</a></li>
+            
+            <!-- Authentication links -->
+            <li id="login-nav-item"><a href="login.html">Login</a></li>
+            <li id="logout-nav-item" style="display:none;"><a href="#" id="logout-link">Logout</a></li>
+          </ul>
+          <div id="user-status" class="user-status"></div>
         </div>
-    </nav>
+      </nav>
 
     <main id="main-content" class="container">
         <section class="hero">
