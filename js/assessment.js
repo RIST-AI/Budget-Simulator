@@ -12,24 +12,30 @@ let currentAssessmentId = null;
 // Initialize assessment functionality
 document.addEventListener('DOMContentLoaded', async function() {
     // Update user status
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
-        } else {
-            // Redirect to login if not authenticated
-            window.location.href = 'index.html';
-        }
-    });
+    const userStatusElement = document.getElementById('user-status');
+    if (userStatusElement) {
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                userStatusElement.innerHTML = 'Logged in as: ' + user.email;
+            } else {
+                // Redirect to login if not authenticated
+                window.location.href = 'index.html';
+            }
+        });
+    }
     
     // Logout functionality
-    document.getElementById('logout-link').addEventListener('click', function(e) {
-        e.preventDefault();
-        signOut(auth).then(() => {
-            window.location.href = 'index.html';
-        }).catch((error) => {
-            console.error("Error signing out:", error);
+    const logoutLink = document.getElementById('logout-link');
+    if (logoutLink) {
+        logoutLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            signOut(auth).then(() => {
+                window.location.href = 'index.html';
+            }).catch((error) => {
+                console.error("Error signing out:", error);
+            });
         });
-    });
+    }
     
     try {
         // Load assessment content from Firestore
@@ -42,14 +48,25 @@ document.addEventListener('DOMContentLoaded', async function() {
         setupEventListeners();
         
         // Hide loading indicator and show assessment
-        document.getElementById('loading-indicator').style.display = 'none';
-        document.getElementById('assessment-content').style.display = 'block';
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const assessmentContent = document.getElementById('assessment-content');
+        
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'none';
+        }
+        
+        if (assessmentContent) {
+            assessmentContent.style.display = 'block';
+        }
     } catch (error) {
         console.error("Error initializing assessment:", error);
-        document.getElementById('loading-indicator').innerHTML = `
-            <p>Error loading assessment: ${error.message}</p>
-            <button class="btn" onclick="location.reload()">Try Again</button>
-        `;
+        const loadingIndicator = document.getElementById('loading-indicator');
+        if (loadingIndicator) {
+            loadingIndicator.innerHTML = `
+                <p>Error loading assessment: ${error.message}</p>
+                <button class="btn" onclick="location.reload()">Try Again</button>
+            `;
+        }
     }
 });
 
@@ -62,13 +79,31 @@ async function loadAssessmentContent() {
         if (contentDoc.exists()) {
             assessmentContent = contentDoc.data();
             
-            // Populate assessment content using the new HTML structure
-            document.getElementById('assessment-title').textContent = assessmentContent.title || 'Farm Budget Assessment';
-            document.getElementById('assessment-description').textContent = assessmentContent.description || 'Complete this assessment to demonstrate your understanding of farm budget management.';
-            document.getElementById('scenario-text').textContent = assessmentContent.scenario || 'No scenario provided.';
-            document.getElementById('instructions-text').textContent = assessmentContent.instructions || 'No instructions provided.';
-            document.getElementById('budget-instructions').textContent = assessmentContent.budgetSetupInstructions || 'Create a budget for the farm based on the scenario.';
-            document.getElementById('analysis-instructions').textContent = assessmentContent.analysisInstructions || 'Answer the following questions based on your budget.';
+            // Debug: Log the element IDs we're trying to access
+            console.log("Checking for elements:");
+            console.log("assessment-title:", document.getElementById('assessment-title'));
+            console.log("assessment-description:", document.getElementById('assessment-description'));
+            console.log("scenario-text:", document.getElementById('scenario-text'));
+            console.log("instructions-text:", document.getElementById('instructions-text'));
+            console.log("budget-instructions:", document.getElementById('budget-instructions'));
+            console.log("analysis-instructions:", document.getElementById('analysis-instructions'));
+            
+            // Safely set content for each element
+            const setElementContent = (id, content) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = content;
+                } else {
+                    console.error(`Element with ID '${id}' not found`);
+                }
+            };
+            
+            setElementContent('assessment-title', assessmentContent.title || 'Farm Budget Assessment');
+            setElementContent('assessment-description', assessmentContent.description || 'Complete this assessment to demonstrate your understanding of farm budget management.');
+            setElementContent('scenario-text', assessmentContent.scenario || 'No scenario provided.');
+            setElementContent('instructions-text', assessmentContent.instructions || 'No instructions provided.');
+            setElementContent('budget-instructions', assessmentContent.budgetSetupInstructions || 'Create a budget for the farm based on the scenario.');
+            setElementContent('analysis-instructions', assessmentContent.analysisInstructions || 'Answer the following questions based on your budget.');
             
         } else {
             throw new Error('Assessment content not found');
@@ -118,15 +153,20 @@ async function checkExistingAssessment() {
             }
             
             // Load answers
+            const question1 = document.getElementById('question1');
+            const question2 = document.getElementById('question2');
+            const question3 = document.getElementById('question3');
+            
             if (assessment.answers) {
-                document.getElementById('question1').value = assessment.answers.question1 || '';
-                document.getElementById('question2').value = assessment.answers.question2 || '';
-                document.getElementById('question3').value = assessment.answers.question3 || '';
+                if (question1) question1.value = assessment.answers.question1 || '';
+                if (question2) question2.value = assessment.answers.question2 || '';
+                if (question3) question3.value = assessment.answers.question3 || '';
             }
             
             // Update button text based on status
-            if (assessment.status === 'submitted') {
-                document.getElementById('submit-assessment').textContent = 'Update Submission';
+            const submitButton = document.getElementById('submit-assessment');
+            if (submitButton && assessment.status === 'submitted') {
+                submitButton.textContent = 'Update Submission';
             }
         }
     } catch (error) {
@@ -136,30 +176,49 @@ async function checkExistingAssessment() {
 
 // Clear default rows from tables
 function clearDefaultRows() {
-    const incomeTable = document.getElementById('income-table').querySelector('tbody');
-    const expenseTable = document.getElementById('expense-table').querySelector('tbody');
+    const incomeTable = document.getElementById('income-table');
+    const expenseTable = document.getElementById('expense-table');
     
-    incomeTable.innerHTML = '';
-    expenseTable.innerHTML = '';
+    if (incomeTable) {
+        const incomeTbody = incomeTable.querySelector('tbody');
+        if (incomeTbody) incomeTbody.innerHTML = '';
+    }
+    
+    if (expenseTable) {
+        const expenseTbody = expenseTable.querySelector('tbody');
+        if (expenseTbody) expenseTbody.innerHTML = '';
+    }
 }
 
 // Set up event listeners
 function setupEventListeners() {
     // Add income button
-    document.getElementById('add-income').addEventListener('click', function() {
-        addIncomeRow('', '');
-    });
+    const addIncomeBtn = document.getElementById('add-income');
+    if (addIncomeBtn) {
+        addIncomeBtn.addEventListener('click', function() {
+            addIncomeRow('', '');
+        });
+    }
     
     // Add expense button
-    document.getElementById('add-expense').addEventListener('click', function() {
-        addExpenseRow('', '');
-    });
+    const addExpenseBtn = document.getElementById('add-expense');
+    if (addExpenseBtn) {
+        addExpenseBtn.addEventListener('click', function() {
+            addExpenseRow('', '');
+        });
+    }
     
     // Save assessment button
-    document.getElementById('save-assessment').addEventListener('click', saveAssessment);
+    const saveBtn = document.getElementById('save-assessment');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', saveAssessment);
+    }
     
     // Submit assessment button
-    document.getElementById('submit-assessment').addEventListener('click', submitAssessment);
+    const submitBtn = document.getElementById('submit-assessment');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', submitAssessment);
+    }
     
     // Set up event delegation for remove buttons
     document.addEventListener('click', function(e) {
@@ -182,7 +241,18 @@ function setupEventListeners() {
 
 // Add income row
 function addIncomeRow(name = '', amount = '') {
-    const tbody = document.getElementById('income-table').querySelector('tbody');
+    const incomeTable = document.getElementById('income-table');
+    if (!incomeTable) {
+        console.error("Income table not found");
+        return;
+    }
+    
+    const tbody = incomeTable.querySelector('tbody');
+    if (!tbody) {
+        console.error("Income table body not found");
+        return;
+    }
+    
     const row = document.createElement('tr');
     
     row.innerHTML = `
@@ -203,7 +273,18 @@ function addIncomeRow(name = '', amount = '') {
 
 // Add expense row
 function addExpenseRow(name = '', amount = '') {
-    const tbody = document.getElementById('expense-table').querySelector('tbody');
+    const expenseTable = document.getElementById('expense-table');
+    if (!expenseTable) {
+        console.error("Expense table not found");
+        return;
+    }
+    
+    const tbody = expenseTable.querySelector('tbody');
+    if (!tbody) {
+        console.error("Expense table body not found");
+        return;
+    }
+    
     const row = document.createElement('tr');
     
     row.innerHTML = `
@@ -226,42 +307,57 @@ function addExpenseRow(name = '', amount = '') {
 function updateBudgetTotals() {
     // Calculate income total
     let totalIncome = 0;
-    const incomeRows = document.getElementById('income-table').querySelectorAll('tbody tr');
-    incomeRows.forEach(row => {
-        const amountInput = row.querySelector('input[type="number"]');
-        if (amountInput && amountInput.value) {
-            totalIncome += parseFloat(amountInput.value) || 0;
-        }
-    });
+    const incomeTable = document.getElementById('income-table');
+    if (incomeTable) {
+        const incomeRows = incomeTable.querySelectorAll('tbody tr');
+        incomeRows.forEach(row => {
+            const amountInput = row.querySelector('input[type="number"]');
+            if (amountInput && amountInput.value) {
+                totalIncome += parseFloat(amountInput.value) || 0;
+            }
+        });
+    }
     
     // Calculate expense total
     let totalExpenses = 0;
-    const expenseRows = document.getElementById('expense-table').querySelectorAll('tbody tr');
-    expenseRows.forEach(row => {
-        const amountInput = row.querySelector('input[type="number"]');
-        if (amountInput && amountInput.value) {
-            totalExpenses += parseFloat(amountInput.value) || 0;
-        }
-    });
+    const expenseTable = document.getElementById('expense-table');
+    if (expenseTable) {
+        const expenseRows = expenseTable.querySelectorAll('tbody tr');
+        expenseRows.forEach(row => {
+            const amountInput = row.querySelector('input[type="number"]');
+            if (amountInput && amountInput.value) {
+                totalExpenses += parseFloat(amountInput.value) || 0;
+            }
+        });
+    }
     
     // Calculate net result
     const netResult = totalIncome - totalExpenses;
     
     // Update the display
-    document.getElementById('total-income').textContent = formatCurrency(totalIncome);
-    document.getElementById('total-expenses').textContent = formatCurrency(totalExpenses);
-    document.getElementById('net-result').textContent = formatCurrency(netResult);
-    document.getElementById('summary-income').textContent = formatCurrency(totalIncome);
-    document.getElementById('summary-expenses').textContent = formatCurrency(totalExpenses);
+    const updateElementText = (id, value) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = formatCurrency(value);
+        }
+    };
+    
+    updateElementText('total-income', totalIncome);
+    updateElementText('total-expenses', totalExpenses);
+    updateElementText('net-result', netResult);
+    updateElementText('summary-income', totalIncome);
+    updateElementText('summary-expenses', totalExpenses);
     
     // Add class based on net result
     const netResultElement = document.getElementById('net-result');
-    if (netResult > 0) {
-        netResultElement.className = 'positive';
-    } else if (netResult < 0) {
-        netResultElement.className = 'negative';
-    } else {
-        netResultElement.className = '';
+    if (netResultElement) {
+        if (netResult > 0) {
+            netResultElement.className = 'positive';
+        } else if (netResult < 0) {
+            netResultElement.className = 'negative';
+        } else {
+            netResultElement.className = '';
+        }
     }
 }
 
@@ -278,36 +374,42 @@ function collectBudgetItems() {
     const budgetItems = [];
     
     // Collect income items
-    const incomeRows = document.getElementById('income-table').querySelectorAll('tbody tr');
-    incomeRows.forEach(row => {
-        const nameInput = row.querySelector('input[type="text"]');
-        const amountInput = row.querySelector('input[type="number"]');
-        
-        if (nameInput && nameInput.value && amountInput && amountInput.value) {
-            budgetItems.push({
-                id: Date.now() + Math.random(), // Generate a unique ID
-                name: nameInput.value.trim(),
-                category: 'income',
-                amount: parseFloat(amountInput.value) || 0
-            });
-        }
-    });
+    const incomeTable = document.getElementById('income-table');
+    if (incomeTable) {
+        const incomeRows = incomeTable.querySelectorAll('tbody tr');
+        incomeRows.forEach(row => {
+            const nameInput = row.querySelector('input[type="text"]');
+            const amountInput = row.querySelector('input[type="number"]');
+            
+            if (nameInput && nameInput.value && amountInput && amountInput.value) {
+                budgetItems.push({
+                    id: Date.now() + Math.random(), // Generate a unique ID
+                    name: nameInput.value.trim(),
+                    category: 'income',
+                    amount: parseFloat(amountInput.value) || 0
+                });
+            }
+        });
+    }
     
     // Collect expense items
-    const expenseRows = document.getElementById('expense-table').querySelectorAll('tbody tr');
-    expenseRows.forEach(row => {
-        const nameInput = row.querySelector('input[type="text"]');
-        const amountInput = row.querySelector('input[type="number"]');
-        
-        if (nameInput && nameInput.value && amountInput && amountInput.value) {
-            budgetItems.push({
-                id: Date.now() + Math.random(), // Generate a unique ID
-                name: nameInput.value.trim(),
-                category: 'expense',
-                amount: parseFloat(amountInput.value) || 0
-            });
-        }
-    });
+    const expenseTable = document.getElementById('expense-table');
+    if (expenseTable) {
+        const expenseRows = expenseTable.querySelectorAll('tbody tr');
+        expenseRows.forEach(row => {
+            const nameInput = row.querySelector('input[type="text"]');
+            const amountInput = row.querySelector('input[type="number"]');
+            
+            if (nameInput && nameInput.value && amountInput && amountInput.value) {
+                budgetItems.push({
+                    id: Date.now() + Math.random(), // Generate a unique ID
+                    name: nameInput.value.trim(),
+                    category: 'expense',
+                    amount: parseFloat(amountInput.value) || 0
+                });
+            }
+        });
+    }
     
     return budgetItems;
 }
@@ -322,6 +424,8 @@ async function saveAssessment() {
     
     // Show loading state
     const saveButton = document.getElementById('save-assessment');
+    if (!saveButton) return;
+    
     const originalButtonText = saveButton.textContent;
     saveButton.disabled = true;
     saveButton.textContent = 'Saving...';
@@ -344,6 +448,11 @@ async function saveAssessment() {
         
         const netResult = totalIncome - totalExpenses;
         
+        // Get answers
+        const question1 = document.getElementById('question1');
+        const question2 = document.getElementById('question2');
+        const question3 = document.getElementById('question3');
+        
         // Collect assessment data
         const assessmentData = {
             userId: user.uid,
@@ -355,9 +464,9 @@ async function saveAssessment() {
                 netResult: netResult
             },
             answers: {
-                question1: document.getElementById('question1').value,
-                question2: document.getElementById('question2').value,
-                question3: document.getElementById('question3').value
+                question1: question1 ? question1.value : '',
+                question2: question2 ? question2.value : '',
+                question3: question3 ? question3.value : ''
             },
             status: 'draft',
             updatedAt: new Date()
@@ -404,9 +513,13 @@ async function submitAssessment() {
         return;
     }
     
-    if (!document.getElementById('question1').value.trim() ||
-        !document.getElementById('question2').value.trim() ||
-        !document.getElementById('question3').value.trim()) {
+    const question1 = document.getElementById('question1');
+    const question2 = document.getElementById('question2');
+    const question3 = document.getElementById('question3');
+    
+    if ((!question1 || !question1.value.trim()) ||
+        (!question2 || !question2.value.trim()) ||
+        (!question3 || !question3.value.trim())) {
         alert('Please answer all questions.');
         return;
     }
@@ -418,6 +531,8 @@ async function submitAssessment() {
     
     // Show loading state
     const submitButton = document.getElementById('submit-assessment');
+    if (!submitButton) return;
+    
     const originalButtonText = submitButton.textContent;
     submitButton.disabled = true;
     submitButton.textContent = 'Submitting...';
@@ -448,9 +563,9 @@ async function submitAssessment() {
                 netResult: netResult
             },
             answers: {
-                question1: document.getElementById('question1').value,
-                question2: document.getElementById('question2').value,
-                question3: document.getElementById('question3').value
+                question1: question1 ? question1.value : '',
+                question2: question2 ? question2.value : '',
+                question3: question3 ? question3.value : ''
             },
             status: 'submitted',
             updatedAt: new Date()
@@ -470,8 +585,11 @@ async function submitAssessment() {
         }
         
         // Show success message and hide assessment content
-        document.getElementById('assessment-content').style.display = 'none';
-        document.getElementById('submission-success').style.display = 'block';
+        const assessmentContent = document.getElementById('assessment-content');
+        const submissionSuccess = document.getElementById('submission-success');
+        
+        if (assessmentContent) assessmentContent.style.display = 'none';
+        if (submissionSuccess) submissionSuccess.style.display = 'block';
         
     } catch (error) {
         console.error('Error submitting assessment:', error);
