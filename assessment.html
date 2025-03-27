@@ -38,8 +38,179 @@
     </nav>
 
     <main class="container">
-        <!-- Rest of the content remains the same -->
-        <!-- ... -->
+        <div id="loading-indicator">
+            <p>Loading assessment...</p>
+        </div>
+
+        <div id="assessment-content" style="display: none;">
+            <section class="assessment-intro">
+                <h2 id="assessment-title">Farm Budget Assessment</h2>
+                <p id="assessment-description">Complete this assessment to demonstrate your understanding of farm budget management.</p>
+                
+                <div class="scenario-box">
+                    <h3>Scenario</h3>
+                    <p id="scenario-text">You are the manager of Green Valley Farm, a mixed farming operation that produces crops and raises livestock. The farm owner has asked you to prepare a budget, analyze it, and make recommendations for improvements.</p>
+                </div>
+                
+                <div class="instructions-box">
+                    <h3>Instructions</h3>
+                    <p id="instructions-text">Create a budget for the farm, answer the analysis questions, and submit your assessment for review.</p>
+                </div>
+            </section>
+
+            <section class="assessment-section">
+                <h2>Part 1: Budget Setup</h2>
+                <p id="budget-instructions">Create a budget for Green Valley Farm by adding income and expense items. Include all major income sources and expense categories relevant to a mixed farming operation.</p>
+                
+                <!-- Budget Section (Styled like budget.html) -->
+                <div class="budget-container">
+                    <div class="budget-header">
+                        <div class="budget-info">
+                            <div class="form-group">
+                                <label for="farm-type">Farm Type:</label>
+                                <select id="farm-type">
+                                    <option value="dairy">Dairy</option>
+                                    <option value="crop">Crop</option>
+                                    <option value="livestock">Livestock</option>
+                                    <option value="mixed">Mixed</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="budget-period">Budget Period:</label>
+                                <select id="budget-period">
+                                    <option value="annual">Annual</option>
+                                    <option value="quarterly">Quarterly</option>
+                                    <option value="monthly">Monthly</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="budget-tables">
+                        <div class="budget-table-container">
+                            <h3>Income</h3>
+                            <table id="income-table" class="budget-table">
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Amount ($)</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><input type="text" placeholder="Income item"></td>
+                                        <td><input type="number" placeholder="0.00"></td>
+                                        <td><button class="btn-small btn-remove">Remove</button></td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3">
+                                            <button id="add-income" class="btn-small">+ Add Income Item</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="total-row">
+                                        <td>Total Income:</td>
+                                        <td id="total-income">$0.00</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <div class="budget-table-container">
+                            <h3>Expenses</h3>
+                            <table id="expense-table" class="budget-table">
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Amount ($)</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><input type="text" placeholder="Expense item"></td>
+                                        <td><input type="number" placeholder="0.00"></td>
+                                        <td><button class="btn-small btn-remove">Remove</button></td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3">
+                                            <button id="add-expense" class="btn-small">+ Add Expense Item</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="total-row">
+                                        <td>Total Expenses:</td>
+                                        <td id="total-expenses">$0.00</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="budget-summary">
+                        <h3>Budget Summary</h3>
+                        <table class="summary-table">
+                            <tr>
+                                <td>Total Income:</td>
+                                <td id="summary-income">$0.00</td>
+                            </tr>
+                            <tr>
+                                <td>Total Expenses:</td>
+                                <td id="summary-expenses">$0.00</td>
+                            </tr>
+                            <tr class="net-result-row">
+                                <td>Net Result:</td>
+                                <td id="net-result">$0.00</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section class="assessment-section">
+                <h2>Part 2: Budget Analysis</h2>
+                <p id="analysis-instructions">Based on your budget, answer the following questions to demonstrate your understanding of farm budget management.</p>
+                
+                <div class="question-container">
+                    <div class="question">
+                        <h3>Question 1</h3>
+                        <p>Explain the key factors that influenced your income projections. What assumptions did you make?</p>
+                        <textarea id="question1" rows="5" placeholder="Your answer here..."></textarea>
+                    </div>
+                    
+                    <div class="question">
+                        <h3>Question 2</h3>
+                        <p>Identify the major expense categories in your budget and explain how you would prioritize them if you needed to reduce costs.</p>
+                        <textarea id="question2" rows="5" placeholder="Your answer here..."></textarea>
+                    </div>
+                    
+                    <div class="question">
+                        <h3>Question 3</h3>
+                        <p>Based on your budget analysis, what recommendations would you make to improve the farm's profitability?</p>
+                        <textarea id="question3" rows="5" placeholder="Your answer here..."></textarea>
+                    </div>
+                </div>
+            </section>
+
+            <div class="assessment-actions">
+                <button id="save-assessment" class="btn">Save Progress</button>
+                <button id="submit-assessment" class="btn btn-primary">Submit Assessment</button>
+            </div>
+        </div>
+
+        <div id="submission-success" style="display: none;">
+            <div class="success-message">
+                <h2>Assessment Submitted Successfully!</h2>
+                <p>Your assessment has been submitted for review. You will be notified when feedback is available.</p>
+                <button class="btn" onclick="window.location.href='index.html'">Return to Home</button>
+            </div>
+        </div>
     </main>
 
     <footer>
