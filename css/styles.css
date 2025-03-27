@@ -933,8 +933,8 @@ footer a {
 
 /* User status styles */
 .user-status {
+    color: white;
     font-size: 0.9rem;
-    color: #333;
     margin-left: auto;
     text-align: right;
 }

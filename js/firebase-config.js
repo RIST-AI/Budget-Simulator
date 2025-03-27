@@ -27,7 +27,8 @@ import {
     orderBy,
     limit,
     startAfter,
-    Timestamp
+    Timestamp,
+    arrayUnion  // Add this import
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
 // Your web app's Firebase configuration
@@ -69,5 +70,6 @@ export {
   orderBy,
   limit,
   startAfter,
-  Timestamp
+  Timestamp,
+  arrayUnion  // Add this export
 };
