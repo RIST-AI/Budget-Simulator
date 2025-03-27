@@ -1,6 +1,6 @@
 // js/review.js
-import { auth, onAuthStateChanged, signOut, db, doc, getDoc, collection, query, where, getDocs, updateDoc, arrayUnion } from './js/firebase-config.js';
-import { requireRole } from './js/auth.js';
+import { auth, onAuthStateChanged, signOut, db, doc, getDoc, collection, query, where, getDocs, updateDoc, arrayUnion } from './firebase-config.js';
+import { requireRole } from './auth.js';
 
 // Ensure user is authenticated and has trainer role
 requireRole('trainer');

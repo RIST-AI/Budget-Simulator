@@ -1,7 +1,6 @@
 // js/budget.js
-import { auth, onAuthStateChanged, signOut, db, collection, addDoc } from './js/firebase-config.js';
-import { requireAuth } from './js/auth.js';
-
+import { auth, onAuthStateChanged, signOut, db, doc, getDoc, collection, addDoc, updateDoc, query, where, getDocs } from './firebase-config.js';
+import { requireAuth } from './auth.js';
 // Ensure user is authenticated
 requireAuth();
 
