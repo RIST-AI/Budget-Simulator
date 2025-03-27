@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
         } else {
             // Redirect to login if not authenticated
-            window.location.href = 'index.html';
+            window.location.href = 'budget.html';
         }
     });
     

@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         // Check if user is logged in
         if (!user) {
-            window.location.href = 'index.html';
+            window.location.href = 'budget.html';
             return;
         }
         

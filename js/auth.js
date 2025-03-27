@@ -87,51 +87,49 @@ function logoutUser() {
 // Update UI based on authentication state
 // In auth.js, update the updateNavigation function:
 
-async function updateNavigation() {
+// js/auth.js - Update the updateNavigation function
+
+export async function updateNavigation() {
     const user = await getCurrentUser();
     
-    const loginItem = document.getElementById('login-nav-item');
-    const logoutItem = document.getElementById('logout-nav-item');
-    const userStatus = document.getElementById('user-status');
-    const studentItems = document.querySelectorAll('.student-only');
-    const trainerItems = document.querySelectorAll('.trainer-only');
+    // Update user status display
+    const userStatusElement = document.getElementById('user-status');
+    if (userStatusElement) {
+        if (user) {
+            userStatusElement.innerHTML = `
+                <p>Logged in as: <strong>${user.email}</strong></p>
+                <p class="user-role">${user.role || 'Student'}</p>
+            `;
+        } else {
+            userStatusElement.innerHTML = `
+                <p>Not logged in</p>
+                <a href="login.html" class="btn-small">Login</a>
+            `;
+        }
+    }
     
-    if (user) {
-      // User is logged in
-      if (loginItem) loginItem.style.display = 'none';
-      if (logoutItem) logoutItem.style.display = '';
-      if (userStatus) userStatus.innerHTML = `Logged in as: ${user.email}`;
-      
-      // Get user roles as array
-      const userRoles = Array.isArray(user.roles) ? user.roles : [user.role];
-      console.log("Current user roles:", userRoles); // Debug log
-      
-      // Handle trainer items
-      trainerItems.forEach(item => {
-        if (userRoles.includes('trainer')) {
-          item.style.display = ''; // Show for trainers
-        } else {
-          item.style.display = 'none'; // Hide for non-trainers
-        }
-      });
-      
-      // Handle student items
-      studentItems.forEach(item => {
-        if (userRoles.includes('student')) {
-          item.style.display = ''; // Show for students
-        } else {
-          item.style.display = 'none'; // Hide for non-students
-        }
-      });
+    // Show/hide trainer-only navigation items
+    const trainerOnlyItems = document.querySelectorAll('.trainer-only');
+    if (user && (user.role === 'trainer' || (user.roles && user.roles.includes('trainer')))) {
+        // User is a trainer, show trainer-only items
+        trainerOnlyItems.forEach(item => {
+            item.style.display = 'block';
+        });
     } else {
-      // User is not logged in
-      if (loginItem) loginItem.style.display = '';
-      if (logoutItem) logoutItem.style.display = 'none';
-      if (userStatus) userStatus.innerHTML = '';
-      
-      // Hide role-specific items
-      studentItems.forEach(item => item.style.display = 'none');
-      trainerItems.forEach(item => item.style.display = 'none');
+        // User is not a trainer, hide trainer-only items
+        trainerOnlyItems.forEach(item => {
+            item.style.display = 'none';
+        });
+    }
+    
+    // Show/hide logout link
+    const logoutNavItem = document.getElementById('logout-nav-item');
+    if (logoutNavItem) {
+        if (user) {
+            logoutNavItem.style.display = 'block';
+        } else {
+            logoutNavItem.style.display = 'none';
+        }
     }
 }
 // Initialize authentication on page load
@@ -162,7 +160,7 @@ async function redirectIfLoggedIn() {
     } else if (userRoles.includes('trainer')) {
       window.location.href = 'trainer-dashboard.html';
     } else {
-      window.location.href = 'index.html';
+      window.location.href = 'budget.html';
     }
     return true;
   }
