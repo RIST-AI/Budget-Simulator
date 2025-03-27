@@ -183,9 +183,7 @@
             if (user) {
               // User is authenticated and has student role
               console.log("Student authenticated:", user.email);
-              
-              // Initialize student dashboard functionality here
-              // For example, load student data, assessments, etc.
+              // Dashboard functionality is handled in the main script below
             }
           } catch (error) {
             console.error("Authentication error:", error);
@@ -205,7 +203,7 @@
                     <h1>AHCBUS408 Budget Master</h1>
                     <p>Agricultural Budgeting Training Tool</p>
                 </div>
-                <div id="user-status" class="user-status">
+                <div id="header-user-status" class="user-status">
                     <!-- Login status will be shown here -->
                 </div>
             </div>
@@ -220,7 +218,7 @@
             <li class="auth-required"><a href="farm-budget-assessment.html">Assessment</a></li>
             
             <!-- Student-specific navigation -->
-            <li class="student-only"><a href="student-dashboard.html">My Dashboard</a></li>
+            <li id="dashboard-nav-item" class="student-only"><a href="student-dashboard.html">My Dashboard</a></li>
             <li class="student-only"><a href="view-assessment.html">My Assessments</a></li>
             
             <!-- Trainer-specific navigation -->
@@ -231,7 +229,7 @@
             <li id="login-nav-item"><a href="login.html">Login</a></li>
             <li id="logout-nav-item" style="display:none;"><a href="#" id="logout-link">Logout</a></li>
           </ul>
-          <div id="user-status" class="user-status"></div>
+          <div id="nav-user-status" class="user-status"></div>
         </div>
       </nav>
 
@@ -310,8 +308,9 @@
     </footer>
 
     <script type="module">
-    import { auth, onAuthStateChanged, signOut, db, doc, getDoc, collection, query, where, getDocs, Timestamp } from './js/firebase-config.js';
-    
+    import { auth, db, doc, getDoc, collection, query, where, getDocs, Timestamp } from './js/firebase-config.js';
+    import { getCurrentUser, logoutUser } from './js/auth.js';
+
     // Global error handler
     window.onerror = function(message, source, lineno, colno, error) {
         console.error("Error caught:", message, "at line:", lineno);
@@ -322,70 +321,46 @@
         }
         return false;
     };
-    
-    // Initialize dashboard with timeout protection
+
+    // Initialize dashboard
     async function initializeDashboard() {
         console.log("Dashboard initialization started");
         
         try {
-            // Set a timeout for Firebase operations
-            const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Dashboard loading timed out after 15 seconds')), 15000)
-            );
+            // Get current user from auth.js
+            const user = await getCurrentUser();
             
-            // Race your Firebase operations against the timeout
-            await Promise.race([
-                new Promise((resolve) => {
-                    onAuthStateChanged(auth, async (user) => {
-                        if (user) {
-                            console.log("User authenticated, loading data");
-                            
-                            try {
-                                // Update navigation
-                                document.getElementById('login-nav-item').style.display = 'none';
-                                document.getElementById('dashboard-nav-item').style.display = 'inline-block';
-                                document.getElementById('logout-nav-item').style.display = 'inline-block';
-                                document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
-                                
-                                // Load user data
-                                await loadUserData(user);
-                                
-                                // Load user budgets and assessments
-                                await Promise.all([
-                                    loadUserBudgets(user),
-                                    loadUserAssessments(user)
-                                ]);
-                                
-                                // Show dashboard content
-                                document.getElementById('loading-indicator').style.display = 'none';
-                                document.getElementById('dashboard-content').style.display = 'grid';
-                                
-                                // Setup dashboard navigation
-                                setupDashboardNavigation();
-                                
-                                resolve();
-                            } catch (error) {
-                                console.error("Error loading dashboard data:", error);
-                                document.getElementById('loading-indicator').style.display = 'none';
-                                document.getElementById('error-container').style.display = 'block';
-                                document.getElementById('error-container').textContent = 'Error loading dashboard data: ' + error.message;
-                                resolve(); // Resolve to prevent timeout
-                            }
-                        } else {
-                            console.log("No user, redirecting to login");
-                            window.location.href = 'login.html';
-                            resolve(); // Resolve to prevent timeout
-                        }
-                    }, (error) => {
-                        console.error("Auth state change error:", error);
-                        document.getElementById('loading-indicator').style.display = 'none';
-                        document.getElementById('error-container').style.display = 'block';
-                        document.getElementById('error-container').textContent = 'Authentication error: ' + error.message;
-                        resolve(); // Resolve to prevent timeout
-                    });
-                }),
-                timeoutPromise
-            ]);
+            if (!user) {
+                console.log("No user, redirecting to login");
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            console.log("User authenticated, loading data");
+            
+            try {
+                // Load user data
+                await loadUserData(user);
+                
+                // Load user budgets and assessments
+                await Promise.all([
+                    loadUserBudgets(user),
+                    loadUserAssessments(user)
+                ]);
+                
+                // Show dashboard content
+                document.getElementById('loading-indicator').style.display = 'none';
+                document.getElementById('dashboard-content').style.display = 'grid';
+                
+                // Setup dashboard navigation
+                setupDashboardNavigation();
+                
+            } catch (error) {
+                console.error("Error loading dashboard data:", error);
+                document.getElementById('loading-indicator').style.display = 'none';
+                document.getElementById('error-container').style.display = 'block';
+                document.getElementById('error-container').textContent = 'Error loading dashboard data: ' + error.message;
+            }
         } catch (error) {
             console.error("Dashboard initialization error:", error);
             document.getElementById('loading-indicator').style.display = 'none';
@@ -393,7 +368,7 @@
             document.getElementById('error-container').textContent = 'Dashboard initialization error: ' + error.message;
         }
     }
-    
+
     // Load user data
     async function loadUserData(user) {
         console.log("Loading user data");
@@ -405,7 +380,7 @@
                 const userData = userDoc.data();
                 
                 // Update profile information
-                document.getElementById('student-name').textContent = userData.name || 'Student';
+                document.getElementById('student-name').textContent = userData.fullName || userData.name || 'Student';
                 document.getElementById('student-email').textContent = user.email;
                 
                 console.log("User data loaded successfully");
@@ -419,7 +394,7 @@
             throw error;
         }
     }
-    
+
     // Load user budgets
     async function loadUserBudgets(user) {
         console.log("Loading user budgets");
@@ -464,6 +439,9 @@
                         <span>Expenses: $${budget.totalExpenses?.toFixed(2) || '0.00'}</span>
                         <span>Net: $${budget.netResult?.toFixed(2) || '0.00'}</span>
                     </div>
+                    <div class="budget-item-actions">
+                        <a href="view-budget.html?id=${doc.id}" class="btn-view">View Budget</a>
+                    </div>
                 `;
                 
                 budgetList.appendChild(budgetItem);
@@ -475,7 +453,7 @@
             throw error;
         }
     }
-    
+
     // Load user assessments
     async function loadUserAssessments(user) {
         console.log("Loading user assessments");
@@ -517,6 +495,9 @@
                     <div class="assessment-item-details">
                         <span>Budget Net Result: $${assessment.budget?.netResult?.toFixed(2) || '0.00'}</span>
                     </div>
+                    <div class="assessment-item-actions">
+                        <a href="view-assessment.html?id=${doc.id}" class="btn-view">View Assessment</a>
+                    </div>
                 `;
                 
                 assessmentList.appendChild(assessmentItem);
@@ -528,7 +509,7 @@
             throw error;
         }
     }
-    
+
     // Setup dashboard navigation
     function setupDashboardNavigation() {
         console.log("Setting up dashboard navigation");
@@ -557,34 +538,22 @@
             });
         });
     }
-    
-    // Logout functionality
-    function setupLogout() {
-        document.getElementById('logout-link').addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            console.log("Logging out");
-            
-            signOut(auth).then(() => {
-                // Sign-out successful
-                window.location.href = 'login.html';
-            }).catch((error) => {
-                // An error happened
-                console.error("Error signing out:", error);
-                alert('Error signing out: ' + error.message);
-            });
-        });
-    }
-    
+
     // Initialize when DOM is loaded
     document.addEventListener('DOMContentLoaded', function() {
         console.log("DOM loaded");
         
-        // Setup logout
-        setupLogout();
-        
         // Initialize dashboard
         initializeDashboard();
+        
+        // Set up logout functionality (handled by auth.js, but add event listener)
+        const logoutLink = document.getElementById('logout-link');
+        if (logoutLink) {
+            logoutLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                logoutUser();
+            });
+        }
     });
     </script>
 </body>
