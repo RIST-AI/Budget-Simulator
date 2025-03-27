@@ -164,6 +164,8 @@ function setupEventListeners() {
 }
 
 // View assessment details
+// In your review.js file, update the viewAssessment function:
+
 async function viewAssessment(assessmentId) {
     try {
         // Get assessment document
@@ -201,13 +203,32 @@ async function viewAssessment(assessmentId) {
         
         document.getElementById('submission-date').textContent = submittedDate;
         
+        // Get the assessment content to find the scenario and questions
+        const contentDoc = await getDoc(doc(db, 'assessmentContent', 'current'));
+        if (contentDoc.exists()) {
+            const content = contentDoc.data();
+            
+            // Find the scenario that was used
+            if (content.scenarios && currentAssessment.scenarioId) {
+                const scenario = content.scenarios.find(s => s.id === currentAssessment.scenarioId);
+                if (scenario) {
+                    // Display the scenario
+                    const scenarioElement = document.getElementById('assessment-scenario');
+                    if (scenarioElement) {
+                        scenarioElement.innerHTML = `
+                            <h3>${scenario.title}</h3>
+                            <p>${scenario.description}</p>
+                        `;
+                    }
+                }
+            }
+        }
+        
         // Display budget items
         displayBudgetItems(currentAssessment.budgetItems || []);
         
         // Display answers
-        document.getElementById('answer1').textContent = currentAssessment.answers?.question1 || 'No answer provided';
-        document.getElementById('answer2').textContent = currentAssessment.answers?.question2 || 'No answer provided';
-        document.getElementById('answer3').textContent = currentAssessment.answers?.question3 || 'No answer provided';
+        displayAnswers(currentAssessment.answers || {});
         
         // Display comments
         displayComments(currentAssessment.comments || []);
@@ -219,6 +240,33 @@ async function viewAssessment(assessmentId) {
         console.error("Error viewing assessment:", error);
         alert('Error loading assessment details: ' + error.message);
     }
+}
+
+// Add a new function to display answers
+function displayAnswers(answers) {
+    const answersContainer = document.getElementById('answers-container');
+    if (!answersContainer) return;
+    
+    answersContainer.innerHTML = '';
+    
+    // Check if answers is empty
+    if (Object.keys(answers).length === 0) {
+        answersContainer.innerHTML = '<p>No answers provided.</p>';
+        return;
+    }
+    
+    // Display each answer
+    Object.keys(answers).forEach((key, index) => {
+        const answerDiv = document.createElement('div');
+        answerDiv.className = 'answer-item';
+        
+        answerDiv.innerHTML = `
+            <h4>Question ${index + 1}</h4>
+            <p class="answer-text">${answers[key]}</p>
+        `;
+        
+        answersContainer.appendChild(answerDiv);
+    });
 }
 
 // Display budget items

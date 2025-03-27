@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assessment Content Editor</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-container">
+                    <img src="images/RIST - Primary Colour.jpg" alt="RIST - Rural Industries Skill Training" class="rist-logo">
+                </div>
+                <div class="title-container">
+                    <h1>AHCBUS408 Budget Master</h1>
+                    <p>Agricultural Budgeting Training Tool</p>
+                </div>
+                <div id="user-status" class="user-status">
+                    <!-- Login status will be shown here -->
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav>
+        <div class="container">
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="budget.html">Budget Simulator</a></li>
+                <li><a href="assessment.html">Assessment</a></li>
+                <li class="trainer-only"><a href="trainer-review.html">Review Assessments</a></li>
+                <li class="trainer-only"><a href="assessment-editor.html" class="active">Edit Assessment</a></li>
+                <li id="logout-nav-item"><a href="#" id="logout-link">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div id="loading-indicator">
+            <p>Loading assessment content...</p>
+        </div>
+
+        <div id="editor-content" style="display: none;">
+            <h2>Assessment Content Editor</h2>
+            <p>Use this page to update the assessment content that students will see.</p>
+            
+            <div id="status-message" class="status-message"></div>
+            
+            <div class="tab-container">
+                <div class="tab-buttons">
+                    <div class="tab-button active" data-tab="basic">Basic Content</div>
+                    <div class="tab-button" data-tab="scenarios">Scenarios</div>
+                    <div class="tab-button" data-tab="questions">Questions</div>
+                </div>
+                
+                <div class="tab-content active" id="basic-tab">
+                    <div class="editor-container">
+                        <div class="form-group">
+                            <label for="assessment-title">Assessment Title</label>
+                            <input type="text" id="assessment-title" placeholder="Enter assessment title">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="assessment-description">Assessment Description</label>
+                            <textarea id="assessment-description" placeholder="Enter a brief description of the assessment"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="instructions-text">General Instructions</label>
+                            <textarea id="instructions-text" placeholder="Enter general instructions for the assessment"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="budget-instructions">Budget Setup Instructions</label>
+                            <textarea id="budget-instructions" placeholder="Enter instructions for the budget setup section"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="analysis-instructions">Analysis Instructions</label>
+                            <textarea id="analysis-instructions" placeholder="Enter instructions for the analysis section"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="scenarios-tab">
+                    <div class="editor-container">
+                        <h3>Assessment Scenarios</h3>
+                        <p>Add multiple scenarios for students to work with. One will be randomly assigned to each student.</p>
+                        
+                        <div id="scenarios-container">
+                            <!-- Scenarios will be added here dynamically -->
+                        </div>
+                        
+                        <button id="add-scenario" class="btn btn-add">+ Add New Scenario</button>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="questions-tab">
+                    <div class="editor-container">
+                        <h3>Assessment Questions</h3>
+                        <p>Add or remove questions for students to answer in the assessment.</p>
+                        
+                        <div id="questions-container">
+                            <!-- Questions will be added here dynamically -->
+                        </div>
+                        
+                        <button id="add-question" class="btn btn-add">+ Add New Question</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="editor-actions">
+                <button id="reset-button" class="btn">Reset Changes</button>
+                <button id="save-button" class="btn btn-primary">Save Changes</button>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <img src="images/RIST Brandmark - Navy Circle.png" alt="RIST" class="rist-logo-footer">
+                </div>
+                <div class="footer-info">
+                    <p>&copy; 2025 RIST - Rural Industries Skill Training</p>
+                    <p>AHCBUS408 Budget Master</p>
+                </div>
+                <div class="footer-contact">
+                    <p>Contact: <a href="mailto:info@rist.com.au">info@rist.com.au</a></p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module" src="js/assessment-editor.js"></script>
+</body>
+</html>

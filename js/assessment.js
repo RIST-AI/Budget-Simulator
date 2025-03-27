@@ -67,9 +67,10 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Load assessment content from Firestore
+// In your assessment.js file, update the loadAssessmentContent function:
+
 async function loadAssessmentContent() {
     try {
-        console.log("Loading assessment content");
         // Get the assessment content document
         const contentDoc = await getDoc(doc(db, 'assessmentContent', 'current'));
         
@@ -78,28 +79,166 @@ async function loadAssessmentContent() {
         }
         
         const content = contentDoc.data();
-        console.log("Content loaded:", content);
         
-        // Set content if elements exist
-        const setContent = (id, text) => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.textContent = text;
-            } else {
-                console.warn(`Element with ID '${id}' not found`);
+        // Set basic content
+        setElementContent('assessment-title', content.title || 'Farm Budget Assessment');
+        setElementContent('assessment-description', content.description || 'Complete this assessment to demonstrate your understanding of farm budget management.');
+        setElementContent('instructions-text', content.instructions || 'No instructions provided.');
+        setElementContent('budget-instructions', content.budgetSetupInstructions || 'Create a budget for the farm based on the scenario.');
+        setElementContent('analysis-instructions', content.analysisInstructions || 'Answer the following questions based on your budget.');
+        
+        // Select a random scenario
+        if (content.scenarios && content.scenarios.length > 0) {
+            const randomIndex = Math.floor(Math.random() * content.scenarios.length);
+            const scenario = content.scenarios[randomIndex];
+            
+            // Store the scenario ID for submission
+            window.selectedScenarioId = scenario.id;
+            
+            // Set scenario content
+            setElementContent('scenario-text', scenario.description || 'No scenario provided.');
+        }
+        
+        // Set up questions
+        if (content.questions && content.questions.length > 0) {
+            const questionsContainer = document.querySelector('.question-container');
+            if (questionsContainer) {
+                questionsContainer.innerHTML = '';
+                
+                content.questions.forEach((question, index) => {
+                    const questionDiv = document.createElement('div');
+                    questionDiv.className = 'question';
+                    questionDiv.innerHTML = `
+                        <h3>Question ${index + 1}</h3>
+                        <p>${question.text}</p>
+                        <textarea id="question${index + 1}" rows="5" placeholder="Your answer here..."></textarea>
+                    `;
+                    questionsContainer.appendChild(questionDiv);
+                });
             }
-        };
-        
-        setContent('assessment-title', content.title || 'Farm Budget Assessment');
-        setContent('assessment-description', content.description || 'Complete this assessment to demonstrate your understanding of farm budget management.');
-        setContent('scenario-text', content.scenario || 'No scenario provided.');
-        setContent('instructions-text', content.instructions || 'No instructions provided.');
-        setContent('budget-instructions', content.budgetSetupInstructions || 'Create a budget for the farm based on the scenario.');
-        setContent('analysis-instructions', content.analysisInstructions || 'Answer the following questions based on your budget.');
+        }
         
     } catch (error) {
         console.error("Error loading assessment content:", error);
         throw error;
+    }
+}
+
+// Helper function to set content safely
+function setElementContent(id, content) {
+    const element = document.getElementById(id);
+    if (element) {
+        element.textContent = content;
+    }
+}
+
+// Update the submitAssessment function to handle dynamic questions:
+
+async function submitAssessment() {
+    const user = auth.currentUser;
+    if (!user) {
+        alert('You must be logged in to submit an assessment.');
+        return;
+    }
+    
+    // Collect budget items
+    const budgetItems = collectBudgetItems();
+    
+    // Validate assessment
+    if (budgetItems.length === 0) {
+        alert('Please add at least one budget item.');
+        return;
+    }
+    
+    // Collect answers from all question textareas
+    const answers = {};
+    const questionElements = document.querySelectorAll('.question textarea');
+    let allAnswered = true;
+    
+    questionElements.forEach((element, index) => {
+        const answer = element.value.trim();
+        if (!answer) {
+            allAnswered = false;
+        }
+        answers[`question${index + 1}`] = answer;
+    });
+    
+    if (!allAnswered) {
+        alert('Please answer all questions.');
+        return;
+    }
+    
+    // Confirm submission
+    if (!confirm('Are you sure you want to submit this assessment? You can still make changes after submission.')) {
+        return;
+    }
+    
+    // Show loading state
+    const submitButton = document.getElementById('submit-assessment');
+    if (!submitButton) return;
+    
+    const originalButtonText = submitButton.textContent;
+    submitButton.disabled = true;
+    submitButton.textContent = 'Submitting...';
+    
+    try {
+        // Calculate totals
+        let totalIncome = 0;
+        let totalExpenses = 0;
+        
+        budgetItems.forEach(item => {
+            if (item.category === 'income') {
+                totalIncome += item.amount;
+            } else if (item.category === 'expense') {
+                totalExpenses += item.amount;
+            }
+        });
+        
+        const netResult = totalIncome - totalExpenses;
+        
+        // Collect assessment data
+        const assessmentData = {
+            userId: user.uid,
+            userEmail: user.email,
+            scenarioId: window.selectedScenarioId || 'default',
+            budgetItems: budgetItems,
+            budget: {
+                totalIncome: totalIncome,
+                totalExpenses: totalExpenses,
+                netResult: netResult
+            },
+            answers: answers,
+            status: 'submitted',
+            updatedAt: new Date()
+        };
+        
+        // Save to Firestore
+        if (currentAssessmentId) {
+            // Update existing assessment
+            assessmentData.submittedAt = new Date();
+            await updateDoc(doc(db, 'assessments', currentAssessmentId), assessmentData);
+        } else {
+            // Create new assessment
+            assessmentData.createdAt = new Date();
+            assessmentData.submittedAt = new Date();
+            const docRef = await addDoc(collection(db, 'assessments'), assessmentData);
+            currentAssessmentId = docRef.id;
+        }
+        
+        // Show success message and hide assessment content
+        const assessmentContent = document.getElementById('assessment-content');
+        const submissionSuccess = document.getElementById('submission-success');
+        
+        if (assessmentContent) assessmentContent.style.display = 'none';
+        if (submissionSuccess) submissionSuccess.style.display = 'block';
+        
+    } catch (error) {
+        console.error('Error submitting assessment:', error);
+        alert('Error submitting assessment: ' + error.message);
+        
+        // Reset button
+        submitButton.disabled = false;
+        submitButton.textContent = originalButtonText;
     }
 }
 

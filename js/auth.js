@@ -18,16 +18,17 @@ async function getCurrentUser() {
               uid: user.uid,
               email: user.email,
               role: userData.role,
+              roles: userData.roles || [userData.role], // Support both role and roles fields
               fullName: userData.fullName || '',
               studentId: userData.studentId || '',
               // Add any other user properties you need
             });
           } else {
-            resolve({ uid: user.uid, email: user.email, role: 'unknown' });
+            resolve({ uid: user.uid, email: user.email, role: 'unknown', roles: ['unknown'] });
           }
         } catch (error) {
           console.error("Error getting user data:", error);
-          resolve({ uid: user.uid, email: user.email, role: 'unknown' });
+          resolve({ uid: user.uid, email: user.email, role: 'unknown', roles: ['unknown'] });
         }
       } else {
         resolve(null); // Not logged in
@@ -57,11 +58,15 @@ async function requireRole(requiredRoles) {
     requiredRoles = [requiredRoles]; // Convert to array if single role
   }
   
-  if (!requiredRoles.includes(user.role)) {
+  // Check if user has any of the required roles
+  const userRoles = Array.isArray(user.roles) ? user.roles : [user.role];
+  const hasRequiredRole = requiredRoles.some(role => userRoles.includes(role));
+  
+  if (!hasRequiredRole) {
     // User doesn't have required role, redirect to appropriate dashboard
-    if (user.role === 'student') {
+    if (userRoles.includes('student')) {
       window.location.href = 'student-dashboard.html';
-    } else if (user.role === 'trainer') {
+    } else if (userRoles.includes('trainer')) {
       window.location.href = 'trainer-dashboard.html';
     } else {
       window.location.href = 'index.html';
@@ -79,7 +84,6 @@ function logoutUser() {
   });
 }
 
-// Update UI based on authentication state
 // Update UI based on authentication state
 async function updateNavigation() {
     const user = await getCurrentUser();
@@ -101,15 +105,24 @@ async function updateNavigation() {
       // Show all auth-required elements
       authRequiredItems.forEach(item => item.style.display = '');
       
-      if (user.role === 'student') {
+      // Get user roles as array
+      const userRoles = Array.isArray(user.roles) ? user.roles : [user.role];
+      
+      if (userRoles.includes('student')) {
         // Show student items, hide trainer items
         studentItems.forEach(item => item.style.display = '');
-        trainerItems.forEach(item => item.style.display = 'none');
+        if (!userRoles.includes('trainer')) {
+          trainerItems.forEach(item => item.style.display = 'none');
+        }
         if (dashboardLink) dashboardLink.href = 'student-dashboard.html';
-      } else if (user.role === 'trainer') {
-        // Show trainer items, hide student items
+      }
+      
+      if (userRoles.includes('trainer')) {
+        // Show trainer items, hide student items if not also a student
         trainerItems.forEach(item => item.style.display = '');
-        studentItems.forEach(item => item.style.display = 'none');
+        if (!userRoles.includes('student')) {
+          studentItems.forEach(item => item.style.display = 'none');
+        }
         if (dashboardLink) dashboardLink.href = 'trainer-dashboard.html';
       }
     } else {
@@ -145,9 +158,12 @@ function initAuth() {
 async function redirectIfLoggedIn() {
   const user = await getCurrentUser();
   if (user) {
-    if (user.role === 'student') {
+    // Get user roles as array
+    const userRoles = Array.isArray(user.roles) ? user.roles : [user.role];
+    
+    if (userRoles.includes('student')) {
       window.location.href = 'student-dashboard.html';
-    } else if (user.role === 'trainer') {
+    } else if (userRoles.includes('trainer')) {
       window.location.href = 'trainer-dashboard.html';
     } else {
       window.location.href = 'index.html';
