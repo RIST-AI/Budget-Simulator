@@ -1,40 +1,44 @@
 // js/assessment-editor.js
 import { auth, onAuthStateChanged, signOut, db, doc, getDoc, setDoc } from './firebase-config.js';
-import { requireRole } from './auth.js';
+import { getCurrentUser, updateNavigation } from './auth.js';
 
-// Ensure user is authenticated and has trainer role
-requireRole('trainer');
-
-// Global variables
-let originalContent = {};
-
-// Initialize editor functionality
 document.addEventListener('DOMContentLoaded', async function() {
-    // Update user status
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
-        } else {
-            // Redirect to login if not authenticated
-            window.location.href = 'index.html';
-        }
-    });
-    
-    // Logout functionality
-    document.getElementById('logout-link').addEventListener('click', function(e) {
-        e.preventDefault();
-        signOut(auth).then(() => {
-            window.location.href = 'index.html';
-        }).catch((error) => {
-            console.error("Error signing out:", error);
-        });
-    });
-    
     try {
-        // Load current assessment content
-        await loadAssessmentContent();
+        // Initialize navigation
+        await updateNavigation();
         
-        // Set up event listeners
+        // Get current user
+        const user = await getCurrentUser();
+        
+        // Check if user is logged in
+        if (!user) {
+            window.location.href = 'index.html';
+            return;
+        }
+        
+        // Check if user has trainer role
+        const userRoles = Array.isArray(user.roles) ? user.roles : [user.role];
+        if (!userRoles.includes('trainer')) {
+            alert('Access denied. You need trainer privileges to access this page.');
+            window.location.href = 'index.html';
+            return;
+        }
+        
+        // Update user status
+        document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
+        
+        // Set up logout functionality
+        document.getElementById('logout-link').addEventListener('click', function(e) {
+            e.preventDefault();
+            signOut(auth).then(() => {
+                window.location.href = 'index.html';
+            }).catch((error) => {
+                console.error("Error signing out:", error);
+            });
+        });
+        
+        // Continue with the rest of the initialization
+        await loadAssessmentContent();
         setupEventListeners();
         
         // Hide loading indicator and show editor
@@ -48,6 +52,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         `;
     }
 });
+
+// Global variables
+let originalContent = {};
 
 // Load assessment content from Firestore
 async function loadAssessmentContent() {
@@ -440,6 +447,12 @@ async function saveChanges() {
             }
         }
         
+        // Get current user
+        const user = await getCurrentUser();
+        if (!user) {
+            throw new Error('You must be logged in to save changes');
+        }
+        
         // Create updated content object
         const updatedContent = {
             title: title,
@@ -450,7 +463,7 @@ async function saveChanges() {
             scenarios: scenarios,
             questions: questions,
             updatedAt: new Date(),
-            updatedBy: auth.currentUser.email
+            updatedBy: user.email
         };
         
         // Save to Firestore

@@ -85,6 +85,8 @@ function logoutUser() {
 }
 
 // Update UI based on authentication state
+// In auth.js, update the updateNavigation function:
+
 async function updateNavigation() {
     const user = await getCurrentUser();
     
@@ -108,22 +110,22 @@ async function updateNavigation() {
       // Get user roles as array
       const userRoles = Array.isArray(user.roles) ? user.roles : [user.role];
       
-      if (userRoles.includes('student')) {
-        // Show student items, hide trainer items
-        studentItems.forEach(item => item.style.display = '');
-        if (!userRoles.includes('trainer')) {
-          trainerItems.forEach(item => item.style.display = 'none');
-        }
-        if (dashboardLink) dashboardLink.href = 'student-dashboard.html';
-      }
+      // Handle student items
+      studentItems.forEach(item => {
+        item.style.display = userRoles.includes('student') ? '' : 'none';
+      });
       
-      if (userRoles.includes('trainer')) {
-        // Show trainer items, hide student items if not also a student
-        trainerItems.forEach(item => item.style.display = '');
-        if (!userRoles.includes('student')) {
-          studentItems.forEach(item => item.style.display = 'none');
+      // Handle trainer items - IMPORTANT: explicitly set display:none for non-trainers
+      trainerItems.forEach(item => {
+        item.style.display = userRoles.includes('trainer') ? '' : 'none';
+      });
+      
+      if (dashboardLink) {
+        if (userRoles.includes('trainer')) {
+          dashboardLink.href = 'trainer-dashboard.html';
+        } else if (userRoles.includes('student')) {
+          dashboardLink.href = 'student-dashboard.html';
         }
-        if (dashboardLink) dashboardLink.href = 'trainer-dashboard.html';
       }
     } else {
       // User is not logged in
@@ -136,8 +138,7 @@ async function updateNavigation() {
       trainerItems.forEach(item => item.style.display = 'none');
       authRequiredItems.forEach(item => item.style.display = 'none');
     }
-  }
-
+}
 // Initialize authentication on page load
 function initAuth() {
   document.addEventListener('DOMContentLoaded', async () => {
