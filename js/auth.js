@@ -95,48 +95,43 @@ async function updateNavigation() {
     const userStatus = document.getElementById('user-status');
     const studentItems = document.querySelectorAll('.student-only');
     const trainerItems = document.querySelectorAll('.trainer-only');
-    const dashboardLink = document.getElementById('dashboard-link');
-    const authRequiredItems = document.querySelectorAll('.auth-required');
     
     if (user) {
       // User is logged in
       if (loginItem) loginItem.style.display = 'none';
-      if (logoutItem) logoutItem.style.display = 'inline-block';
+      if (logoutItem) logoutItem.style.display = '';
       if (userStatus) userStatus.innerHTML = `Logged in as: ${user.email}`;
-      
-      // Show all auth-required elements
-      authRequiredItems.forEach(item => item.style.display = '');
       
       // Get user roles as array
       const userRoles = Array.isArray(user.roles) ? user.roles : [user.role];
+      console.log("Current user roles:", userRoles); // Debug log
+      
+      // Handle trainer items
+      trainerItems.forEach(item => {
+        if (userRoles.includes('trainer')) {
+          item.style.display = ''; // Show for trainers
+        } else {
+          item.style.display = 'none'; // Hide for non-trainers
+        }
+      });
       
       // Handle student items
       studentItems.forEach(item => {
-        item.style.display = userRoles.includes('student') ? '' : 'none';
-      });
-      
-      // Handle trainer items - IMPORTANT: explicitly set display:none for non-trainers
-      trainerItems.forEach(item => {
-        item.style.display = userRoles.includes('trainer') ? '' : 'none';
-      });
-      
-      if (dashboardLink) {
-        if (userRoles.includes('trainer')) {
-          dashboardLink.href = 'trainer-dashboard.html';
-        } else if (userRoles.includes('student')) {
-          dashboardLink.href = 'student-dashboard.html';
+        if (userRoles.includes('student')) {
+          item.style.display = ''; // Show for students
+        } else {
+          item.style.display = 'none'; // Hide for non-students
         }
-      }
+      });
     } else {
       // User is not logged in
       if (loginItem) loginItem.style.display = '';
       if (logoutItem) logoutItem.style.display = 'none';
       if (userStatus) userStatus.innerHTML = '';
       
-      // Hide role-specific and auth-required items
+      // Hide role-specific items
       studentItems.forEach(item => item.style.display = 'none');
       trainerItems.forEach(item => item.style.display = 'none');
-      authRequiredItems.forEach(item => item.style.display = 'none');
     }
 }
 // Initialize authentication on page load

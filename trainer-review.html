@@ -153,5 +153,15 @@
     </footer>
 
     <script type="module" src="js/review.js"></script>
+    // Add this to your page for debugging
+    document.addEventListener('DOMContentLoaded', async () => {
+    const { getCurrentUser } = await import('./js/auth.js');
+    const user = await getCurrentUser();
+    console.log("Current user:", user);
+    if (user) {
+        console.log("User role:", user.role);
+        console.log("User roles array:", user.roles);
+    }
+    });
 </body>
 </html>

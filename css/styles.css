@@ -1414,10 +1414,3 @@ footer a {
 .tab-content.active {
     display: block;
 }
-
-/* Hide trainer-only elements by default */
-.trainer-only {
-    display: none !important;
-}
-
-/* JavaScript will override this for trainers */
