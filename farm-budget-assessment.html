@@ -3,10 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <meta name="description" content="Farm Budget Assessment for AHCBUS408 Budget Master - Create and analyze agricultural budgets">
-    <title>Farm Budget Assessment - AHCBUS408 Budget Master</title>
+    <title>Farm Budget Assessment - RIST Budget Master</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" href="images/RIST Brandmark - Navy Circle.png" type="image/png">
+    <style>
+        /* Assessment-specific styles */
+        .assessment-container {
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: none;
+            margin-right: 5px;
+            border-radius: 5px 5px 0 0;
+        }
+        
+        .tab.active {
+            background-color: #f9f9f9;
+            border-color: #ddd;
+            border-bottom-color: #f9f9f9;
+            margin-bottom: -1px;
+        }
+        
+        .tab-content {
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 0 0 5px 5px;
+        }
+        
+        .question {
+            margin-bottom: 20px;
+        }
+        
+        .question h4 {
+            margin-bottom: 10px;
+            color: #1a3a5f;
+        }
+        
+        .options {
+            margin-left: 20px;
+        }
+        
+        .option {
+            margin-bottom: 10px;
+        }
+        
+        .budget-creation-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .budget-creation-form {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .budget-form-section {
+            margin-bottom: 20px;
+        }
+        
+        .budget-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        
+        .budget-table th,
+        .budget-table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        
+        .budget-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        
+        .budget-summary {
+            grid-column: 1 / -1;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .summary-table td {
+            padding: 8px;
+        }
+        
+        .next-button,
+        .submit-button {
+            background-color: #1a3a5f;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+            float: right;
+        }
+        
+        .next-button:hover,
+        .submit-button:hover {
+            background-color: #0f2a4a;
+        }
+        
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .feedback.success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .feedback.error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        /* Error message styling */
+        #error-container {
+            color: red;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid red;
+            border-radius: 5px;
+            background-color: #fff9f9;
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -25,358 +178,286 @@
             </div>
         </div>
     </header>
+
     <nav>
         <div class="container">
             <ul>
                 <li><a href="index.html">Home</a></li>
                 <li><a href="budget.html">Budget Simulator</a></li>
                 <li><a href="farm-budget-assessment.html" class="active">Assessment</a></li>
-                <li id="dashboard-nav-item"><a href="#" id="dashboard-link">Dashboard</a></li>
-                <li id="logout-nav-item"><a href="#" id="logout-link">Logout</a></li>
+                <li id="login-nav-item"><a href="login.html">Login</a></li>
+                <li id="dashboard-nav-item" style="display:none;"><a href="#" id="dashboard-link">Dashboard</a></li>
+                <li id="logout-nav-item" style="display:none;"><a href="#" id="logout-link">Logout</a></li>
             </ul>
         </div>
     </nav>
 
     <main class="container">
-        <div class="assessment-container">
-            <div class="assessment-header">
-                <h2>Farm Budget Management Assessment</h2>
-                <p>Create a farm budget, track actual performance, and analyze variances to demonstrate your budget management skills.</p>
-            </div>
-            
-            <div class="assessment-progress">
-                <div class="progress-step active" id="step1">
-                    1
-                    <div class="step-label">Student Info</div>
-                </div>
-                <div class="progress-step" id="step2">
-                    2
-                    <div class="step-label">Budget Creation</div>
-                </div>
-                <div class="progress-step" id="step3">
-                    3
-                    <div class="step-label">Actual Results</div>
-                </div>
-                <div class="progress-step" id="step4">
-                    4
-                    <div class="step-label">Variance Analysis</div>
-                </div>
-                <div class="progress-step" id="step5">
-                    5
-                    <div class="step-label">Recommendations</div>
-                </div>
-                <div class="progress-step" id="step6">
-                    6
-                    <div class="step-label">Final Report</div>
-                </div>
-            </div>
-            
-            <div class="tabs">
-                <div class="tab-buttons">
-                    <button class="tab-button active" data-tab="student-info">Student Information</button>
-                    <button class="tab-button" data-tab="budget-creation">Budget Creation</button>
-                    <button class="tab-button" data-tab="actual-results">Actual Results</button>
-                    <button class="tab-button" data-tab="variance-analysis">Variance Analysis</button>
-                    <button class="tab-button" data-tab="recommendations">Recommendations</button>
-                    <button class="tab-button" data-tab="final-report">Final Report</button>
-                </div>
-                
-                <div id="student-info" class="tab-content active">
-                    <h3>Student Information</h3>
-                    <p>Please provide your details below.</p>
-                    
-                    <form id="student-info-form">
-                        <div class="student-info-grid">
-                            <div class="form-group">
-                                <label for="student-name">Full Name:</label>
-                                <input type="text" id="student-name" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="student-id">Student ID:</label>
-                                <input type="text" id="student-id" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="unit-code">Unit Code:</label>
-                                <input type="text" id="unit-code" value="AHCBUS408" readonly>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="assessment-date">Assessment Date:</label>
-                                <input type="date" id="assessment-date" required>
-                            </div>
-                        </div>
-                        
-                        <div class="btn-group">
-                            <div></div>
-                            <button type="button" class="btn" id="next-to-budget">Next: Budget Creation</button>
-                        </div>
-                    </form>
-                </div>
-                
-                <div id="budget-creation" class="tab-content">
-                    <h3>Budget Creation</h3>
-                    <p>Create a farm budget by adding income and expense items.</p>
-                    
-                    <div class="form-group">
-                        <label for="farm-type">Farm Type:</label>
-                        <select id="farm-type">
-                            <option value="dairy">Dairy Farm</option>
-                            <option value="crop">Crop Farm</option>
-                            <option value="livestock">Livestock Farm</option>
-                            <option value="mixed">Mixed Farm</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="budget-period">Budget Period:</label>
-                        <select id="budget-period">
-                            <option value="monthly">Monthly</option>
-                            <option value="quarterly">Quarterly</option>
-                            <option value="annual">Annual</option>
-                        </select>
-                    </div>
-                    
-                    <h4>Add Budget Items</h4>
-                    <form id="budget-item-form">
-                        <div class="budget-item-form">
-                            <div class="form-group">
-                                <label for="item-name">Item Name:</label>
-                                <input type="text" id="item-name" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="item-category">Category:</label>
-                                <select id="item-category" required>
-                                    <option value="">Select Category</option>
-                                    <option value="income">Income</option>
-                                    <option value="expense">Expense</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="item-subcategory">Subcategory:</label>
-                                <select id="item-subcategory" required>
-                                    <option value="">Select Subcategory</option>
-                                    <!-- Subcategories will be populated based on category selection -->
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="item-amount">Budgeted Amount ($):</label>
-                                <input type="number" id="item-amount" min="0" step="0.01" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="item-notes">Notes:</label>
-                                <input type="text" id="item-notes">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>&nbsp;</label>
-                                <button type="button" class="btn" id="add-budget-item">Add Item</button>
-                            </div>
-                        </div>
-                    </form>
-                    
-                    <h4>Budget Items</h4>
-                    <div class="budget-grid">
-                        <table class="budget-items-table" id="budget-items-table">
-                            <thead>
-                                <tr>
-                                    <th>Item Name</th>
-                                    <th>Category</th>
-                                    <th>Subcategory</th>
-                                    <th>Amount ($)</th>
-                                    <th>Notes</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="budget-items-body">
-                                <!-- Budget items will be added here -->
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <div class="budget-summary">
-                        <div class="budget-summary-item">
-                            <div class="label">Total Income</div>
-                            <div class="value" id="total-income">$0.00</div>
-                        </div>
-                        <div class="budget-summary-item">
-                            <div class="label">Total Expenses</div>
-                            <div class="value" id="total-expenses">$0.00</div>
-                        </div>
-                        <div class="budget-summary-item">
-                            <div class="label">Net Result</div>
-                            <div class="value" id="net-result">$0.00</div>
-                        </div>
-                    </div>
-                    
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-secondary" id="back-to-student">Back: Student Info</button>
-                        <button type="button" class="btn" id="next-to-actuals">Next: Actual Results</button>
-                    </div>
-                </div>
-                
-                <div id="actual-results" class="tab-content">
-                    <h3>Actual Results</h3>
-                    <p>Enter the actual amounts for each budget item.</p>
-                    
-                    <div class="budget-grid">
-                        <table class="actuals-table" id="actuals-table">
-                            <thead>
-                                <tr>
-                                    <th>Item Name</th>
-                                    <th>Category</th>
-                                    <th>Budgeted Amount ($)</th>
-                                    <th>Actual Amount ($)</th>
-                                    <th>Variance ($)</th>
-                                </tr>
-                            </thead>
-                            <tbody id="actuals-body">
-                                <!-- Actual results will be added here -->
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <div class="budget-summary">
-                        <div class="budget-summary-item">
-                            <div class="label">Total Income</div>
-                            <div class="value" id="actual-income">$0.00</div>
-                        </div>
-                        <div class="budget-summary-item">
-                            <div class="label">Total Expenses</div>
-                            <div class="value" id="actual-expenses">$0.00</div>
-                        </div>
-                        <div class="budget-summary-item">
-                            <div class="label">Net Result</div>
-                            <div class="value" id="actual-net-result">$0.00</div>
-                        </div>
-                    </div>
-                    
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-secondary" id="back-to-budget">Back: Budget Creation</button>
-                        <button type="button" class="btn" id="next-to-variance">Next: Variance Analysis</button>
-                    </div>
-                </div>
-                
-                <div id="variance-analysis" class="tab-content">
-                    <h3>Variance Analysis</h3>
-                    <p>Analyze the significant variances between budgeted and actual amounts.</p>
-                    
-                    <div class="budget-grid">
-                        <table class="variance-table" id="variance-table">
-                            <thead>
-                                <tr>
-                                    <th>Item Name</th>
-                                    <th>Budgeted ($)</th>
-                                    <th>Actual ($)</th>
-                                    <th>Variance ($)</th>
-                                    <th>Variance (%)</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="variance-body">
-                                <!-- Variance items will be added here -->
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <div id="variance-form" style="display: none;">
-                        <h4>Variance Analysis for: <span id="variance-item-name"></span></h4>
-                        
-                        <div class="form-group">
-                            <label for="variance-cause">Cause of Variance:</label>
-                            <select id="variance-cause" required>
-                                <option value="">Select Cause</option>
-                                <option value="price-change">Price Change</option>
-                                <option value="volume-change">Volume/Quantity Change</option>
-                                <option value="timing-difference">Timing Difference</option>
-                                <option value="unexpected-event">Unexpected Event</option>
-                                <option value="estimation-error">Estimation Error</option>
-                                <option value="efficiency-change">Efficiency Change</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="variance-explanation">Explanation:</label>
-                            <textarea id="variance-explanation" rows="3" required></textarea>
-                        </div>
-                        
-                        <div class="form-group">
-                            <button type="button" class="btn" id="save-variance">Save Analysis</button>
-                            <button type="button" class="btn btn-secondary" id="cancel-variance">Cancel</button>
-                        </div>
-                    </div>
-                    
-                    <h4>Overall Budget Performance Assessment</h4>
-                    <div class="form-group">
-                        <textarea id="overall-assessment" rows="5" placeholder="Provide an overall assessment of the budget performance..."></textarea>
-                    </div>
-                    
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-secondary" id="back-to-actuals">Back: Actual Results</button>
-                        <button type="button" class="btn" id="next-to-recommendations">Next: Recommendations</button>
-                    </div>
-                </div>
-                
-                <div id="recommendations" class="tab-content">
-                    <h3>Recommendations</h3>
-                    <p>Based on your variance analysis, provide recommendations for improving budget performance.</p>
-                    
-                    <div id="recommendations-list">
-                        <!-- Recommendations will be added here -->
-                    </div>
-                    
-                    <h4>Add Recommendation</h4>
-                    <div class="form-group">
-                        <label for="recommendation-title">Title:</label>
-                        <input type="text" id="recommendation-title" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="recommendation-details">Details:</label>
-                        <textarea id="recommendation-details" rows="3" required></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <button type="button" class="btn" id="add-recommendation">Add Recommendation</button>
-                    </div>
-                    
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-secondary" id="back-to-variance">Back: Variance Analysis</button>
-                        <button type="button" class="btn" id="next-to-report">Next: Final Report</button>
-                    </div>
-                </div>
-                
-                <div id="final-report" class="tab-content">
-                    <h3>Final Report</h3>
-                    <p>Summarize your findings and recommendations in a final report.</p>
-                    
-                    <div class="form-group">
-                        <label for="final-report-text">Final Report:</label>
-                        <textarea id="final-report-text" rows="10" placeholder="Write your final report here..."></textarea>
-                    </div>
-                    
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-secondary" id="back-to-recommendations">Back: Recommendations</button>
-                        <button type="button" class="btn btn-success" id="submit-assessment">Submit Assessment</button>
-                    </div>
-                </div>
-            </div>
-            
-            <div id="save-status" class="mt-20" style="display: none;">
-                <p>Draft saved automatically at <span id="save-time"></span></p>
-            </div>
-            
-            <div class="btn-group mt-20">
-                <button type="button" class="btn btn-secondary" id="save-draft">Save Draft</button>
-            </div>
+        <section class="page-header">
+            <h2>Farm Budget Assessment</h2>
+            <p>Test your knowledge of farm budgeting concepts and create a sample budget.</p>
+        </section>
+
+        <!-- Error container for displaying errors -->
+        <div id="error-container"></div>
+        
+        <!-- Loading indicator -->
+        <div id="loading-indicator" style="text-align: center; padding: 20px; display: none;">
+            <p>Loading assessment...</p>
+            <div class="spinner" style="border: 4px solid rgba(0, 0, 0, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #1a3a5f; animation: spin 1s linear infinite; margin: 20px auto;"></div>
         </div>
+        
+        <section class="assessment-container">
+            <div class="tabs">
+                <div class="tab active">Knowledge Check</div>
+                <div class="tab">Budget Creation</div>
+                <div class="tab">Submission</div>
+            </div>
+            
+            <div class="tab-content" id="knowledge-check">
+                <h3>Knowledge Check</h3>
+                <p>Answer the following questions about farm budgeting concepts.</p>
+                
+                <div class="question">
+                    <h4>1. What is the primary purpose of creating a farm budget?</h4>
+                    <div class="options">
+                        <div class="option">
+                            <input type="radio" name="q1" id="q1a" value="a">
+                            <label for="q1a">To satisfy bank requirements for loans</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="q1" id="q1b" value="b">
+                            <label for="q1b">To plan income and expenses for a specific period</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="q1" id="q1c" value="c">
+                            <label for="q1c">To calculate taxes owed at the end of the year</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="q1" id="q1d" value="d">
+                            <label for="q1d">To determine the market value of the farm</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="question">
+                    <h4>2. Which of the following is NOT typically included in a farm budget?</h4>
+                    <div class="options">
+                        <div class="option">
+                            <input type="radio" name="q2" id="q2a" value="a">
+                            <label for="q2a">Crop sales revenue</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="q2" id="q2b" value="b">
+                            <label for="q2b">Feed costs</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="q2" id="q2c" value="c">
+                            <label for="q2c">Neighbor's property value</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="q2" id="q2d" value="d">
+                            <label for="q2d">Equipment maintenance</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="question">
+                    <h4>3. What is the formula for calculating net farm income?</h4>
+                    <div class="options">
+                        <div class="option">
+                            <input type="radio" name="q3" id="q3a" value="a">
+                            <label for="q3a">Total Revenue - Total Expenses</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="q3" id="q3b" value="b">
+                            <label for="q3b">Total Assets - Total Liabilities</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="q3" id="q3c" value="c">
+                            <label for="q3c">Total Revenue + Total Assets</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="q3" id="q3d" value="d">
+                            <label for="q3d">Total Revenue × Profit Margin</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="question">
+                    <h4>4. Which of the following is a variable cost in farming?</h4>
+                    <div class="options">
+                        <div class="option">
+                            <input type="radio" name="q4" id="q4a" value="a">
+                            <label for="q4a">Property taxes</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="q4" id="q4b" value="b">
+                            <label for="q4b">Mortgage payments</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="q4" id="q4c" value="c">
+                            <label for="q4c">Fertilizer</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="q4" id="q4d" value="d">
+                            <label for="q4d">Insurance premiums</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="question">
+                    <h4>5. What is a cash flow budget?</h4>
+                    <div class="options">
+                        <div class="option">
+                            <input type="radio" name="q5" id="q5a" value="a">
+                            <label for="q5a">A budget that only includes income from cash crops</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="q5" id="q5b" value="b">
+                            <label for="q5b">A projection of when cash will be received and spent throughout a period</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="q5" id="q5c" value="c">
+                            <label for="q5c">A budget that excludes non-cash transactions like depreciation</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="q5" id="q5d" value="d">
+                            <label for="q5d">A budget that only includes expenses paid in cash</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="next-button" onclick="moveToNextTab()">Next: Budget Creation</button>
+            </div>
+            
+            <div class="tab-content" id="budget-creation">
+                <h3>Budget Creation</h3>
+                <p>Create a sample farm budget for a small dairy farm.</p>
+                
+                <div class="budget-creation-form">
+                    <div class="budget-form-section">
+                        <h4>Income</h4>
+                        <table class="budget-table" id="income-table">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Amount ($)</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><input type="text" placeholder="Income item" value="Milk sales"></td>
+                                    <td><input type="number" placeholder="0.00" value="120000"></td>
+                                    <td><button class="btn-small btn-remove">Remove</button></td>
+                                </tr>
+                                <tr>
+                                    <td><input type="text" placeholder="Income item" value="Cull cow sales"></td>
+                                    <td><input type="number" placeholder="0.00" value="15000"></td>
+                                    <td><button class="btn-small btn-remove">Remove</button></td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3">
+                                        <button id="add-income" class="btn-small">+ Add Income Item</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Total Income</strong></td>
+                                    <td id="total-income">$135,000.00</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    
+                    <div class="budget-form-section">
+                        <h4>Expenses</h4>
+                        <table class="budget-table" id="expense-table">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Amount ($)</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><input type="text" placeholder="Expense item" value="Feed"></td>
+                                    <td><input type="number" placeholder="0.00" value="45000"></td>
+                                    <td><button class="btn-small btn-remove">Remove</button></td>
+                                </tr>
+                                <tr>
+                                    <td><input type="text" placeholder="Expense item" value="Veterinary services"></td>
+                                    <td><input type="number" placeholder="0.00" value="12000"></td>
+                                    <td><button class="btn-small btn-remove">Remove</button></td>
+                                </tr>
+                                <tr>
+                                    <td><input type="text" placeholder="Expense item" value="Labor"></td>
+                                    <td><input type="number" placeholder="0.00" value="35000"></td>
+                                    <td><button class="btn-small btn-remove">Remove</button></td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3">
+                                        <button id="add-expense" class="btn-small">+ Add Expense Item</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Total Expenses</strong></td>
+                                    <td id="total-expenses">$92,000.00</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    
+                    <div class="budget-summary">
+                        <h4>Budget Summary</h4>
+                        <table class="summary-table">
+                            <tr>
+                                <td>Total Income:</td>
+                                <td id="summary-income">$135,000.00</td>
+                            </tr>
+                            <tr>
+                                <td>Total Expenses:</td>
+                                <td id="summary-expenses">$92,000.00</td>
+                            </tr>
+                            <tr class="net-result">
+                                <td>Net Result:</td>
+                                <td id="net-result" class="positive">$43,000.00</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <button class="next-button" onclick="moveToNextTab()">Next: Submission</button>
+            </div>
+            
+            <div class="tab-content" id="submission">
+                <h3>Assessment Submission</h3>
+                <p>Review your answers and submit your assessment.</p>
+                
+                <div id="assessment-summary">
+                    <h4>Knowledge Check Answers</h4>
+                    <ul id="knowledge-answers">
+                        <!-- Will be populated by JavaScript -->
+                    </ul>
+                    
+                    <h4>Budget Summary</h4>
+                    <p>Total Income: <span id="final-income">$135,000.00</span></p>
+                    <p>Total Expenses: <span id="final-expenses">$92,000.00</span></p>
+                    <p>Net Result: <span id="final-result" class="positive">$43,000.00</span></p>
+                </div>
+                
+                <button id="submit-assessment" class="submit-button">Submit Assessment</button>
+                
+                <div id="submission-feedback" class="feedback"></div>
+            </div>
+        </section>
     </main>
 
     <footer>
@@ -397,298 +478,422 @@
     </footer>
 
     <script type="module">
-        import { auth, onAuthStateChanged, signOut, db, doc, getDoc, setDoc, addDoc, collection } from './js/firebase-config.js';
+    import { auth, onAuthStateChanged, signOut, db, doc, getDoc, collection, addDoc } from './js/firebase-config.js';
+    
+    // Global error handler
+    window.onerror = function(message, source, lineno, colno, error) {
+        console.error("Error caught:", message, "at line:", lineno);
+        const errorContainer = document.getElementById('error-container');
+        if (errorContainer) {
+            errorContainer.style.display = 'block';
+            errorContainer.innerHTML = `<p>Error: ${message}</p><p>Line: ${lineno}, Column: ${colno}</p>`;
+        }
+        return false;
+    };
+    
+    // Setup tabs function
+    function setupTabs() {
+        console.log("Setting up tabs");
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
         
-        // Global variables
-        let currentUser = null;
-        let budgetItems = [];
-        let varianceAnalyses = [];
-        let recommendations = [];
-        let currentVarianceItemId = null;
-        let autoSaveTimer = null;
-        let lastSaveTime = null;
-        
-        // Check authentication first using localStorage
-        document.addEventListener('DOMContentLoaded', function() {
-            // First check localStorage for a stored user
-            const storedUser = localStorage.getItem('currentUser');
-            if (storedUser) {
-                currentUser = JSON.parse(storedUser);
-                document.getElementById('user-status').innerHTML = 'Logged in as: ' + currentUser.email;
-                
-                // Set dashboard link based on role
-                const storedRole = localStorage.getItem('userRole');
-                if (storedRole === 'trainer') {
-                    document.getElementById('dashboard-link').href = 'trainer-dashboard.html';
-                } else {
-                    document.getElementById('dashboard-link').href = 'student-dashboard.html';
-                }
-                
-                // Initialize the assessment form
-                initializeAssessment();
-            } else {
-                // If no stored user, check Firebase auth
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        currentUser = user;
-                        document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
-                        
-                        // Store user in localStorage for persistence
-                        localStorage.setItem('currentUser', JSON.stringify({
-                            uid: user.uid,
-                            email: user.email
-                        }));
-                        
-                        // Check user role for dashboard link
-                        getDoc(doc(db, 'users', user.uid)).then(userDoc => {
-                            if (userDoc.exists()) {
-                                const role = userDoc.data().role;
-                                localStorage.setItem('userRole', role);
-                                
-                                if (role === 'trainer') {
-                                    document.getElementById('dashboard-link').href = 'trainer-dashboard.html';
-                                } else {
-                                    document.getElementById('dashboard-link').href = 'student-dashboard.html';
-                                }
-                            }
-                        }).catch(error => {
-                            console.error("Error checking user role:", error);
-                        });
-                        
-                        // Initialize the assessment form
-                        initializeAssessment();
-                    } else {
-                        // Not authenticated, redirect to login
-                        window.location.href = 'login.html';
-                    }
-                });
+        // Hide all tab contents except the first one
+        tabContents.forEach((content, index) => {
+            if (index !== 0) {
+                content.style.display = 'none';
             }
-            
-            // Logout functionality
-            document.getElementById('logout-link').addEventListener('click', function(e) {
-                e.preventDefault();
+        });
+        
+        // Add click event listeners to tabs
+        tabs.forEach((tab, index) => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs
+                tabs.forEach(t => t.classList.remove('active'));
                 
-                // Save draft before logging out
-                saveAssessmentDraft().then(() => {
-                    // Clear localStorage
-                    localStorage.removeItem('currentUser');
-                    localStorage.removeItem('userRole');
-                    
-                    // Also sign out from Firebase
-                    signOut(auth).then(() => {
-                        // Sign-out successful
-                        window.location.href = 'login.html';
-                    }).catch((error) => {
-                        // An error happened
-                        console.error("Error signing out:", error);
-                        // Still redirect to login
-                        window.location.href = 'login.html';
-                    });
+                // Add active class to clicked tab
+                tab.classList.add('active');
+                
+                // Hide all tab contents
+                tabContents.forEach(content => {
+                    content.style.display = 'none';
                 });
+                
+                // Show the corresponding tab content
+                tabContents[index].style.display = 'block';
             });
         });
         
-        // Initialize assessment
-        function initializeAssessment() {
-            // Set up tab switching
+        console.log("Tabs setup complete");
+    }
+    
+    // Function to move to next tab
+    function moveToNextTab() {
+        console.log("Moving to next tab");
+        
+        // Get the current tab content
+        const currentTab = document.querySelector('.tab-content:not([style*="display: none"])');
+        if (!currentTab) {
+            console.error("No current tab found");
+            return;
+        }
+        
+        // Find the next tab content
+        const nextTab = currentTab.nextElementSibling;
+        
+        if (nextTab && nextTab.classList.contains('tab-content')) {
+            console.log("Found next tab");
+            
+            // Hide current tab
+            currentTab.style.display = 'none';
+            
+            // Show next tab
+            nextTab.style.display = 'block';
+            
+            // Update active tab indicator
+            const currentTabIndex = Array.from(document.querySelectorAll('.tab-content')).indexOf(currentTab);
+            const tabs = document.querySelectorAll('.tab');
+            
+            if (tabs[currentTabIndex]) tabs[currentTabIndex].classList.remove('active');
+            if (tabs[currentTabIndex + 1]) tabs[currentTabIndex + 1].classList.add('active');
+            
+            // If moving to submission tab, update the summary
+            if (nextTab.id === 'submission') {
+                updateSubmissionSummary();
+            }
+        } else {
+            console.error("No next tab found");
+        }
+    }
+    
+    // Make moveToNextTab available globally
+    window.moveToNextTab = moveToNextTab;
+    
+    // Update submission summary
+    function updateSubmissionSummary() {
+        console.log("Updating submission summary");
+        
+        // Update knowledge check answers
+        const knowledgeAnswers = document.getElementById('knowledge-answers');
+        knowledgeAnswers.innerHTML = '';
+        
+        const questions = [
+            "What is the primary purpose of creating a farm budget?",
+            "Which of the following is NOT typically included in a farm budget?",
+            "What is the formula for calculating net farm income?",
+            "Which of the following is a variable cost in farming?",
+            "What is a cash flow budget?"
+        ];
+        
+        for (let i = 1; i <= 5; i++) {
+            const selectedOption = document.querySelector(`input[name="q${i}"]:checked`);
+            const answer = selectedOption ? selectedOption.value : 'Not answered';
+            
+            const li = document.createElement('li');
+            li.textContent = `Question ${i}: ${questions[i-1]} - Answer: ${answer}`;
+            knowledgeAnswers.appendChild(li);
+        }
+        
+        // Update budget summary
+        document.getElementById('final-income').textContent = document.getElementById('summary-income').textContent;
+        document.getElementById('final-expenses').textContent = document.getElementById('summary-expenses').textContent;
+        document.getElementById('final-result').textContent = document.getElementById('net-result').textContent;
+        
+        // Copy the class (positive/negative) from net-result to final-result
+        const netResultClass = document.getElementById('net-result').className;
+        document.getElementById('final-result').className = netResultClass;
+    }
+    
+    // Initialize assessment
+    function initializeAssessment() {
+        console.log("Initializing assessment");
+        
+        // Show loading indicator
+        document.getElementById('loading-indicator').style.display = 'block';
+        
+        try {
+            // Setup tabs
             setupTabs();
             
-            // Set up navigation buttons
-            setupNavigation();
+            // Add income row
+            document.getElementById('add-income').addEventListener('click', function() {
+                const newRow = document.createElement('tr');
+                newRow.innerHTML = `
+                    <td><input type="text" placeholder="Income item"></td>
+                    <td><input type="number" placeholder="0.00"></td>
+                    <td><button class="btn-small btn-remove">Remove</button></td>
+                `;
+                
+                const tbody = document.querySelector('#income-table tbody');
+                tbody.appendChild(newRow);
+                
+                // Add event listener to the new remove button
+                newRow.querySelector('.btn-remove').addEventListener('click', function() {
+                    tbody.removeChild(newRow);
+                    updateBudgetTotals();
+                });
+                
+                // Add event listener to update totals when amount changes
+                newRow.querySelector('input[type="number"]').addEventListener('input', updateBudgetTotals);
+            });
             
-            // Set up budget item form
-            setupBudgetItemForm();
+            // Add expense row
+            document.getElementById('add-expense').addEventListener('click', function() {
+                const newRow = document.createElement('tr');
+                newRow.innerHTML = `
+                    <td><input type="text" placeholder="Expense item"></td>
+                    <td><input type="number" placeholder="0.00"></td>
+                    <td><button class="btn-small btn-remove">Remove</button></td>
+                `;
+                
+                const tbody = document.querySelector('#expense-table tbody');
+                tbody.appendChild(newRow);
+                
+                // Add event listener to the new remove button
+                newRow.querySelector('.btn-remove').addEventListener('click', function() {
+                    tbody.removeChild(newRow);
+                    updateBudgetTotals();
+                });
+                
+                // Add event listener to update totals when amount changes
+                newRow.querySelector('input[type="number"]').addEventListener('input', updateBudgetTotals);
+            });
             
-            // Set up actuals form
-            setupActualsForm();
-            
-            // Set up variance analysis
-            setupVarianceAnalysis();
-            
-            // Set up recommendations
-            setupRecommendations();
-            
-            // Set up save draft button
-            document.getElementById('save-draft').addEventListener('click', function() {
-                saveAssessmentDraft().then(() => {
-                    alert('Draft saved successfully!');
+            // Add event listeners to existing remove buttons
+            document.querySelectorAll('.btn-remove').forEach(button => {
+                button.addEventListener('click', function() {
+                    const row = button.closest('tr');
+                    row.parentNode.removeChild(row);
+                    updateBudgetTotals();
                 });
             });
             
-            // Set default date to today
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('assessment-date').value = today;
+            // Add event listeners to existing number inputs
+            document.querySelectorAll('input[type="number"]').forEach(input => {
+                input.addEventListener('input', updateBudgetTotals);
+            });
             
-            // Load saved draft
-            loadSavedDraft();
+            // Submit assessment
+            document.getElementById('submit-assessment').addEventListener('click', submitAssessment);
             
-            // Set up auto-save
-            setupAutoSave();
+            // Initial calculation
+            updateBudgetTotals();
+            
+            // Hide loading indicator
+            document.getElementById('loading-indicator').style.display = 'none';
+            
+            console.log("Assessment initialization complete");
+        } catch (error) {
+            console.error("Error initializing assessment:", error);
+            document.getElementById('loading-indicator').style.display = 'none';
+            document.getElementById('error-container').style.display = 'block';
+            document.getElementById('error-container').textContent = 'Error initializing assessment: ' + error.message;
         }
+    }
+    
+    // Update budget totals
+    function updateBudgetTotals() {
+        console.log("Updating budget totals");
         
-        // The rest of your existing functions remain unchanged
-        // ...
-        
-        // Save assessment draft
-        async function saveAssessmentDraft() {
-            if (!currentUser) return Promise.reject(new Error("Not authenticated"));
+        try {
+            // Calculate income total
+            let incomeTotal = 0;
+            document.querySelectorAll('#income-table tbody input[type="number"]').forEach(input => {
+                incomeTotal += parseFloat(input.value || 0);
+            });
             
-            try {
-                // Collect all form data
-                const formData = {
-                    studentName: document.getElementById('student-name').value,
-                    studentId: document.getElementById('student-id').value,
-                    assessmentDate: document.getElementById('assessment-date').value,
-                    farmType: document.getElementById('farm-type').value,
-                    budgetPeriod: document.getElementById('budget-period').value,
-                    budgetItems: budgetItems,
-                    variances: varianceAnalyses,
-                    overallAssessment: document.getElementById('overall-assessment').value,
-                    recommendations: recommendations,
-                    finalReport: document.getElementById('final-report-text').value,
-                    lastUpdated: new Date()
-                };
-                
-                // Save to Firestore
-                const userRef = doc(db, "users", currentUser.uid);
-                const draftRef = doc(collection(userRef, "assessmentDrafts"), "currentDraft");
-                
-                await setDoc(draftRef, formData);
-                console.log("Draft saved");
-                
-                // Update save status
-                lastSaveTime = new Date();
-                document.getElementById('save-time').textContent = lastSaveTime.toLocaleTimeString();
-                document.getElementById('save-status').style.display = 'block';
-                
-                // Also save to localStorage as backup
-                localStorage.setItem('assessment_data', JSON.stringify(formData));
-                
-                return Promise.resolve();
-            } catch (error) {
-                console.error("Error saving draft:", error);
-                return Promise.reject(error);
+            // Calculate expense total
+            let expenseTotal = 0;
+            document.querySelectorAll('#expense-table tbody input[type="number"]').forEach(input => {
+                expenseTotal += parseFloat(input.value || 0);
+            });
+            
+            // Calculate net result
+            const netResult = incomeTotal - expenseTotal;
+            
+            // Update display
+            document.getElementById('total-income').textContent = formatCurrency(incomeTotal);
+            document.getElementById('total-expenses').textContent = formatCurrency(expenseTotal);
+            document.getElementById('summary-income').textContent = formatCurrency(incomeTotal);
+            document.getElementById('summary-expenses').textContent = formatCurrency(expenseTotal);
+            document.getElementById('net-result').textContent = formatCurrency(netResult);
+            
+            // Add class based on net result
+            const netResultElement = document.getElementById('net-result');
+            if (netResult > 0) {
+                netResultElement.className = 'positive';
+            } else if (netResult < 0) {
+                netResultElement.className = 'negative';
+            } else {
+                netResultElement.className = '';
             }
+        } catch (error) {
+            console.error("Error updating budget totals:", error);
         }
+    }
+    
+    // Format currency
+    function formatCurrency(amount) {
+        return '$' + amount.toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
+    
+    // Submit assessment
+    async function submitAssessment() {
+        console.log("Submitting assessment");
         
-        // Load saved draft
-        async function loadSavedDraft() {
-            if (!currentUser) return;
+        const submitButton = document.getElementById('submit-assessment');
+        const feedbackElement = document.getElementById('submission-feedback');
+        
+        // Disable submit button
+        submitButton.disabled = true;
+        submitButton.textContent = 'Submitting...';
+        
+        try {
+            // Check if user is logged in
+            const user = auth.currentUser;
+            if (!user) {
+                feedbackElement.className = 'feedback error';
+                feedbackElement.style.display = 'block';
+                feedbackElement.textContent = 'You must be logged in to submit an assessment.';
+                
+                // Re-enable submit button
+                submitButton.disabled = false;
+                submitButton.textContent = 'Submit Assessment';
+                return;
+            }
             
-            try {
-                // Try to load from Firestore first
-                const userRef = doc(db, "users", currentUser.uid);
-                const draftRef = doc(collection(userRef, "assessmentDrafts"), "currentDraft");
-                
-                const docSnap = await getDoc(draftRef);
-                
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    
-                    // Populate form fields
-                    if (data.studentName) document.getElementById('student-name').value = data.studentName;
-                    if (data.studentId) document.getElementById('student-id').value = data.studentId;
-                    if (data.assessmentDate) document.getElementById('assessment-date').value = data.assessmentDate;
-                    if (data.farmType) document.getElementById('farm-type').value = data.farmType;
-                    if (data.budgetPeriod) document.getElementById('budget-period').value = data.budgetPeriod;
-                    
-                    // Load budget items
-                    if (data.budgetItems && Array.isArray(data.budgetItems)) {
-                        budgetItems = data.budgetItems;
-                        updateBudgetItemsTable();
-                        updateBudgetSummary();
-                    }
-                    
-                    // Load variance analyses
-                    if (data.variances && Array.isArray(data.variances)) {
-                        varianceAnalyses = data.variances;
-                    }
-                    
-                    // Load overall assessment
-                    if (data.overallAssessment) document.getElementById('overall-assessment').value = data.overallAssessment;
-                    
-                    // Load recommendations
-                    if (data.recommendations && Array.isArray(data.recommendations)) {
-                        recommendations = data.recommendations;
-                        updateRecommendationsList();
-                    }
-                    
-                    // Load final report
-                    if (data.finalReport) document.getElementById('final-report-text').value = data.finalReport;
-                    
-                    // Update save status
-                    if (data.lastUpdated) {
-                        lastSaveTime = new Date(data.lastUpdated.seconds * 1000);
-                        document.getElementById('save-time').textContent = lastSaveTime.toLocaleTimeString();
-                        document.getElementById('save-status').style.display = 'block';
-                    }
-                    
-                    console.log("Draft loaded from Firestore");
-                } else {
-                    // Fall back to localStorage
-                    const savedData = localStorage.getItem('assessment_data');
-                    if (savedData) {
-                        const data = JSON.parse(savedData);
-                        
-                        // Populate form fields (same as above)
-                        if (data.studentName) document.getElementById('student-name').value = data.studentName;
-                        if (data.studentId) document.getElementById('student-id').value = data.studentId;
-                        if (data.assessmentDate) document.getElementById('assessment-date').value = data.assessmentDate;
-                        if (data.farmType) document.getElementById('farm-type').value = data.farmType;
-                        if (data.budgetPeriod) document.getElementById('budget-period').value = data.budgetPeriod;
-                        
-                        // Load budget items
-                        if (data.budgetItems && Array.isArray(data.budgetItems)) {
-                            budgetItems = data.budgetItems;
-                            updateBudgetItemsTable();
-                            updateBudgetSummary();
-                        }
-                        
-                        // Load variance analyses
-                        if (data.variances && Array.isArray(data.variances)) {
-                            varianceAnalyses = data.variances;
-                        }
-                        
-                        // Load overall assessment
-                        if (data.overallAssessment) document.getElementById('overall-assessment').value = data.overallAssessment;
-                        
-                        // Load recommendations
-                        if (data.recommendations && Array.isArray(data.recommendations)) {
-                            recommendations = data.recommendations;
-                            updateRecommendationsList();
-                        }
-                        
-                        // Load final report
-                        if (data.finalReport) document.getElementById('final-report-text').value = data.finalReport;
-                        
-                        console.log("Draft loaded from localStorage");
-                    } else {
-                        // No saved draft found
-                        console.log("No saved draft found");
-                    }
+            // Collect assessment data
+            const assessmentData = {
+                userId: user.uid,
+                userEmail: user.email,
+                submittedAt: new Date(),
+                knowledgeCheck: {},
+                budget: {
+                    income: [],
+                    expenses: [],
+                    totalIncome: 0,
+                    totalExpenses: 0,
+                    netResult: 0
                 }
-            } catch (error) {
-                console.error("Error loading draft:", error);
-            }
-        }
-        
-        // Set up auto-save
-        function setupAutoSave() {
-            // Clear any existing timer
-            if (autoSaveTimer) clearInterval(autoSaveTimer);
+            };
             
-            // Set up auto-save every 30 seconds
-            autoSaveTimer = setInterval(() => {
-                if (currentUser) {
-                    saveAssessmentDraft().catch(error => {
-                        console.error("Auto-save error:", error);
+            // Collect knowledge check answers
+            for (let i = 1; i <= 5; i++) {
+                const selectedOption = document.querySelector(`input[name="q${i}"]:checked`);
+                assessmentData.knowledgeCheck[`q${i}`] = selectedOption ? selectedOption.value : null;
+            }
+            
+            // Collect budget data
+            document.querySelectorAll('#income-table tbody tr').forEach(row => {
+                const itemInput = row.querySelector('input[type="text"]');
+                const amountInput = row.querySelector('input[type="number"]');
+                
+                if (itemInput && amountInput) {
+                    assessmentData.budget.income.push({
+                        item: itemInput.value || 'Unnamed item',
+                        amount: parseFloat(amountInput.value || 0)
                     });
                 }
-            }, 30000); // 30 seconds
+            });
+            
+            document.querySelectorAll('#expense-table tbody tr').forEach(row => {
+                const itemInput = row.querySelector('input[type="text"]');
+                const amountInput = row.querySelector('input[type="number"]');
+                
+                if (itemInput && amountInput) {
+                    assessmentData.budget.expenses.push({
+                        item: itemInput.value || 'Unnamed item',
+                        amount: parseFloat(amountInput.value || 0)
+                    });
+                }
+            });
+            
+            // Calculate totals
+            assessmentData.budget.totalIncome = assessmentData.budget.income.reduce((sum, item) => sum + item.amount, 0);
+            assessmentData.budget.totalExpenses = assessmentData.budget.expenses.reduce((sum, item) => sum + item.amount, 0);
+            assessmentData.budget.netResult = assessmentData.budget.totalIncome - assessmentData.budget.totalExpenses;
+            
+            // Save to Firestore
+            const docRef = await addDoc(collection(db, 'assessments'), assessmentData);
+            console.log("Assessment submitted with ID:", docRef.id);
+            
+            // Show success message
+            feedbackElement.className = 'feedback success';
+            feedbackElement.style.display = 'block';
+            feedbackElement.textContent = 'Assessment submitted successfully!';
+            
+        } catch (error) {
+            console.error("Error submitting assessment:", error);
+            
+            // Show error message
+            feedbackElement.className = 'feedback error';
+            feedbackElement.style.display = 'block';
+            feedbackElement.textContent = 'Error submitting assessment: ' + error.message;
         }
         
-        // The rest of your existing code remains unchanged
-        // ...
+        // Re-enable submit button
+        submitButton.disabled = false;
+        submitButton.textContent = 'Submit Assessment';
+    }
+    
+    // Check authentication status when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("DOM loaded, checking authentication");
+        
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // User is signed in
+                console.log("User is signed in:", user.email);
+                document.getElementById('login-nav-item').style.display = 'none';
+                document.getElementById('dashboard-nav-item').style.display = 'inline-block';
+                document.getElementById('logout-nav-item').style.display = 'inline-block';
+                document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
+                
+                // Check user role for dashboard link
+                try {
+                    const userDoc = await getDoc(doc(db, 'users', user.uid));
+                    if (userDoc.exists()) {
+                        const role = userDoc.data().role;
+                        if (role === 'trainer') {
+                            document.getElementById('dashboard-link').href = 'trainer-dashboard.html';
+                        } else {
+                            document.getElementById('dashboard-link').href = 'student-dashboard.html';
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error checking user role:", error);
+                }
+                
+                // Initialize assessment
+                initializeAssessment();
+            } else {
+                // User is not signed in - redirect to login page
+                console.log("User is not signed in, redirecting to login");
+                window.location.href = 'login.html';
+            }
+        });
+        
+        // Logout functionality
+        document.getElementById('logout-link').addEventListener('click', function(e) {
+            e.preventDefault();
+            signOut(auth).then(() => {
+                // Sign-out successful
+                window.location.href = 'login.html';
+            }).catch((error) => {
+                // An error happened
+                console.error("Error signing out:", error);
+            });
+        });
+    });
     </script>
+    
+    <style>
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    </style>
 </body>
 </html>
