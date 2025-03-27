@@ -28,7 +28,8 @@ import {
     limit,
     startAfter,
     Timestamp,
-    arrayUnion  // Add this import
+    arrayUnion,
+    serverTimestamp  // Add this import
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
 // Your web app's Firebase configuration
@@ -71,5 +72,6 @@ export {
   limit,
   startAfter,
   Timestamp,
-  arrayUnion  // Add this export
+  arrayUnion,
+  serverTimestamp  // Add this export
 };
