@@ -93,9 +93,21 @@ function displayAssessments(assessmentsToDisplay) {
     }
     
     assessmentsToDisplay.forEach(assessment => {
-        const submittedDate = assessment.submittedAt ? 
-            new Date(assessment.submittedAt.seconds * 1000).toLocaleDateString() : 
-            'Unknown date';
+        let submittedDate = 'Unknown date';
+        
+        // Handle different date formats
+        if (assessment.submittedAt) {
+            if (assessment.submittedAt.seconds) {
+                // Firestore timestamp
+                submittedDate = new Date(assessment.submittedAt.seconds * 1000).toLocaleDateString();
+            } else if (assessment.submittedAt instanceof Date) {
+                // JavaScript Date object
+                submittedDate = assessment.submittedAt.toLocaleDateString();
+            } else if (typeof assessment.submittedAt === 'string') {
+                // Already formatted string
+                submittedDate = assessment.submittedAt;
+            }
+        }
         
         const hasComments = assessment.comments && assessment.comments.length > 0;
         
@@ -171,9 +183,22 @@ async function viewAssessment(assessmentId) {
         // Display assessment details
         document.getElementById('student-email').textContent = currentAssessment.userEmail;
         
-        const submittedDate = currentAssessment.submittedAt ? 
-            new Date(currentAssessment.submittedAt.seconds * 1000).toLocaleDateString() : 
-            'Unknown date';
+        let submittedDate = 'Unknown date';
+        
+        // Handle different date formats for submitted date
+        if (currentAssessment.submittedAt) {
+            if (currentAssessment.submittedAt.seconds) {
+                // Firestore timestamp
+                submittedDate = new Date(currentAssessment.submittedAt.seconds * 1000).toLocaleDateString();
+            } else if (currentAssessment.submittedAt instanceof Date) {
+                // JavaScript Date object
+                submittedDate = currentAssessment.submittedAt.toLocaleDateString();
+            } else if (typeof currentAssessment.submittedAt === 'string') {
+                // Already formatted string
+                submittedDate = currentAssessment.submittedAt;
+            }
+        }
+        
         document.getElementById('submission-date').textContent = submittedDate;
         
         // Display budget items
@@ -259,15 +284,27 @@ function displayComments(comments) {
     const commentsContainer = document.getElementById('comments-container');
     commentsContainer.innerHTML = '';
     
-    if (comments.length === 0) {
+    if (!comments || comments.length === 0) {
         commentsContainer.innerHTML = '<p>No comments yet.</p>';
         return;
     }
     
     comments.forEach(comment => {
-        const commentDate = comment.createdAt ? 
-            new Date(comment.createdAt.seconds * 1000).toLocaleDateString() : 
-            'Unknown date';
+        // Format the date properly
+        let commentDate = 'Unknown date';
+        
+        if (comment.createdAt) {
+            if (comment.createdAt.seconds) {
+                // Firestore timestamp
+                commentDate = new Date(comment.createdAt.seconds * 1000).toLocaleDateString();
+            } else if (comment.createdAt instanceof Date) {
+                // JavaScript Date object
+                commentDate = comment.createdAt.toLocaleDateString();
+            } else if (typeof comment.createdAt === 'string') {
+                // Already formatted string
+                commentDate = comment.createdAt;
+            }
+        }
         
         commentsContainer.innerHTML += `
             <div class="trainer-comment">
@@ -305,10 +342,18 @@ async function addComment() {
     try {
         const user = auth.currentUser;
         
-        // Create comment object
+        // Format the date as a string to avoid "Invalid Date" issues
+        const now = new Date();
+        const formattedDate = now.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+        
+        // Create comment object with formatted date string
         const comment = {
             text: commentText,
-            createdAt: new Date(),
+            createdAt: formattedDate,
             createdBy: user.email
         };
         
