@@ -1,6 +1,6 @@
 // js/budget.js
 import { auth, onAuthStateChanged, signOut, db, doc, getDoc, collection, addDoc, updateDoc, query, where, getDocs } from './firebase-config.js';
-import { requireAuth } from './auth.js';
+import { requireAuth, updateNavigation } from './auth.js';
 
 // Global variables
 let currentUser = null;
@@ -8,10 +8,15 @@ let currentUser = null;
 // Initialize budget functionality
 document.addEventListener('DOMContentLoaded', async function() {
     try {
+        // Initialize navigation first
+        await updateNavigation();
+        
         // Ensure user is authenticated
         currentUser = await requireAuth();
+        
+        // If user is null, the function will redirect and we should stop execution
         if (!currentUser) {
-            return; // User was redirected
+            return;
         }
         
         // Update user status
@@ -20,7 +25,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             userStatusElement.innerHTML = 'Logged in as: ' + currentUser.email;
         }
         
-        // Set up event listeners
+        // Set up event listeners after we know the user is authenticated and navigation is loaded
         setupEventListeners();
         
         // Initial calculation
@@ -51,8 +56,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 // Set up event listeners
 function setupEventListeners() {
-    // Logout functionality
-    const logoutLink = document.getElementById('logout-link');
+    // Logout functionality - UPDATED SELECTOR to match navigation.js
+    const logoutLink = document.querySelector('.logout-link');
     if (logoutLink) {
         logoutLink.addEventListener('click', function(e) {
             e.preventDefault();
@@ -62,6 +67,8 @@ function setupEventListeners() {
                 console.error("Error signing out:", error);
             });
         });
+    } else {
+        console.warn("Logout link not found in the DOM");
     }
     
     // Add income row
