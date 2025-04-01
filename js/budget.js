@@ -38,6 +38,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (loadingIndicator) {
             loadingIndicator.style.display = 'none';
         }
+        const budgetContent = document.getElementById('budget-content');
+        if (budgetContent) {
+            budgetContent.style.display = 'block';
+        }
     } catch (error) {
         console.error("Error initializing budget:", error);
     }
