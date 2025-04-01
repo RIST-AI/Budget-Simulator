@@ -25,11 +25,11 @@ const archivedSearchInput = document.getElementById('archived-search-input');
 
 // Modal elements
 const confirmModal = document.getElementById('confirm-modal');
-const modalTitle = document.getElementById('modal-title');
-const modalMessage = document.getElementById('modal-message');
-const modalConfirm = document.getElementById('modal-confirm');
-const modalCancel = document.getElementById('modal-cancel');
-const closeModalButton = document.querySelector('.close-modal');
+const modalTitle = confirmModal ? document.getElementById('modal-title') : null;
+const modalMessage = confirmModal ? document.getElementById('modal-message') : null;
+const modalConfirm = confirmModal ? document.getElementById('modal-confirm') : null;
+const modalCancel = confirmModal ? document.getElementById('modal-cancel') : null;
+const closeModalButton = confirmModal ? document.querySelector('.close-modal') : null;
 
 // Tab switching functionality
 document.querySelectorAll('.tab-button').forEach(button => {
@@ -46,11 +46,14 @@ document.querySelectorAll('.tab-button').forEach(button => {
         });
         
         const tabName = button.getAttribute('data-tab');
-        document.getElementById(`${tabName}-tab`).classList.add('active');
+        const tabContent = document.getElementById(`${tabName}-tab`);
+        if (tabContent) {
+            tabContent.classList.add('active');
+        }
         currentTab = tabName;
         
         // If we're on the assessment detail view, go back to the list
-        if (assessmentDetail.style.display !== 'none') {
+        if (assessmentDetail && assessmentDetail.style.display !== 'none') {
             showAssessmentsList();
         }
         
@@ -61,6 +64,8 @@ document.querySelectorAll('.tab-button').forEach(button => {
 
 // Modal functionality
 function showModal(title, message, confirmAction) {
+    if (!confirmModal || !modalTitle || !modalMessage || !modalConfirm) return;
+    
     modalTitle.textContent = title;
     modalMessage.textContent = message;
     confirmModal.style.display = 'block';
@@ -70,36 +75,50 @@ function showModal(title, message, confirmAction) {
     modalConfirm.parentNode.replaceChild(newModalConfirm, modalConfirm);
     
     // Add new event listener
-    document.getElementById('modal-confirm').addEventListener('click', () => {
-        confirmAction();
-        confirmModal.style.display = 'none';
-    });
+    const newConfirmButton = document.getElementById('modal-confirm');
+    if (newConfirmButton) {
+        newConfirmButton.addEventListener('click', () => {
+            confirmAction();
+            confirmModal.style.display = 'none';
+        });
+    }
 }
 
 // Close modal when clicking the X or Cancel
-closeModalButton.onclick = () => {
-    confirmModal.style.display = 'none';
-};
+if (closeModalButton) {
+    closeModalButton.onclick = () => {
+        if (confirmModal) confirmModal.style.display = 'none';
+    };
+}
 
-modalCancel.onclick = () => {
-    confirmModal.style.display = 'none';
-};
+if (modalCancel) {
+    modalCancel.onclick = () => {
+        if (confirmModal) confirmModal.style.display = 'none';
+    };
+}
 
 // Close modal when clicking outside
 window.onclick = (event) => {
-    if (event.target === confirmModal) {
+    if (confirmModal && event.target === confirmModal) {
         confirmModal.style.display = 'none';
     }
 };
 
 // Load submissions based on status
 async function loadSubmissions(status = 'active') {
-    loadingIndicator.style.display = 'block';
+    if (loadingIndicator) {
+        loadingIndicator.style.display = 'block';
+    }
     
     const container = status === 'active' ? 
         activeAssessmentsContainer : 
         archivedAssessmentsContainer;
         
+    if (!container) {
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+        return;
+    }
+    
     container.innerHTML = '';
     
     try {
@@ -113,7 +132,9 @@ async function loadSubmissions(status = 'active') {
         
         const snapshot = await getDocs(q);
         
-        loadingIndicator.style.display = 'none';
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'none';
+        }
         
         if (snapshot.empty) {
             container.innerHTML = `<div class="info-message">No ${status} submissions found.</div>`;
@@ -125,7 +146,9 @@ async function loadSubmissions(status = 'active') {
             const submission = doc.data();
             submission.id = doc.id;
             
-            const submissionDate = new Date(submission.submittedAt.seconds * 1000).toLocaleDateString();
+            const submissionDate = submission.submittedAt ? 
+                new Date(submission.submittedAt.seconds * 1000).toLocaleDateString() : 
+                'Date unknown';
             const studentEmail = submission.userEmail || 'No email provided';
             
             submissionsHTML += `
@@ -152,15 +175,23 @@ async function loadSubmissions(status = 'active') {
         container.innerHTML = submissionsHTML;
     } catch (error) {
         console.error("Error loading submissions:", error);
-        loadingIndicator.style.display = 'none';
-        container.innerHTML = `<div class="error-message">Error loading submissions: ${error.message}</div>`;
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'none';
+        }
+        if (container) {
+            container.innerHTML = `<div class="error-message">Error loading submissions: ${error.message}</div>`;
+        }
     }
 }
 
 // View a submission
 async function viewSubmission(submissionId) {
-    loadingIndicator.style.display = 'block';
-    assessmentDetail.style.display = 'none';
+    if (loadingIndicator) {
+        loadingIndicator.style.display = 'block';
+    }
+    if (assessmentDetail) {
+        assessmentDetail.style.display = 'none';
+    }
     
     try {
         const submissionRef = doc(db, 'assessments', submissionId);
@@ -179,109 +210,136 @@ async function viewSubmission(submissionId) {
                                  (submission.submitted ? 'submitted' : 'saved');
         
         // Fill in submission details
-        document.getElementById('student-email').textContent = submission.userEmail || 'No email provided';
-        document.getElementById('submission-date').textContent = new Date(submission.submittedAt.seconds * 1000).toLocaleString();
-        document.getElementById('submission-status').textContent = capitalizeFirstLetter(currentSubmissionStatus);
+        const studentEmailElement = document.getElementById('student-email');
+        if (studentEmailElement) {
+            studentEmailElement.textContent = submission.userEmail || 'No email provided';
+        }
+        
+        const submissionDateElement = document.getElementById('submission-date');
+        if (submissionDateElement && submission.submittedAt) {
+            submissionDateElement.textContent = new Date(submission.submittedAt.seconds * 1000).toLocaleString();
+        }
+        
+        const submissionStatusElement = document.getElementById('submission-status');
+        if (submissionStatusElement) {
+            submissionStatusElement.textContent = capitalizeFirstLetter(currentSubmissionStatus);
+        }
         
         // Show appropriate action buttons based on status
-        document.getElementById('active-actions').style.display = 'none';
-        document.getElementById('archived-actions').style.display = 'none';
-        document.getElementById('feedback-actions').style.display = 'none';
-        document.getElementById('finalized-actions').style.display = 'none';
+        const activeActions = document.getElementById('active-actions');
+        const archivedActions = document.getElementById('archived-actions');
+        const feedbackActions = document.getElementById('feedback-actions');
+        const finalizedActions = document.getElementById('finalized-actions');
+        
+        if (activeActions) activeActions.style.display = 'none';
+        if (archivedActions) archivedActions.style.display = 'none';
+        if (feedbackActions) feedbackActions.style.display = 'none';
+        if (finalizedActions) finalizedActions.style.display = 'none';
         
         switch(currentSubmissionStatus) {
             case 'submitted':
-                document.getElementById('feedback-actions').style.display = 'block';
+                if (feedbackActions) feedbackActions.style.display = 'block';
                 break;
             case 'feedback_provided':
-                document.getElementById('feedback-actions').style.display = 'block';
+                if (feedbackActions) feedbackActions.style.display = 'block';
                 break;
             case 'finalized':
-                document.getElementById('finalized-actions').style.display = 'block';
+                if (finalizedActions) finalizedActions.style.display = 'block';
                 break;
             case 'archived':
-                document.getElementById('archived-actions').style.display = 'block';
+                if (archivedActions) archivedActions.style.display = 'block';
                 break;
         }
         
         // Fill in budget info
-        document.getElementById('farm-type').textContent = submission.budget?.farmType || 'Not specified';
-        document.getElementById('budget-period').textContent = submission.budget?.budgetPeriod || 'Not specified';
+        const farmTypeElement = document.getElementById('farm-type');
+        if (farmTypeElement) {
+            farmTypeElement.textContent = submission.budget?.farmType || 'Not specified';
+        }
+        
+        const budgetPeriodElement = document.getElementById('budget-period');
+        if (budgetPeriodElement) {
+            budgetPeriodElement.textContent = submission.budget?.budgetPeriod || 'Not specified';
+        }
         
         // Fill in income items
         const incomeItemsBody = document.getElementById('income-items-body');
-        incomeItemsBody.innerHTML = '';
-        
-        if (submission.budget?.incomeItems && submission.budget.incomeItems.length > 0) {
-            submission.budget.incomeItems.forEach(item => {
+        if (incomeItemsBody) {
+            incomeItemsBody.innerHTML = '';
+            
+            if (submission.budget?.incomeItems && submission.budget.incomeItems.length > 0) {
+                submission.budget.incomeItems.forEach(item => {
+                    const row = document.createElement('tr');
+                    
+                    const nameCell = document.createElement('td');
+                    nameCell.textContent = item.name || 'Unnamed item';
+                    row.appendChild(nameCell);
+                    
+                    const quantityCell = document.createElement('td');
+                    quantityCell.textContent = item.quantity || '1';
+                    row.appendChild(quantityCell);
+                    
+                    const priceCell = document.createElement('td');
+                    const price = parseFloat(item.price || 0);
+                    priceCell.textContent = `$${price.toFixed(2)}`;
+                    row.appendChild(priceCell);
+                    
+                    const amountCell = document.createElement('td');
+                    const amount = parseFloat(item.amount || 0);
+                    amountCell.textContent = `$${amount.toFixed(2)}`;
+                    row.appendChild(amountCell);
+                    
+                    incomeItemsBody.appendChild(row);
+                });
+            } else {
                 const row = document.createElement('tr');
-                
-                const nameCell = document.createElement('td');
-                nameCell.textContent = item.name || 'Unnamed item';
-                row.appendChild(nameCell);
-                
-                const quantityCell = document.createElement('td');
-                quantityCell.textContent = item.quantity || '1';
-                row.appendChild(quantityCell);
-                
-                const priceCell = document.createElement('td');
-                const price = parseFloat(item.price || 0);
-                priceCell.textContent = `$${price.toFixed(2)}`;
-                row.appendChild(priceCell);
-                
-                const amountCell = document.createElement('td');
-                const amount = parseFloat(item.amount);
-                amountCell.textContent = `$${amount.toFixed(2)}`;
-                row.appendChild(amountCell);
-                
+                const cell = document.createElement('td');
+                cell.colSpan = 4;
+                cell.textContent = 'No income items found';
+                cell.style.textAlign = 'center';
+                row.appendChild(cell);
                 incomeItemsBody.appendChild(row);
-            });
-        } else {
-            const row = document.createElement('tr');
-            const cell = document.createElement('td');
-            cell.colSpan = 4;
-            cell.textContent = 'No income items found';
-            cell.style.textAlign = 'center';
-            row.appendChild(cell);
-            incomeItemsBody.appendChild(row);
+            }
         }
         
         // Fill in expense items
         const expenseItemsBody = document.getElementById('expense-items-body');
-        expenseItemsBody.innerHTML = '';
-        
-        if (submission.budget?.expenseItems && submission.budget.expenseItems.length > 0) {
-            submission.budget.expenseItems.forEach(item => {
+        if (expenseItemsBody) {
+            expenseItemsBody.innerHTML = '';
+            
+            if (submission.budget?.expenseItems && submission.budget.expenseItems.length > 0) {
+                submission.budget.expenseItems.forEach(item => {
+                    const row = document.createElement('tr');
+                    
+                    const nameCell = document.createElement('td');
+                    nameCell.textContent = item.name || 'Unnamed item';
+                    row.appendChild(nameCell);
+                    
+                    const quantityCell = document.createElement('td');
+                    quantityCell.textContent = item.quantity || '1';
+                    row.appendChild(quantityCell);
+                    
+                    const priceCell = document.createElement('td');
+                    const price = parseFloat(item.price || 0);
+                    priceCell.textContent = `$${price.toFixed(2)}`;
+                    row.appendChild(priceCell);
+                    
+                    const amountCell = document.createElement('td');
+                    const amount = parseFloat(item.amount || 0);
+                    amountCell.textContent = `$${amount.toFixed(2)}`;
+                    row.appendChild(amountCell);
+                    
+                    expenseItemsBody.appendChild(row);
+                });
+            } else {
                 const row = document.createElement('tr');
-                
-                const nameCell = document.createElement('td');
-                nameCell.textContent = item.name || 'Unnamed item';
-                row.appendChild(nameCell);
-                
-                const quantityCell = document.createElement('td');
-                quantityCell.textContent = item.quantity || '1';
-                row.appendChild(quantityCell);
-                
-                const priceCell = document.createElement('td');
-                const price = parseFloat(item.price || 0);
-                priceCell.textContent = `$${price.toFixed(2)}`;
-                row.appendChild(priceCell);
-                
-                const amountCell = document.createElement('td');
-                const amount = parseFloat(item.amount);
-                amountCell.textContent = `$${amount.toFixed(2)}`;
-                row.appendChild(amountCell);
-                
+                const cell = document.createElement('td');
+                cell.colSpan = 4;
+                cell.textContent = 'No expense items found';
+                cell.style.textAlign = 'center';
+                row.appendChild(cell);
                 expenseItemsBody.appendChild(row);
-            });
-        } else {
-            const row = document.createElement('tr');
-            const cell = document.createElement('td');
-            cell.colSpan = 4;
-            cell.textContent = 'No expense items found';
-            cell.style.textAlign = 'center';
-            row.appendChild(cell);
-            expenseItemsBody.appendChild(row);
+            }
         }
         
         // Update totals
@@ -289,39 +347,50 @@ async function viewSubmission(submissionId) {
         const totalExpenses = submission.budget?.totalExpenses || 0;
         const netResult = submission.budget?.netResult || 0;
         
-        document.getElementById('total-income').textContent = `$${totalIncome.toFixed(2)}`;
-        document.getElementById('total-expenses').textContent = `$${totalExpenses.toFixed(2)}`;
+        const totalIncomeElement = document.getElementById('total-income');
+        if (totalIncomeElement) {
+            totalIncomeElement.textContent = `$${totalIncome.toFixed(2)}`;
+        }
+        
+        const totalExpensesElement = document.getElementById('total-expenses');
+        if (totalExpensesElement) {
+            totalExpensesElement.textContent = `$${totalExpenses.toFixed(2)}`;
+        }
         
         const netResultElement = document.getElementById('net-result');
-        netResultElement.textContent = `$${netResult.toFixed(2)}`;
-        netResultElement.className = netResult >= 0 ? 'positive' : 'negative';
+        if (netResultElement) {
+            netResultElement.textContent = `$${netResult.toFixed(2)}`;
+            netResultElement.className = netResult >= 0 ? 'positive' : 'negative';
+        }
         
         // Fill in student answers
         const answersContainer = document.getElementById('answers-container');
-        answersContainer.innerHTML = '';
-        
-        if (submission.answers) {
-            const answerKeys = Object.keys(submission.answers).sort();
+        if (answersContainer) {
+            answersContainer.innerHTML = '';
             
-            if (answerKeys.length > 0) {
-                answerKeys.forEach((key, index) => {
-                    const answerDiv = document.createElement('div');
-                    answerDiv.className = 'student-answer';
-                    
-                    const questionNumber = key.replace('question', '');
-                    
-                    answerDiv.innerHTML = `
-                        <h4>Question ${questionNumber}</h4>
-                        <div class="answer-text">${submission.answers[key]}</div>
-                    `;
-                    
-                    answersContainer.appendChild(answerDiv);
-                });
+            if (submission.answers) {
+                const answerKeys = Object.keys(submission.answers).sort();
+                
+                if (answerKeys.length > 0) {
+                    answerKeys.forEach((key, index) => {
+                        const answerDiv = document.createElement('div');
+                        answerDiv.className = 'student-answer';
+                        
+                        const questionNumber = key.replace('question', '');
+                        
+                        answerDiv.innerHTML = `
+                            <h4>Question ${questionNumber}</h4>
+                            <div class="answer-text">${submission.answers[key]}</div>
+                        `;
+                        
+                        answersContainer.appendChild(answerDiv);
+                    });
+                } else {
+                    answersContainer.innerHTML = '<p>No answers provided</p>';
+                }
             } else {
                 answersContainer.innerHTML = '<p>No answers provided</p>';
             }
-        } else {
-            answersContainer.innerHTML = '<p>No answers provided</p>';
         }
         
         // Show grade field if not already finalized
@@ -356,14 +425,20 @@ async function viewSubmission(submissionId) {
         await loadComments(submissionId);
         
         // Show the assessment detail view
-        loadingIndicator.style.display = 'none';
-        assessmentDetail.style.display = 'block';
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'none';
+        }
+        if (assessmentDetail) {
+            assessmentDetail.style.display = 'block';
+        }
         
         // Scroll to top
         window.scrollTo(0, 0);
     } catch (error) {
         console.error("Error viewing submission:", error);
-        loadingIndicator.style.display = 'none';
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'none';
+        }
         alert(`Error viewing submission: ${error.message}`);
     }
 }
@@ -377,6 +452,8 @@ function capitalizeFirstLetter(string) {
 // Load comments for a submission
 async function loadComments(submissionId) {
     const commentsContainer = document.getElementById('comments-container');
+    if (!commentsContainer) return;
+    
     commentsContainer.innerHTML = '<p>Loading comments...</p>';
     
     try {
@@ -419,7 +496,10 @@ async function loadComments(submissionId) {
 
 // Add a comment to a submission
 async function addComment() {
-    const commentText = document.getElementById('new-comment').value.trim();
+    const commentInput = document.getElementById('new-comment');
+    if (!commentInput) return;
+    
+    const commentText = commentInput.value.trim();
     
     if (!commentText) {
         alert('Please enter a comment');
@@ -438,7 +518,7 @@ async function addComment() {
         });
         
         // Clear the comment input
-        document.getElementById('new-comment').value = '';
+        commentInput.value = '';
         
         // Reload comments
         await loadComments(currentSubmissionId);
@@ -450,8 +530,15 @@ async function addComment() {
 
 // Show the assessments list
 function showAssessmentsList() {
-    assessmentDetail.style.display = 'none';
-    document.getElementById(currentTab + '-tab').classList.add('active');
+    if (assessmentDetail) {
+        assessmentDetail.style.display = 'none';
+    }
+    
+    const tabContent = document.getElementById(currentTab + '-tab');
+    if (tabContent) {
+        tabContent.classList.add('active');
+    }
+    
     currentSubmissionId = null;
 }
 
@@ -471,6 +558,11 @@ async function archiveSubmission(submissionId) {
                 // If we're viewing this submission, update the UI
                 if (currentSubmissionId === submissionId) {
                     showAssessmentsList();
+                }
+                
+                // Reload submissions if we're on the active tab
+                if (currentTab === 'active') {
+                    loadSubmissions('active');
                 }
             } catch (error) {
                 console.error("Error archiving submission:", error);
@@ -497,6 +589,11 @@ async function restoreSubmission(submissionId) {
                 if (currentSubmissionId === submissionId) {
                     showAssessmentsList();
                 }
+                
+                // Reload submissions if we're on the archived tab
+                if (currentTab === 'archived') {
+                    loadSubmissions('archived');
+                }
             } catch (error) {
                 console.error("Error restoring submission:", error);
                 alert(`Error restoring submission: ${error.message}`);
@@ -522,6 +619,9 @@ async function deleteSubmission(submissionId) {
                 if (currentSubmissionId === submissionId) {
                     showAssessmentsList();
                 }
+                
+                // Reload submissions
+                loadSubmissions(currentTab);
             } catch (error) {
                 console.error("Error deleting submission:", error);
                 alert(`Error deleting submission: ${error.message}`);
@@ -532,7 +632,10 @@ async function deleteSubmission(submissionId) {
 
 // Add feedback and request resubmission
 async function provideFeedback() {
-    const commentText = document.getElementById('new-comment').value.trim();
+    const commentInput = document.getElementById('new-comment');
+    if (!commentInput) return;
+    
+    const commentText = commentInput.value.trim();
     
     if (!commentText) {
         alert('Please enter feedback comments before requesting resubmission.');
@@ -583,7 +686,10 @@ async function provideFeedback() {
         await loadComments(currentSubmissionId);
         
         // Update UI to reflect new status
-        document.getElementById('submission-status').textContent = 'Feedback Provided';
+        const submissionStatusElement = document.getElementById('submission-status');
+        if (submissionStatusElement) {
+            submissionStatusElement.textContent = 'Feedback Provided';
+        }
         
     } catch (error) {
         console.error("Error providing feedback:", error);
@@ -597,14 +703,22 @@ async function provideFeedback() {
         }
         
         // Clear comment input
-        document.getElementById('new-comment').value = '';
+        const commentInput = document.getElementById('new-comment');
+        if (commentInput) {
+            commentInput.value = '';
+        }
     }
 }
 
 // Finalize assessment with grade
 async function finalizeAssessment() {
-    const commentText = document.getElementById('new-comment').value.trim();
-    const grade = document.getElementById('assessment-grade').value;
+    const commentInput = document.getElementById('new-comment');
+    const gradeSelect = document.getElementById('assessment-grade');
+    
+    if (!commentInput || !gradeSelect) return;
+    
+    const commentText = commentInput.value.trim();
+    const grade = gradeSelect.value;
     
     if (!grade) {
         alert('Please select a grade before finalizing the assessment.');
@@ -661,9 +775,29 @@ async function finalizeAssessment() {
         await loadComments(currentSubmissionId);
         
         // Update UI to reflect new status
-        document.getElementById('submission-status').textContent = 'Finalized';
-        document.getElementById('feedback-actions').style.display = 'none';
-        document.getElementById('finalized-actions').style.display = 'block';
+        const submissionStatusElement = document.getElementById('submission-status');
+        if (submissionStatusElement) {
+            submissionStatusElement.textContent = 'Finalized';
+        }
+        
+        const feedbackActions = document.getElementById('feedback-actions');
+        if (feedbackActions) {
+            feedbackActions.style.display = 'none';
+        }
+        
+        const finalizedActions = document.getElementById('finalized-actions');
+        if (finalizedActions) {
+            finalizedActions.style.display = 'block';
+        }
+        
+        // Update grade display
+        const gradeContainer = document.getElementById('grade-container');
+        if (gradeContainer) {
+            gradeContainer.innerHTML = `
+                <h3>Grade</h3>
+                <p><strong>Final Grade:</strong> ${grade}</p>
+            `;
+        }
         
     } catch (error) {
         console.error("Error finalizing assessment:", error);
@@ -677,24 +811,33 @@ async function finalizeAssessment() {
         }
         
         // Clear comment input
-        document.getElementById('new-comment').value = '';
+        const commentInput = document.getElementById('new-comment');
+        if (commentInput) {
+            commentInput.value = '';
+        }
     }
 }
 
 // Search functionality
 function setupSearch() {
-    activeSearchInput.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase();
-        filterSubmissions(activeAssessmentsContainer, searchTerm);
-    });
+    if (activeSearchInput) {
+        activeSearchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            filterSubmissions(activeAssessmentsContainer, searchTerm);
+        });
+    }
     
-    archivedSearchInput.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase();
-        filterSubmissions(archivedAssessmentsContainer, searchTerm);
-    });
+    if (archivedSearchInput) {
+        archivedSearchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            filterSubmissions(archivedAssessmentsContainer, searchTerm);
+        });
+    }
 }
 
 function filterSubmissions(container, searchTerm) {
+    if (!container) return;
+    
     const cards = container.querySelectorAll('.assessment-card');
     
     cards.forEach(card => {
@@ -716,30 +859,48 @@ document.addEventListener('DOMContentLoaded', () => {
     setupSearch();
     
     // Back to list button
-    backToListButton.addEventListener('click', showAssessmentsList);
+    if (backToListButton) {
+        backToListButton.addEventListener('click', showAssessmentsList);
+    }
     
     // Add comment button
-    document.getElementById('add-comment').addEventListener('click', addComment);
+    const addCommentButton = document.getElementById('add-comment');
+    if (addCommentButton) {
+        addCommentButton.addEventListener('click', addComment);
+    }
     
     // Archive button in detail view
-    document.getElementById('archive-submission').addEventListener('click', () => {
-        archiveSubmission(currentSubmissionId);
-    });
+    const archiveButton = document.getElementById('archive-submission');
+    if (archiveButton) {
+        archiveButton.addEventListener('click', () => {
+            archiveSubmission(currentSubmissionId);
+        });
+    }
     
     // Delete button in detail view
-    document.getElementById('delete-submission').addEventListener('click', () => {
-        deleteSubmission(currentSubmissionId);
-    });
+    const deleteButton = document.getElementById('delete-submission');
+    if (deleteButton) {
+        deleteButton.addEventListener('click', () => {
+            deleteSubmission(currentSubmissionId);
+        });
+    }
     
     // Restore button in detail view
-    document.getElementById('restore-submission').addEventListener('click', () => {
-        restoreSubmission(currentSubmissionId);
-    });
+    const restoreButton = document.getElementById('restore-submission');
+    if (restoreButton) {
+        restoreButton.addEventListener('click', () => {
+            restoreSubmission(currentSubmissionId);
+        });
+    }
     
     // Delete archived button in detail view
-    document.getElementById('delete-archived-submission').addEventListener('click', () => {
-        deleteSubmission(currentSubmissionId);
-    });
+    const deleteArchivedButton = document.getElementById('delete-archived-submission');
+    if (deleteArchivedButton) {
+        deleteArchivedButton.addEventListener('click', () => {
+            deleteSubmission(currentSubmissionId);
+        });
+    }
+    
     // Provide feedback button
     const provideFeedbackButton = document.getElementById('provide-feedback');
     if (provideFeedbackButton) {
@@ -783,9 +944,20 @@ document.addEventListener('DOMContentLoaded', () => {
                         alert('Assessment returned for resubmission.');
                         
                         // Update UI
-                        document.getElementById('submission-status').textContent = 'Feedback Provided';
-                        document.getElementById('finalized-actions').style.display = 'none';
-                        document.getElementById('feedback-actions').style.display = 'block';
+                        const submissionStatusElement = document.getElementById('submission-status');
+                        if (submissionStatusElement) {
+                            submissionStatusElement.textContent = 'Feedback Provided';
+                        }
+                        
+                        const finalizedActions = document.getElementById('finalized-actions');
+                        if (finalizedActions) {
+                            finalizedActions.style.display = 'none';
+                        }
+                        
+                        const feedbackActions = document.getElementById('feedback-actions');
+                        if (feedbackActions) {
+                            feedbackActions.style.display = 'block';
+                        }
                     } catch (error) {
                         console.error("Error reopening assessment:", error);
                         alert(`Error: ${error.message}`);
