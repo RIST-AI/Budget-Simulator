@@ -171,8 +171,7 @@ export {
   getCurrentUser, 
   requireAuth, 
   requireRole,
-  logoutUser, 
-  updateNavigation,
+  logoutUser,
   initAuth,
   redirectIfLoggedIn
 };
