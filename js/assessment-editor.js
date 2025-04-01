@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 // Set up event listeners for the editor
+// Set up event listeners for the editor
 function setupEventListeners() {
     // Check if elements exist before adding event listeners
     const saveButton = document.getElementById('save-assessment');
@@ -44,14 +45,14 @@ function setupEventListeners() {
         saveButton.addEventListener('click', saveAssessment);
     }
     
-    const previewButton = document.getElementById('preview-assessment');
-    if (previewButton) {
-        previewButton.addEventListener('click', previewAssessment);
-    }
-
     const publishButton = document.getElementById('publish-assessment');
     if (publishButton) {
         publishButton.addEventListener('click', publishAssessment);
+    }
+    
+    const previewButton = document.getElementById('preview-assessment');
+    if (previewButton) {
+        previewButton.addEventListener('click', previewAssessment);
     }
     
     const addQuestionButton = document.getElementById('add-question');
@@ -74,6 +75,7 @@ function setupEventListeners() {
     });
 }
 
+// Load existing assessment data
 // Load existing assessment data
 async function loadAssessment() {
     try {
@@ -121,15 +123,48 @@ async function loadAssessment() {
             // Show success message
             showStatusMessage('Assessment loaded successfully.', 'success');
         } else {
-            // No existing assessment, create a new one
+            // No existing assessment, create a new one with example content
             assessmentData = {
                 title: 'Farm Budget Assessment',
-                description: 'Assessment for farm budgeting skills',
-                instructions: 'Please complete all sections of this assessment.',
-                questions: [],
-                scenarios: [],
+                description: 'Complete this assessment to demonstrate your understanding of farm budget management and financial planning.',
+                instructions: 'Please complete all sections of this assessment. First, create a budget based on the scenario you are assigned. Then, answer the analysis questions to demonstrate your understanding of farm financial management principles.',
+                questions: [
+                    {
+                        id: 1,
+                        text: 'Explain the key factors that influenced your income projections in your budget. What assumptions did you make about prices, yields, or production levels?',
+                        points: 15
+                    },
+                    {
+                        id: 2,
+                        text: 'Identify the major expense categories in your budget and explain how you would prioritize them if you needed to reduce costs by 15% due to financial constraints.',
+                        points: 20
+                    },
+                    {
+                        id: 3,
+                        text: 'Based on your budget analysis, what are three specific recommendations you would make to improve the farm\'s profitability? Explain the potential impact of each recommendation.',
+                        points: 25
+                    }
+                ],
+                scenarios: [
+                    {
+                        id: 1,
+                        title: 'Dairy Farm Scenario',
+                        description: 'You are managing Green Valley Dairy Farm with 200 milking cows. The farm produces milk for a local processor and sells bull calves and excess heifers. Current milk price is $6.80 per kg of milk solids. The farm has 150 hectares of pasture and employs 3 full-time staff. Create a comprehensive annual budget that includes all relevant income and expenses for this operation.'
+                    },
+                    {
+                        id: 2,
+                        title: 'Crop Farm Scenario',
+                        description: 'You are managing Hillside Crop Farm, a 500-hectare property that produces wheat, canola, and barley. The farm has irrigation infrastructure for 200 hectares, with the remaining area being dryland farming. Equipment includes 2 tractors, a harvester, and various implements. The farm employs 1 full-time manager and 3 seasonal workers. Create an annual budget that includes all relevant income and expenses for this operation.'
+                    },
+                    {
+                        id: 3,
+                        title: 'Sheep Grazing Enterprise',
+                        description: 'You are managing Riverside Sheep Station, a 1,200-hectare property with 5,000 Merino sheep primarily raised for wool production with some meat sales. The property has 4 main paddocks with rotational grazing systems, basic shearing facilities, and employs 2 full-time staff with additional seasonal workers during shearing. Create an annual budget that includes all relevant income and expenses for this operation.'
+                    }
+                ],
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
+                createdBy: currentUser.uid,
                 published: false
             };
             
@@ -137,6 +172,33 @@ async function loadAssessment() {
             document.getElementById('assessment-title').value = assessmentData.title;
             document.getElementById('assessment-description').value = assessmentData.description;
             document.getElementById('assessment-instructions').value = assessmentData.instructions;
+            
+            // Add example questions to the UI
+            const questionsContainer = document.getElementById('questions-container');
+            if (questionsContainer) {
+                questionsContainer.innerHTML = '';
+                
+                assessmentData.questions.forEach((question, index) => {
+                    const questionId = index + 1;
+                    const questionHTML = createQuestionHTML(questionId, question.text, question.points);
+                    questionsContainer.innerHTML += questionHTML;
+                });
+                
+                currentQuestionId = assessmentData.questions.length + 1;
+            }
+            
+            // Add example scenarios to the UI
+            const scenariosContainer = document.getElementById('scenarios-container');
+            if (scenariosContainer) {
+                scenariosContainer.innerHTML = '';
+                
+                assessmentData.scenarios.forEach((scenario, index) => {
+                    const scenarioHTML = createScenarioHTML(index + 1, scenario.title, scenario.description);
+                    scenariosContainer.innerHTML += scenarioHTML;
+                });
+            }
+            
+            showStatusMessage('Created new assessment with example content.', 'success');
         }
     } catch (error) {
         console.error("Error loading assessment:", error);
@@ -254,6 +316,57 @@ function previewAssessment() {
         console.error("Error previewing assessment:", error);
         showStatusMessage('Error previewing assessment: ' + error.message, 'error');
     }
+}
+
+// Save assessment data to localStorage for preview
+function saveAssessmentToLocalStorage() {
+    // Collect data from the form
+    const title = document.getElementById('assessment-title').value;
+    const description = document.getElementById('assessment-description').value;
+    const instructions = document.getElementById('assessment-instructions').value;
+    
+    // Collect questions
+    const questions = [];
+    const questionElements = document.querySelectorAll('.question-container');
+    questionElements.forEach(element => {
+        const questionId = element.getAttribute('data-question-id');
+        const questionText = element.querySelector('.question-text').value;
+        const questionPoints = parseInt(element.querySelector('.question-points').value) || 10;
+        
+        questions.push({
+            id: questionId,
+            text: questionText,
+            points: questionPoints
+        });
+    });
+    
+    // Collect scenarios
+    const scenarios = [];
+    const scenarioElements = document.querySelectorAll('.scenario-container');
+    scenarioElements.forEach(element => {
+        const scenarioId = element.getAttribute('data-scenario-id');
+        const scenarioTitle = element.querySelector('.scenario-title').value;
+        const scenarioDescription = element.querySelector('.scenario-description').value;
+        
+        scenarios.push({
+            id: scenarioId,
+            title: scenarioTitle,
+            description: scenarioDescription
+        });
+    });
+    
+    // Create preview data
+    const previewData = {
+        title,
+        description,
+        instructions,
+        questions,
+        scenarios,
+        previewTimestamp: new Date().toISOString()
+    };
+    
+    // Save to localStorage
+    localStorage.setItem('assessmentPreview', JSON.stringify(previewData));
 }
 
 // Save assessment data to localStorage for preview

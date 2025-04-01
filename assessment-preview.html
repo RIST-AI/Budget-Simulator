@@ -29,12 +29,27 @@
             background-color: #f9f9f9;
         }
         
-        .scenario-container {
+        .scenario-box {
             margin-bottom: 30px;
             padding: 15px;
             border: 1px solid #d1ecf1;
             border-radius: 4px;
             background-color: #f0f8ff;
+        }
+        
+        .scenario-note {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            margin-top: 20px;
+            border-radius: 4px;
+            font-style: italic;
+        }
+        
+        .all-scenarios {
+            margin-top: 30px;
+            border-top: 1px dashed #ccc;
+            padding-top: 20px;
         }
     </style>
 </head>
@@ -66,9 +81,13 @@
                 <h2 id="assessment-title">Farm Budget Assessment</h2>
                 <p id="assessment-description">Complete this assessment to demonstrate your understanding of farm budget management.</p>
                 
-                <div id="scenario-container" class="scenario-box">
-                    <h3>Scenario</h3>
-                    <p id="scenario-text">No scenario available.</p>
+                <div class="scenario-box">
+                    <h3>Scenario Example</h3>
+                    <p><strong id="scenario-title">Sample Scenario</strong></p>
+                    <p id="scenario-text">This is an example scenario. Students will be randomly assigned one scenario from your list.</p>
+                    <div class="scenario-note">
+                        <p><strong>Note:</strong> When students take the assessment, they will be randomly assigned one scenario from your list.</p>
+                    </div>
                 </div>
                 
                 <div class="instructions-box">
@@ -131,6 +150,14 @@
                     <!-- Questions will be added here -->
                 </div>
             </section>
+            
+            <section class="all-scenarios">
+                <h2>All Scenarios</h2>
+                <p>Below are all the scenarios you've created. Students will be randomly assigned one of these scenarios.</p>
+                <div id="all-scenarios-container">
+                    <!-- All scenarios will be listed here -->
+                </div>
+            </section>
         </div>
     </main>
 
@@ -171,11 +198,33 @@
                 document.getElementById('assessment-description').textContent = previewData.description || 'Complete this assessment to demonstrate your understanding of farm budget management.';
                 document.getElementById('instructions-text').textContent = previewData.instructions || 'Instructions will appear here.';
                 
-                // Populate scenario
+                // Populate example scenario
                 if (previewData.scenarios && previewData.scenarios.length > 0) {
-                    // Pick the first scenario for preview
+                    // Pick the first scenario for the example
                     const scenario = previewData.scenarios[0];
+                    document.getElementById('scenario-title').textContent = scenario.title || 'Sample Scenario';
                     document.getElementById('scenario-text').textContent = scenario.description || 'No scenario description provided.';
+                }
+                
+                // Populate all scenarios
+                const allScenariosContainer = document.getElementById('all-scenarios-container');
+                allScenariosContainer.innerHTML = '';
+                
+                if (previewData.scenarios && previewData.scenarios.length > 0) {
+                    previewData.scenarios.forEach((scenario, index) => {
+                        const scenarioDiv = document.createElement('div');
+                        scenarioDiv.className = 'scenario-box';
+                        
+                        scenarioDiv.innerHTML = `
+                            <h3>Scenario ${index + 1}</h3>
+                            <p><strong>${scenario.title || 'Untitled Scenario'}</strong></p>
+                            <p>${scenario.description || 'No description provided.'}</p>
+                        `;
+                        
+                        allScenariosContainer.appendChild(scenarioDiv);
+                    });
+                } else {
+                    allScenariosContainer.innerHTML = '<p>No scenarios have been added to this assessment.</p>';
                 }
                 
                 // Populate questions
