@@ -1,8 +1,6 @@
 // js/auth.js
 
 import { auth, onAuthStateChanged, signOut, db, doc, getDoc } from './firebase-config.js';
-import { generateNavigation } from './navigation.js';
-
 
 // Check if user is logged in and get their role
 async function getCurrentUser() {
@@ -39,6 +37,12 @@ async function getCurrentUser() {
   });
 }
 
+// Helper function to get user roles
+function getUserRoles(user) {
+  if (!user) return [];
+  return Array.isArray(user.roles) ? user.roles : [user.role];
+}
+
 // Redirect to login if not authenticated
 async function requireAuth() {
   const user = await getCurrentUser();
@@ -61,16 +65,19 @@ async function requireRole(requiredRoles) {
   }
   
   // Check if user has any of the required roles
-  const userRoles = Array.isArray(user.roles) ? user.roles : [user.role];
+  const userRoles = getUserRoles(user);
   const hasRequiredRole = requiredRoles.some(role => userRoles.includes(role));
   
   if (!hasRequiredRole) {
     // User doesn't have required role, redirect to appropriate dashboard
     if (userRoles.includes('student')) {
+      alert(`You need ${requiredRoles.join(' or ')} permissions to access this page.`);
       window.location.href = 'student-dashboard.html';
     } else if (userRoles.includes('trainer')) {
+      alert(`You need ${requiredRoles.join(' or ')} permissions to access this page.`);
       window.location.href = 'trainer-dashboard.html';
     } else {
+      alert(`You need ${requiredRoles.join(' or ')} permissions to access this page.`);
       window.location.href = 'index.html';
     }
     return null;
@@ -79,36 +86,13 @@ async function requireRole(requiredRoles) {
   return user;
 }
 
-// Update UI based on authentication state
-async function updateNavigation() {
-  // Call the shared navigation generator
-  await generateNavigation();
-  
-  // Update user status display
-  const userStatusElement = document.getElementById('user-status');
-  if (userStatusElement) {
-    const user = await getCurrentUser();
-    if (user) {
-      userStatusElement.innerHTML = `
-        <p>Logged in as: <strong>${user.email}</strong></p>
-        <p class="user-role">${user.role || 'Student'}</p>
-      `;
-    } else {
-      userStatusElement.innerHTML = `
-        <p>Not logged in</p>
-        <a href="login.html" class="btn-small">Login</a>
-      `;
-    }
-  }
-}
-
 // Check if user is a student (for assessment page)
 async function requireStudent() {
   const user = await requireAuth();
   if (!user) return null; // Already redirected to login
   
   // Check if user is a trainer
-  const userRoles = Array.isArray(user.roles) ? user.roles : [user.role];
+  const userRoles = getUserRoles(user);
   const isTrainer = userRoles.includes('trainer');
   
   if (isTrainer) {
@@ -126,14 +110,18 @@ function logoutUser() {
     window.location.href = 'login.html';
   });
 }
+
+// Update UI based on authentication state
+async function updateNavigation() {
+  const currentUser = await getCurrentUser();
   
   // Update user status display
   const userStatusElement = document.getElementById('user-status');
   if (userStatusElement) {
-    if (user) {
+    if (currentUser) {
       userStatusElement.innerHTML = `
-        <p>Logged in as: <strong>${user.email}</strong></p>
-        <p class="user-role">${user.role || 'Student'}</p>
+        <p>Logged in as: <strong>${currentUser.email}</strong></p>
+        <p class="user-role">${currentUser.role || 'Student'}</p>
       `;
     } else {
       userStatusElement.innerHTML = `
@@ -146,9 +134,9 @@ function logoutUser() {
   // Show/hide trainer-only navigation items
   const trainerOnlyItems = document.querySelectorAll('.trainer-only');
   
-  if (user) {
+  if (currentUser) {
     // Get user roles as array
-    const userRoles = Array.isArray(user.roles) ? user.roles : [user.role];
+    const userRoles = getUserRoles(currentUser);
     const isTrainer = userRoles.includes('trainer');
     
     // Show/hide trainer-only items
@@ -165,12 +153,13 @@ function logoutUser() {
   // Show/hide logout link
   const logoutNavItem = document.getElementById('logout-nav-item');
   if (logoutNavItem) {
-    if (user) {
+    if (currentUser) {
       logoutNavItem.style.display = 'block';
     } else {
       logoutNavItem.style.display = 'none';
     }
   }
+}
 
 // Initialize authentication on page load
 function initAuth() {
@@ -188,9 +177,9 @@ function initAuth() {
     
     // Check if we're on the assessment page and prevent trainers from accessing it
     if (window.location.pathname.includes('assessment.html')) {
-      const user = await getCurrentUser();
-      if (user) {
-        const userRoles = Array.isArray(user.roles) ? user.roles : [user.role];
+      const currentUser = await getCurrentUser();
+      if (currentUser) {
+        const userRoles = getUserRoles(currentUser);
         if (userRoles.includes('trainer')) {
           alert('Trainers cannot submit assessments. Please use a student account.');
           window.location.href = 'trainer-review.html';
@@ -202,10 +191,10 @@ function initAuth() {
 
 // Auto-redirect to dashboard if already logged in (for login page)
 async function redirectIfLoggedIn() {
-  const user = await getCurrentUser();
-  if (user) {
+  const currentUser = await getCurrentUser();
+  if (currentUser) {
     // Get user roles as array
-    const userRoles = Array.isArray(user.roles) ? user.roles : [user.role];
+    const userRoles = getUserRoles(currentUser);
     
     if (userRoles.includes('student')) {
       window.location.href = 'student-dashboard.html';
