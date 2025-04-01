@@ -3,9 +3,8 @@ import { getCurrentUser } from './auth.js';
 
 // Navigation items configuration
 const navItems = {
-  all: [
-    { id: 'budget-nav-item', text: 'Budget Simulator', href: 'budget.html' },
-    { id: 'logout-nav-item', text: 'Logout', href: '#', class: 'logout-link' }
+  left: [
+    { id: 'budget-nav-item', text: 'Budget Simulator', href: 'budget.html' }
   ],
   student: [
     { id: 'assessment-nav-item', text: 'Assessment', href: 'assessment.html' }
@@ -13,6 +12,9 @@ const navItems = {
   trainer: [
     { id: 'review-nav-item', text: 'Review Assessments', href: 'trainer-review.html' },
     { id: 'edit-nav-item', text: 'Edit Assessment', href: 'assessment-editor.html' }
+  ],
+  right: [
+    { id: 'logout-nav-item', text: 'Logout', href: '#', class: 'logout-link' }
   ]
 };
 
@@ -29,13 +31,17 @@ export async function generateNavigation() {
   // Clear existing navigation
   navElement.innerHTML = '';
   
-  // Add items for all users
-  navItems.all.forEach(item => {
-    if (item.id === 'logout-nav-item' && !user) {
-      // Don't show logout if not logged in
-      return;
-    }
-    addNavItem(navElement, item);
+  // Create left container for main navigation items
+  const leftNav = document.createElement('div');
+  leftNav.className = 'nav-left';
+  
+  // Create right container for logout
+  const rightNav = document.createElement('div');
+  rightNav.className = 'nav-right';
+  
+  // Add common items to left nav
+  navItems.left.forEach(item => {
+    addNavItem(leftNav, item);
   });
   
   if (user) {
@@ -45,11 +51,18 @@ export async function generateNavigation() {
     
     // Add role-specific items
     if (isTrainer) {
-      navItems.trainer.forEach(item => addNavItem(navElement, item));
+      navItems.trainer.forEach(item => addNavItem(leftNav, item));
     } else {
-      navItems.student.forEach(item => addNavItem(navElement, item));
+      navItems.student.forEach(item => addNavItem(leftNav, item));
     }
+    
+    // Add right-aligned items (logout)
+    navItems.right.forEach(item => addNavItem(rightNav, item));
   }
+  
+  // Append both containers to the nav
+  navElement.appendChild(leftNav);
+  navElement.appendChild(rightNav);
   
   // Set active nav item based on current page
   setActiveNavItem();
@@ -68,7 +81,7 @@ export async function generateNavigation() {
 }
 
 // Helper function to add a nav item
-function addNavItem(navElement, item) {
+function addNavItem(container, item) {
   const li = document.createElement('li');
   li.id = item.id;
   
@@ -81,17 +94,18 @@ function addNavItem(navElement, item) {
   }
   
   li.appendChild(a);
-  navElement.appendChild(li);
+  container.appendChild(li);
 }
 
 // Set the active nav item based on current page
 function setActiveNavItem() {
-  const currentPage = window.location.pathname.split('/').pop();
+  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
   const navLinks = document.querySelectorAll('nav a');
   
   navLinks.forEach(link => {
     const linkPage = link.getAttribute('href');
-    if (linkPage === currentPage) {
+    if (linkPage === currentPage || 
+        (currentPage === 'index.html' && linkPage === 'budget.html')) {
       link.classList.add('active');
     } else {
       link.classList.remove('active');
