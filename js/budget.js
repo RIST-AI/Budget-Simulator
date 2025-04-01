@@ -64,19 +64,6 @@ function setupEventListeners() {
             });
         }
     });
-    const logoutLink = document.querySelector('.logout-link');
-    if (logoutLink) {
-        logoutLink.addEventListener('click', function(e) {
-            e.preventDefault();
-            signOut(auth).then(() => {
-                window.location.href = 'index.html';
-            }).catch((error) => {
-                console.error("Error signing out:", error);
-            });
-        });
-    } else {
-        console.warn("Logout link not found in the DOM");
-    }
     
     // Add income row
     const addIncomeButton = document.getElementById('add-income');
