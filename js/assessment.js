@@ -104,6 +104,7 @@ function assignScenario() {
 }
 
 // Populate questions
+// Populate questions
 function populateQuestions() {
     if (!assessmentData || !assessmentData.questions || assessmentData.questions.length === 0) {
         return;
@@ -118,7 +119,7 @@ function populateQuestions() {
         
         questionElement.innerHTML = `
             <h3>Question ${index + 1}</h3>
-            <p>${question.text}</p>
+            <div class="question-text">${question.text}</div>
             <textarea id="question${index + 1}" rows="5" placeholder="Your answer here..."></textarea>
         `;
         

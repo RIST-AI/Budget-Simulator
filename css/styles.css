@@ -1454,3 +1454,15 @@ footer a {
 .trainer-only {
     display: none;
 }
+
+.question-text, 
+.scenario-description, 
+#assessment-instructions,
+#instructions-text,
+#scenario-text,
+#budget-instructions,
+#analysis-instructions,
+textarea {
+    white-space: pre-wrap;
+    line-height: 1.5;
+}

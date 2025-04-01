@@ -197,17 +197,17 @@
             try {
                 const previewData = JSON.parse(previewDataString);
                 
-                // Populate assessment details
+                // Populate assessment details - use innerHTML for text that needs to preserve line breaks
                 document.getElementById('assessment-title').textContent = previewData.title || 'Farm Budget Assessment';
-                document.getElementById('assessment-description').textContent = previewData.description || 'Complete this assessment to demonstrate your understanding of farm budget management.';
-                document.getElementById('instructions-text').textContent = previewData.instructions || 'Instructions will appear here.';
+                document.getElementById('assessment-description').innerHTML = previewData.description || 'Complete this assessment to demonstrate your understanding of farm budget management.';
+                document.getElementById('instructions-text').innerHTML = previewData.instructions || 'Instructions will appear here.';
                 
                 // Populate example scenario
                 if (previewData.scenarios && previewData.scenarios.length > 0) {
                     // Pick the first scenario for the example
                     const scenario = previewData.scenarios[0];
                     document.getElementById('scenario-title').textContent = scenario.title || 'Sample Scenario';
-                    document.getElementById('scenario-text').textContent = scenario.description || 'No scenario description provided.';
+                    document.getElementById('scenario-text').innerHTML = scenario.description || 'No scenario description provided.';
                 }
                 
                 // Populate all scenarios
@@ -222,7 +222,7 @@
                         scenarioDiv.innerHTML = `
                             <h3>Scenario ${index + 1}</h3>
                             <p><strong>${scenario.title || 'Untitled Scenario'}</strong></p>
-                            <p>${scenario.description || 'No description provided.'}</p>
+                            <div class="scenario-description">${scenario.description || 'No description provided.'}</div>
                         `;
                         
                         allScenariosContainer.appendChild(scenarioDiv);
@@ -242,7 +242,7 @@
                         
                         questionDiv.innerHTML = `
                             <h3>Question ${index + 1}</h3>
-                            <p>${question.text || 'No question text provided.'}</p>
+                            <div class="question-text">${question.text || 'No question text provided.'}</div>
                             <textarea rows="5" placeholder="Student answer will go here..." disabled></textarea>
                             <p class="points-value">Points: ${question.points || 10}</p>
                         `;
