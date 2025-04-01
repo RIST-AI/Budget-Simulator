@@ -29,7 +29,8 @@ import {
     startAfter,
     Timestamp,
     arrayUnion,
-    serverTimestamp  // Add this import
+    serverTimestamp,
+    onSnapshot  // Add this import
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
 // Your web app's Firebase configuration
@@ -73,5 +74,6 @@ export {
   startAfter,
   Timestamp,
   arrayUnion,
-  serverTimestamp  // Add this export
+  serverTimestamp,
+  onSnapshot  // Add this export
 };
