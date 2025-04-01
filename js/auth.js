@@ -45,27 +45,27 @@ function getUserRoles(user) {
 
 // Redirect to login if not authenticated
 async function requireAuth() {
-  const user = await getCurrentUser();
-  if (!user) {
+  const currentUser = await getCurrentUser();
+  if (!currentUser) {
     // Save the current URL to redirect back after login
     sessionStorage.setItem('redirectUrl', window.location.href);
     window.location.href = 'login.html';
     return null;
   }
-  return user;
+  return currentUser;
 }
 
 // Check if user has specific role and redirect if not
 async function requireRole(requiredRoles) {
-  const user = await requireAuth();
-  if (!user) return null; // Already redirected to login
+  const currentUser = await requireAuth();
+  if (!currentUser) return null; // Already redirected to login
   
   if (!Array.isArray(requiredRoles)) {
     requiredRoles = [requiredRoles]; // Convert to array if single role
   }
   
   // Check if user has any of the required roles
-  const userRoles = getUserRoles(user);
+  const userRoles = getUserRoles(currentUser);
   const hasRequiredRole = requiredRoles.some(role => userRoles.includes(role));
   
   if (!hasRequiredRole) {
@@ -83,16 +83,16 @@ async function requireRole(requiredRoles) {
     return null;
   }
   
-  return user;
+  return currentUser;
 }
 
 // Check if user is a student (for assessment page)
 async function requireStudent() {
-  const user = await requireAuth();
-  if (!user) return null; // Already redirected to login
+  const currentUser = await requireAuth();
+  if (!currentUser) return null; // Already redirected to login
   
   // Check if user is a trainer
-  const userRoles = getUserRoles(user);
+  const userRoles = getUserRoles(currentUser);
   const isTrainer = userRoles.includes('trainer');
   
   if (isTrainer) {
@@ -101,7 +101,7 @@ async function requireStudent() {
     return null;
   }
   
-  return user;
+  return currentUser;
 }
 
 // Handle logout
