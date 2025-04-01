@@ -282,7 +282,7 @@ async function publishAssessment() {
         assessmentData.publishedAt = serverTimestamp();
         assessmentData.publishedBy = currentUser.uid;
         
-        // Save to Firestore
+        // Save to Firestore (template)
         const assessmentRef = doc(db, 'assessmentTemplate', 'current');
         await updateDoc(assessmentRef, {
             published: true,
@@ -290,7 +290,14 @@ async function publishAssessment() {
             publishedBy: currentUser.uid
         });
         
-        showStatusMessage('Assessment published successfully!', 'success');
+        // Copy the assessment to the assessmentContent collection for students
+        const contentRef = doc(db, 'assessmentContent', 'current');
+        await setDoc(contentRef, {
+            ...assessmentData,
+            lastPublished: serverTimestamp()
+        });
+        
+        showStatusMessage('Assessment published successfully! Students can now access this assessment.', 'success');
     } catch (error) {
         console.error("Error publishing assessment:", error);
         showStatusMessage('Error publishing assessment: ' + error.message, 'error');
