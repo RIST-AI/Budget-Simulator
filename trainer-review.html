@@ -28,9 +28,9 @@
     <nav>
         <div class="container">
             <ul>
-                <li><a href="budget.html" class="active">Budget Simulator</a></li>
+                <li><a href="budget.html">Budget Simulator</a></li>
                 <li><a href="assessment.html">Assessment</a></li>
-                <li class="trainer-only"><a href="trainer-review.html">Review Assessments</a></li>
+                <li class="trainer-only"><a href="trainer-review.html" class="active">Review Assessments</a></li>
                 <li class="trainer-only"><a href="assessment-editor.html">Edit Assessment</a></li>
                 <li id="logout-nav-item"><a href="#" id="logout-link">Logout</a></li>
             </ul>
@@ -43,18 +43,36 @@
             <p>Review and provide feedback on student assessment submissions.</p>
         </section>
 
+        <!-- Tab navigation -->
+        <div class="tab-buttons">
+            <div class="tab-button active" data-tab="active">Active Submissions</div>
+            <div class="tab-button" data-tab="archived">Archived Submissions</div>
+        </div>
+
         <div id="loading-indicator" class="text-center">
             <p>Loading assessments...</p>
             <div class="spinner"></div>
         </div>
 
-        <div id="assessments-list" style="display: none;">
+        <!-- Active submissions tab -->
+        <div id="active-tab" class="tab-content active">
             <div class="search-box">
-                <input type="text" id="search-input" placeholder="Search by student email...">
+                <input type="text" id="active-search-input" placeholder="Search by student email...">
             </div>
             
-            <div id="assessments-container">
-                <!-- Assessments will be loaded here -->
+            <div id="active-assessments-container">
+                <!-- Active assessments will be loaded here -->
+            </div>
+        </div>
+        
+        <!-- Archived submissions tab -->
+        <div id="archived-tab" class="tab-content">
+            <div class="search-box">
+                <input type="text" id="archived-search-input" placeholder="Search by student email...">
+            </div>
+            
+            <div id="archived-assessments-container">
+                <!-- Archived assessments will be loaded here -->
             </div>
         </div>
 
@@ -66,55 +84,67 @@
                 <div class="student-info">
                     <p><strong>Student:</strong> <span id="student-email"></span></p>
                     <p><strong>Submitted:</strong> <span id="submission-date"></span></p>
+                    <p><strong>Status:</strong> <span id="submission-status"></span></p>
                 </div>
             </div>
             
             <div class="assessment-section">
                 <h3>Budget Items</h3>
+                <div class="budget-info">
+                    <p><strong>Farm Type:</strong> <span id="farm-type"></span></p>
+                    <p><strong>Budget Period:</strong> <span id="budget-period"></span></p>
+                </div>
+                
+                <h4>Income Items</h4>
                 <table class="budget-table">
                     <thead>
                         <tr>
                             <th>Item</th>
-                            <th>Category</th>
                             <th>Amount</th>
                         </tr>
                     </thead>
-                    <tbody id="budget-items-body">
-                        <!-- Budget items will be added here -->
+                    <tbody id="income-items-body">
+                        <!-- Income items will be added here -->
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="2"><strong>Total Income:</strong></td>
+                            <td><strong>Total Income:</strong></td>
                             <td id="total-income">$0.00</td>
-                        </tr>
-                        <tr>
-                            <td colspan="2"><strong>Total Expenses:</strong></td>
-                            <td id="total-expenses">$0.00</td>
-                        </tr>
-                        <tr>
-                            <td colspan="2"><strong>Net Result:</strong></td>
-                            <td id="net-result">$0.00</td>
                         </tr>
                     </tfoot>
                 </table>
+                
+                <h4>Expense Items</h4>
+                <table class="budget-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expense-items-body">
+                        <!-- Expense items will be added here -->
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td><strong>Total Expenses:</strong></td>
+                            <td id="total-expenses">$0.00</td>
+                        </tr>
+                    </tfoot>
+                </table>
+                
+                <div class="budget-summary">
+                    <div class="budget-summary-item">
+                        <h4>Net Result</h4>
+                        <div id="net-result" class="value">$0.00</div>
+                    </div>
+                </div>
             </div>
             
             <div class="assessment-section">
                 <h3>Student Answers</h3>
-                
-                <div class="student-answer">
-                    <h4>1. What factors influenced your budget decisions?</h4>
-                    <div id="answer1" class="answer-text"></div>
-                </div>
-                
-                <div class="student-answer">
-                    <h4>2. How would you adjust this budget if input costs increased by 10%?</h4>
-                    <div id="answer2" class="answer-text"></div>
-                </div>
-                
-                <div class="student-answer">
-                    <h4>3. What recommendations would you make to improve profitability?</h4>
-                    <div id="answer3" class="answer-text"></div>
+                <div id="answers-container">
+                    <!-- Student answers will be loaded here -->
                 </div>
             </div>
             
@@ -131,8 +161,32 @@
                 
                 <button id="add-comment" class="btn">Add Comment</button>
             </div>
+            
+            <div class="assessment-actions">
+                <div id="active-actions" style="display: none;">
+                    <button id="archive-submission" class="btn btn-warning">Archive Submission</button>
+                    <button id="delete-submission" class="btn btn-danger">Delete Submission</button>
+                </div>
+                <div id="archived-actions" style="display: none;">
+                    <button id="restore-submission" class="btn btn-success">Restore to Active</button>
+                    <button id="delete-archived-submission" class="btn btn-danger">Delete Submission</button>
+                </div>
+            </div>
         </div>
     </main>
+
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 id="modal-title">Confirm Action</h2>
+            <p id="modal-message">Are you sure you want to perform this action?</p>
+            <div class="modal-actions">
+                <button id="modal-cancel" class="btn btn-secondary">Cancel</button>
+                <button id="modal-confirm" class="btn btn-danger">Confirm</button>
+            </div>
+        </div>
+    </div>
 
     <footer>
         <div class="container">
@@ -152,21 +206,5 @@
     </footer>
 
     <script type="module" src="js/review.js"></script>
-    <script type="module">
-        // Add this to your page for debugging
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                const { getCurrentUser } = await import('./js/auth.js');
-                const user = await getCurrentUser();
-                console.log("Current user:", user);
-                if (user) {
-                    console.log("User role:", user.role);
-                    console.log("User roles array:", user.roles);
-                }
-            } catch (error) {
-                console.error("Debug error:", error);
-            }
-        });
-    </script>
 </body>
 </html>
