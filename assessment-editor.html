@@ -1,10 +1,12 @@
+<!-- assessment-editor.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assessment Content Editor</title>
+    <title>Assessment Editor - RIST Budget Master</title>
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="images/RIST Brandmark - Navy Circle.png" type="image/png">
 </head>
 <body>
     <header>
@@ -15,7 +17,7 @@
                 </div>
                 <div class="title-container">
                     <h1>AHCBUS408 Budget Master</h1>
-                    <p>Agricultural Budgeting Training Tool</p>
+                    <p>Assessment Editor</p>
                 </div>
                 <div id="user-status" class="user-status">
                     <!-- Login status will be shown here -->
@@ -26,89 +28,71 @@
 
     <nav>
         <div class="container">
-          <ul>
-            <!-- Navigation items will be inserted here by JavaScript -->
-          </ul>
+            <ul>
+                <!-- Navigation items will be inserted here by JavaScript -->
+            </ul>
         </div>
-      </nav>
+    </nav>
 
     <main class="container">
-        <div id="loading-indicator">
-            <p>Loading assessment content...</p>
-        </div>
+        <section class="page-header">
+            <h2>Assessment Editor</h2>
+            <p>Create and edit assessment content for students.</p>
+        </section>
 
-        <div id="editor-content" style="display: none;">
-            <h2>Assessment Content Editor</h2>
-            <p>Use this page to update the assessment content that students will see.</p>
-            
-            <div id="status-message" class="status-message"></div>
-            
+        <div id="loading-indicator" class="spinner"></div>
+
+        <div id="status-message" class="status-message" style="display: none;"></div>
+
+        <div id="editor-container" class="editor-container" style="display: none;">
             <div class="tab-container">
                 <div class="tab-buttons">
-                    <div class="tab-button active" data-tab="basic">Basic Content</div>
-                    <div class="tab-button" data-tab="scenarios">Scenarios</div>
-                    <div class="tab-button" data-tab="questions">Questions</div>
+                    <button class="tab-button active" data-tab="general-tab">General</button>
+                    <button class="tab-button" data-tab="questions-tab">Questions</button>
+                    <button class="tab-button" data-tab="scenarios-tab">Scenarios</button>
                 </div>
-                
-                <div class="tab-content active" id="basic-tab">
-                    <div class="editor-container">
-                        <div class="form-group">
-                            <label for="assessment-title">Assessment Title</label>
-                            <input type="text" id="assessment-title" placeholder="Enter assessment title">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="assessment-description">Assessment Description</label>
-                            <textarea id="assessment-description" placeholder="Enter a brief description of the assessment"></textarea>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="instructions-text">General Instructions</label>
-                            <textarea id="instructions-text" placeholder="Enter general instructions for the assessment"></textarea>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="budget-instructions">Budget Setup Instructions</label>
-                            <textarea id="budget-instructions" placeholder="Enter instructions for the budget setup section"></textarea>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="analysis-instructions">Analysis Instructions</label>
-                            <textarea id="analysis-instructions" placeholder="Enter instructions for the analysis section"></textarea>
-                        </div>
+
+                <div id="general-tab" class="tab-content" style="display: block;">
+                    <h3>General Information</h3>
+                    <div class="form-group">
+                        <label for="assessment-title">Assessment Title:</label>
+                        <input type="text" id="assessment-title" placeholder="Enter assessment title">
+                    </div>
+                    <div class="form-group">
+                        <label for="assessment-description">Description:</label>
+                        <textarea id="assessment-description" rows="3" placeholder="Enter a brief description of the assessment"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="assessment-instructions">Instructions:</label>
+                        <textarea id="assessment-instructions" rows="5" placeholder="Enter instructions for students"></textarea>
                     </div>
                 </div>
-                
-                <div class="tab-content" id="scenarios-tab">
-                    <div class="editor-container">
-                        <h3>Assessment Scenarios</h3>
-                        <p>Add multiple scenarios for students to work with. One will be randomly assigned to each student.</p>
-                        
-                        <div id="scenarios-container">
-                            <!-- Scenarios will be added here dynamically -->
-                        </div>
-                        
-                        <button id="add-scenario" class="btn btn-add">+ Add New Scenario</button>
+
+                <div id="questions-tab" class="tab-content">
+                    <h3>Assessment Questions</h3>
+                    <p>Add questions that students will need to answer.</p>
+                    <button id="add-question" class="btn btn-add">+ Add Question</button>
+                    <div id="questions-container">
+                        <!-- Questions will be added here -->
                     </div>
                 </div>
-                
-                <div class="tab-content" id="questions-tab">
-                    <div class="editor-container">
-                        <h3>Assessment Questions</h3>
-                        <p>Add or remove questions for students to answer in the assessment.</p>
-                        
-                        <div id="questions-container">
-                            <!-- Questions will be added here dynamically -->
-                        </div>
-                        
-                        <button id="add-question" class="btn btn-add">+ Add New Question</button>
+
+                <div id="scenarios-tab" class="tab-content">
+                    <h3>Assessment Scenarios</h3>
+                    <p>Add scenarios that students will work with.</p>
+                    <button id="add-scenario" class="btn btn-add">+ Add Scenario</button>
+                    <div id="scenarios-container">
+                        <!-- Scenarios will be added here -->
                     </div>
                 </div>
             </div>
-            
+
             <div class="editor-actions">
-                <button id="reset-button" class="btn">Reset Changes</button>
-                <button id="save-button" class="btn btn-primary">Save Changes</button>
+                <div>
+                    <button id="save-assessment" class="btn">Save Draft</button>
+                    <button id="publish-assessment" class="btn btn-success">Publish Assessment</button>
+                </div>
+                <button id="preview-assessment" class="btn btn-secondary">Preview</button>
             </div>
         </div>
     </main>

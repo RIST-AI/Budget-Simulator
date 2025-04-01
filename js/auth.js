@@ -1,212 +1,374 @@
-// js/auth.js
+// js/assessment-editor.js
 
-import { auth, onAuthStateChanged, signOut, db, doc, getDoc } from './firebase-config.js';
+import { auth, db, collection, doc, getDoc, setDoc, addDoc, deleteDoc, updateDoc, serverTimestamp } from './firebase-config.js';
+import { requireRole, getCurrentUser } from './auth.js';
 
-// Check if user is logged in and get their role
-async function getCurrentUser() {
-  return new Promise((resolve, reject) => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      unsubscribe(); // Stop listening immediately
-      
-      if (user) {
-        try {
-          // Get user role from Firestore
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            resolve({
-              uid: user.uid,
-              email: user.email,
-              role: userData.role,
-              roles: userData.roles || [userData.role], // Support both role and roles fields
-              fullName: userData.fullName || '',
-              studentId: userData.studentId || '',
-              // Add any other user properties you need
+// Global variables
+let currentUser = null;
+let assessmentData = null;
+let currentQuestionId = 1;
+
+// Initialize the assessment editor
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        // Ensure user is authenticated and has trainer role
+        currentUser = await requireRole('trainer');
+        if (!currentUser) return; // User was redirected
+        
+        // Load existing assessment if available
+        await loadAssessment();
+        
+        // Set up event listeners
+        setupEventListeners();
+        
+        // Show the editor
+        document.getElementById('loading-indicator').style.display = 'none';
+        document.getElementById('editor-container').style.display = 'block';
+    } catch (error) {
+        console.error("Error initializing editor:", error);
+        const loadingIndicator = document.getElementById('loading-indicator');
+        if (loadingIndicator) {
+            loadingIndicator.innerHTML = `
+                <div class="error-message">Error initializing editor: ${error.message}</div>
+                <button class="btn" onclick="location.reload()">Try Again</button>
+            `;
+        }
+    }
+});
+
+// Set up event listeners for the editor
+function setupEventListeners() {
+    // Check if elements exist before adding event listeners
+    const saveButton = document.getElementById('save-assessment');
+    if (saveButton) {
+        saveButton.addEventListener('click', saveAssessment);
+    }
+    
+    const publishButton = document.getElementById('publish-assessment');
+    if (publishButton) {
+        publishButton.addEventListener('click', publishAssessment);
+    }
+    
+    const addQuestionButton = document.getElementById('add-question');
+    if (addQuestionButton) {
+        addQuestionButton.addEventListener('click', addQuestion);
+    }
+    
+    const addScenarioButton = document.getElementById('add-scenario');
+    if (addScenarioButton) {
+        addScenarioButton.addEventListener('click', addScenario);
+    }
+    
+    // Tab navigation
+    const tabButtons = document.querySelectorAll('.tab-button');
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const tabId = button.getAttribute('data-tab');
+            showTab(tabId);
+        });
+    });
+}
+
+// Load existing assessment data
+async function loadAssessment() {
+    try {
+        // Check if there's an existing assessment
+        const assessmentRef = doc(db, 'assessmentTemplate', 'current');
+        const assessmentDoc = await getDoc(assessmentRef);
+        
+        if (assessmentDoc.exists()) {
+            assessmentData = assessmentDoc.data();
+            
+            // Populate the form with existing data
+            document.getElementById('assessment-title').value = assessmentData.title || '';
+            document.getElementById('assessment-description').value = assessmentData.description || '';
+            document.getElementById('assessment-instructions').value = assessmentData.instructions || '';
+            
+            // Load questions
+            if (assessmentData.questions && assessmentData.questions.length > 0) {
+                const questionsContainer = document.getElementById('questions-container');
+                if (questionsContainer) {
+                    questionsContainer.innerHTML = '';
+                    
+                    assessmentData.questions.forEach((question, index) => {
+                        const questionId = index + 1;
+                        const questionHTML = createQuestionHTML(questionId, question.text, question.points);
+                        questionsContainer.innerHTML += questionHTML;
+                    });
+                    
+                    currentQuestionId = assessmentData.questions.length + 1;
+                }
+            }
+            
+            // Load scenarios
+            if (assessmentData.scenarios && assessmentData.scenarios.length > 0) {
+                const scenariosContainer = document.getElementById('scenarios-container');
+                if (scenariosContainer) {
+                    scenariosContainer.innerHTML = '';
+                    
+                    assessmentData.scenarios.forEach((scenario, index) => {
+                        const scenarioHTML = createScenarioHTML(index + 1, scenario.title, scenario.description);
+                        scenariosContainer.innerHTML += scenarioHTML;
+                    });
+                }
+            }
+            
+            // Show success message
+            showStatusMessage('Assessment loaded successfully.', 'success');
+        } else {
+            // No existing assessment, create a new one
+            assessmentData = {
+                title: 'Farm Budget Assessment',
+                description: 'Assessment for farm budgeting skills',
+                instructions: 'Please complete all sections of this assessment.',
+                questions: [],
+                scenarios: [],
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+                published: false
+            };
+            
+            // Set default values in the form
+            document.getElementById('assessment-title').value = assessmentData.title;
+            document.getElementById('assessment-description').value = assessmentData.description;
+            document.getElementById('assessment-instructions').value = assessmentData.instructions;
+        }
+    } catch (error) {
+        console.error("Error loading assessment:", error);
+        showStatusMessage('Error loading assessment: ' + error.message, 'error');
+    }
+}
+
+// Save assessment
+async function saveAssessment() {
+    try {
+        // Collect data from the form
+        const title = document.getElementById('assessment-title').value;
+        const description = document.getElementById('assessment-description').value;
+        const instructions = document.getElementById('assessment-instructions').value;
+        
+        // Validate required fields
+        if (!title || !description || !instructions) {
+            showStatusMessage('Please fill in all required fields.', 'error');
+            return;
+        }
+        
+        // Collect questions
+        const questions = [];
+        const questionElements = document.querySelectorAll('.question-container');
+        questionElements.forEach(element => {
+            const questionId = element.getAttribute('data-question-id');
+            const questionText = element.querySelector('.question-text').value;
+            const questionPoints = parseInt(element.querySelector('.question-points').value) || 10;
+            
+            questions.push({
+                id: questionId,
+                text: questionText,
+                points: questionPoints
             });
-          } else {
-            resolve({ uid: user.uid, email: user.email, role: 'unknown', roles: ['unknown'] });
-          }
-        } catch (error) {
-          console.error("Error getting user data:", error);
-          resolve({ uid: user.uid, email: user.email, role: 'unknown', roles: ['unknown'] });
+        });
+        
+        // Collect scenarios
+        const scenarios = [];
+        const scenarioElements = document.querySelectorAll('.scenario-container');
+        scenarioElements.forEach(element => {
+            const scenarioId = element.getAttribute('data-scenario-id');
+            const scenarioTitle = element.querySelector('.scenario-title').value;
+            const scenarioDescription = element.querySelector('.scenario-description').value;
+            
+            scenarios.push({
+                id: scenarioId,
+                title: scenarioTitle,
+                description: scenarioDescription
+            });
+        });
+        
+        // Update assessment data
+        assessmentData = {
+            ...assessmentData,
+            title,
+            description,
+            instructions,
+            questions,
+            scenarios,
+            updatedAt: serverTimestamp(),
+            updatedBy: currentUser.uid
+        };
+        
+        // Save to Firestore
+        const assessmentRef = doc(db, 'assessmentTemplate', 'current');
+        await setDoc(assessmentRef, assessmentData);
+        
+        showStatusMessage('Assessment saved successfully!', 'success');
+    } catch (error) {
+        console.error("Error saving assessment:", error);
+        showStatusMessage('Error saving assessment: ' + error.message, 'error');
+    }
+}
+
+// Publish assessment
+async function publishAssessment() {
+    try {
+        // First save the assessment
+        await saveAssessment();
+        
+        // Update the published status
+        assessmentData.published = true;
+        assessmentData.publishedAt = serverTimestamp();
+        assessmentData.publishedBy = currentUser.uid;
+        
+        // Save to Firestore
+        const assessmentRef = doc(db, 'assessmentTemplate', 'current');
+        await updateDoc(assessmentRef, {
+            published: true,
+            publishedAt: serverTimestamp(),
+            publishedBy: currentUser.uid
+        });
+        
+        showStatusMessage('Assessment published successfully!', 'success');
+    } catch (error) {
+        console.error("Error publishing assessment:", error);
+        showStatusMessage('Error publishing assessment: ' + error.message, 'error');
+    }
+}
+
+// Add a new question
+function addQuestion() {
+    const questionsContainer = document.getElementById('questions-container');
+    if (questionsContainer) {
+        const questionHTML = createQuestionHTML(currentQuestionId, '', 10);
+        questionsContainer.innerHTML += questionHTML;
+        currentQuestionId++;
+        
+        // Add event listeners to the new question's buttons
+        const newQuestion = questionsContainer.lastElementChild;
+        if (newQuestion) {
+            const removeButton = newQuestion.querySelector('.btn-remove');
+            if (removeButton) {
+                removeButton.addEventListener('click', function() {
+                    newQuestion.remove();
+                });
+            }
         }
-      } else {
-        resolve(null); // Not logged in
-      }
-    });
-  });
-}
-
-// Redirect to login if not authenticated
-async function requireAuth() {
-  const user = await getCurrentUser();
-  if (!user) {
-    // Save the current URL to redirect back after login
-    sessionStorage.setItem('redirectUrl', window.location.href);
-    window.location.href = 'login.html';
-    return null;
-  }
-  return user;
-}
-
-// Check if user has specific role and redirect if not
-async function requireRole(requiredRoles) {
-  const user = await requireAuth();
-  if (!user) return null; // Already redirected to login
-  
-  if (!Array.isArray(requiredRoles)) {
-    requiredRoles = [requiredRoles]; // Convert to array if single role
-  }
-  
-  // Check if user has any of the required roles
-  const userRoles = Array.isArray(user.roles) ? user.roles : [user.role];
-  const hasRequiredRole = requiredRoles.some(role => userRoles.includes(role));
-  
-  if (!hasRequiredRole) {
-    // User doesn't have required role, redirect to appropriate dashboard
-    if (userRoles.includes('student')) {
-      window.location.href = 'student-dashboard.html';
-    } else if (userRoles.includes('trainer')) {
-      window.location.href = 'trainer-dashboard.html';
-    } else {
-      window.location.href = 'index.html';
     }
-    return null;
-  }
-  
-  return user;
 }
 
-// Check if user is a student (for assessment page)
-async function requireStudent() {
-  const user = await requireAuth();
-  if (!user) return null; // Already redirected to login
-  
-  // Check if user is a trainer
-  const userRoles = Array.isArray(user.roles) ? user.roles : [user.role];
-  const isTrainer = userRoles.includes('trainer');
-  
-  if (isTrainer) {
-    alert('Trainers cannot submit assessments. Please use a student account.');
-    window.location.href = 'trainer-review.html';
-    return null;
-  }
-  
-  return user;
-}
-
-// Handle logout
-function logoutUser() {
-  return signOut(auth).then(() => {
-    window.location.href = 'login.html';
-  });
-}
-
-// Update UI based on authentication state
-async function updateNavigation() {
-  const currentUser = await getCurrentUser(); // Changed variable name to avoid conflict
-  
-  // Update user status display
-  const userStatusElement = document.getElementById('user-status');
-  if (userStatusElement) {
-    if (currentUser) {
-      userStatusElement.innerHTML = `
-        <p>Logged in as: <strong>${currentUser.email}</strong></p>
-        <p class="user-role">${currentUser.role || 'Student'}</p>
-      `;
-    } else {
-      userStatusElement.innerHTML = `
-        <p>Not logged in</p>
-        <a href="login.html" class="btn-small">Login</a>
-      `;
-    }
-  }
-  
-  // Show/hide trainer-only navigation items
-  const trainerOnlyItems = document.querySelectorAll('.trainer-only');
-  
-  if (currentUser) {
-    // Get user roles as array
-    const userRoles = Array.isArray(currentUser.roles) ? currentUser.roles : [currentUser.role];
-    const isTrainer = userRoles.includes('trainer');
-    
-    // Show/hide trainer-only items
-    trainerOnlyItems.forEach(item => {
-      item.style.display = isTrainer ? 'block' : 'none';
-    });
-  } else {
-    // User is not logged in, hide role-specific items
-    trainerOnlyItems.forEach(item => {
-      item.style.display = 'none';
-    });
-  }
-  
-  // Show/hide logout link
-  const logoutNavItem = document.getElementById('logout-nav-item');
-  if (logoutNavItem) {
-    if (currentUser) {
-      logoutNavItem.style.display = 'block';
-    } else {
-      logoutNavItem.style.display = 'none';
-    }
-  }
-}
-
-// Initialize authentication on page load
-function initAuth() {
-  document.addEventListener('DOMContentLoaded', async () => {
-    await updateNavigation();
-    
-    // Set up logout functionality
-    const logoutLink = document.getElementById('logout-link');
-    if (logoutLink) {
-      logoutLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        logoutUser();
-      });
-    }
-    
-    // Check if we're on the assessment page and prevent trainers from accessing it
-    if (window.location.pathname.includes('assessment.html')) {
-      const currentUser = await getCurrentUser(); // Changed variable name to avoid conflict
-      if (currentUser) {
-        const userRoles = Array.isArray(currentUser.roles) ? currentUser.roles : [currentUser.role];
-        if (userRoles.includes('trainer')) {
-          alert('Trainers cannot submit assessments. Please use a student account.');
-          window.location.href = 'trainer-review.html';
+// Add a new scenario
+function addScenario() {
+    const scenariosContainer = document.getElementById('scenarios-container');
+    if (scenariosContainer) {
+        const scenarioId = scenariosContainer.children.length + 1;
+        const scenarioHTML = createScenarioHTML(scenarioId, '', '');
+        scenariosContainer.innerHTML += scenarioHTML;
+        
+        // Add event listeners to the new scenario's buttons
+        const newScenario = scenariosContainer.lastElementChild;
+        if (newScenario) {
+            const removeButton = newScenario.querySelector('.btn-remove');
+            if (removeButton) {
+                removeButton.addEventListener('click', function() {
+                    newScenario.remove();
+                });
+            }
         }
-      }
     }
-  });
 }
 
-// Auto-redirect to dashboard if already logged in (for login page)
-async function redirectIfLoggedIn() {
-  const currentUser = await getCurrentUser(); // Changed variable name to avoid conflict
-  if (currentUser) {
-    // Get user roles as array
-    const userRoles = Array.isArray(currentUser.roles) ? currentUser.roles : [currentUser.role];
+// Create HTML for a question
+function createQuestionHTML(id, text = '', points = 10) {
+    return `
+        <div class="question-container" data-question-id="${id}">
+            <div class="question-header">
+                <h4>Question ${id}</h4>
+                <div class="question-actions">
+                    <button class="btn-small btn-remove">Remove</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="question-${id}-text">Question Text:</label>
+                <textarea class="question-text" id="question-${id}-text" rows="3">${text}</textarea>
+            </div>
+            <div class="form-group">
+                <label for="question-${id}-points">Points:</label>
+                <input type="number" class="question-points" id="question-${id}-points" value="${points}" min="1" max="100">
+            </div>
+        </div>
+    `;
+}
+
+// Create HTML for a scenario
+function createScenarioHTML(id, title = '', description = '') {
+    return `
+        <div class="scenario-container" data-scenario-id="${id}">
+            <div class="scenario-header">
+                <h4>Scenario ${id}</h4>
+                <div class="scenario-actions">
+                    <button class="btn-small btn-remove">Remove</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="scenario-${id}-title">Scenario Title:</label>
+                <input type="text" class="scenario-title" id="scenario-${id}-title" value="${title}">
+            </div>
+            <div class="form-group">
+                <label for="scenario-${id}-description">Scenario Description:</label>
+                <textarea class="scenario-description" id="scenario-${id}-description" rows="5">${description}</textarea>
+            </div>
+        </div>
+    `;
+}
+
+// Show a tab
+function showTab(tabId) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.style.display = 'none';
+    });
     
-    if (userRoles.includes('student')) {
-      window.location.href = 'student-dashboard.html';
-    } else if (userRoles.includes('trainer')) {
-      window.location.href = 'trainer-dashboard.html';
-    } else {
-      window.location.href = 'budget.html';
+    // Remove active class from all buttons
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('active');
+    });
+    
+    // Show the selected tab
+    const selectedTab = document.getElementById(tabId);
+    if (selectedTab) {
+        selectedTab.style.display = 'block';
     }
-    return true;
-  }
-  return false;
+    
+    // Add active class to the clicked button
+    const activeButton = document.querySelector(`.tab-button[data-tab="${tabId}"]`);
+    if (activeButton) {
+        activeButton.classList.add('active');
+    }
 }
 
-// Export all functions at the end
-export { 
-  getCurrentUser, 
-  requireAuth, 
-  requireRole,
-  requireStudent,
-  logoutUser, 
-  updateNavigation,
-  initAuth,
-  redirectIfLoggedIn
-};
+// Show status message
+function showStatusMessage(message, type = 'success') {
+    const statusMessage = document.getElementById('status-message');
+    if (statusMessage) {
+        statusMessage.textContent = message;
+        statusMessage.className = `status-message ${type}`;
+        statusMessage.style.display = 'block';
+        
+        // Hide the message after 5 seconds
+        setTimeout(() => {
+            statusMessage.style.display = 'none';
+        }, 5000);
+    }
+}
+
+// Add event listeners for remove buttons
+document.addEventListener('click', function(event) {
+    if (event.target.classList.contains('btn-remove')) {
+        const container = event.target.closest('.question-container, .scenario-container');
+        if (container) {
+            container.remove();
+        }
+    }
+});
+
+// Show the general tab by default
+document.addEventListener('DOMContentLoaded', function() {
+    showTab('general-tab');
+});

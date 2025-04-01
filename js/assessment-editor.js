@@ -1,498 +1,374 @@
 // js/assessment-editor.js
-import { auth, onAuthStateChanged, signOut, db, doc, getDoc, setDoc } from './firebase-config.js';
-import { getCurrentUser, updateNavigation } from './auth.js';
 
+import { auth, db, collection, doc, getDoc, setDoc, addDoc, deleteDoc, updateDoc, serverTimestamp } from './firebase-config.js';
+import { requireRole, getCurrentUser } from './auth.js';
+
+// Global variables
+let currentUser = null;
+let assessmentData = null;
+let currentQuestionId = 1;
+
+// Initialize the assessment editor
 document.addEventListener('DOMContentLoaded', async function() {
     try {
-        // Initialize navigation
-        await updateNavigation();
+        // Ensure user is authenticated and has trainer role
+        currentUser = await requireRole('trainer');
+        if (!currentUser) return; // User was redirected
         
-        // Get current user
-        const user = await getCurrentUser();
+        // Load existing assessment if available
+        await loadAssessment();
         
-        // Check if user is logged in
-        if (!user) {
-            window.location.href = 'budget.html';
-            return;
-        }
-        
-        // Check if user has trainer role
-        const userRoles = Array.isArray(user.roles) ? user.roles : [user.role];
-        if (!userRoles.includes('trainer')) {
-            alert('Access denied. You need trainer privileges to access this page.');
-            window.location.href = 'index.html';
-            return;
-        }
-        
-        // Update user status
-        document.getElementById('user-status').innerHTML = 'Logged in as: ' + user.email;
-        
-        // Set up logout functionality
-        document.getElementById('logout-link').addEventListener('click', function(e) {
-            e.preventDefault();
-            signOut(auth).then(() => {
-                window.location.href = 'index.html';
-            }).catch((error) => {
-                console.error("Error signing out:", error);
-            });
-        });
-        
-        // Continue with the rest of the initialization
-        await loadAssessmentContent();
+        // Set up event listeners
         setupEventListeners();
         
-        // Hide loading indicator and show editor
+        // Show the editor
         document.getElementById('loading-indicator').style.display = 'none';
-        document.getElementById('editor-content').style.display = 'block';
+        document.getElementById('editor-container').style.display = 'block';
     } catch (error) {
         console.error("Error initializing editor:", error);
-        document.getElementById('loading-indicator').innerHTML = `
-            <p>Error loading assessment content: ${error.message}</p>
-            <button class="btn" onclick="location.reload()">Try Again</button>
-        `;
+        const loadingIndicator = document.getElementById('loading-indicator');
+        if (loadingIndicator) {
+            loadingIndicator.innerHTML = `
+                <div class="error-message">Error initializing editor: ${error.message}</div>
+                <button class="btn" onclick="location.reload()">Try Again</button>
+            `;
+        }
     }
 });
 
-// Global variables
-let originalContent = {};
+// Set up event listeners for the editor
+function setupEventListeners() {
+    // Check if elements exist before adding event listeners
+    const saveButton = document.getElementById('save-assessment');
+    if (saveButton) {
+        saveButton.addEventListener('click', saveAssessment);
+    }
+    
+    const publishButton = document.getElementById('publish-assessment');
+    if (publishButton) {
+        publishButton.addEventListener('click', publishAssessment);
+    }
+    
+    const addQuestionButton = document.getElementById('add-question');
+    if (addQuestionButton) {
+        addQuestionButton.addEventListener('click', addQuestion);
+    }
+    
+    const addScenarioButton = document.getElementById('add-scenario');
+    if (addScenarioButton) {
+        addScenarioButton.addEventListener('click', addScenario);
+    }
+    
+    // Tab navigation
+    const tabButtons = document.querySelectorAll('.tab-button');
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const tabId = button.getAttribute('data-tab');
+            showTab(tabId);
+        });
+    });
+}
 
-// Load assessment content from Firestore
-async function loadAssessmentContent() {
+// Load existing assessment data
+async function loadAssessment() {
     try {
-        // Get the assessment content document
-        const contentDoc = await getDoc(doc(db, 'assessmentContent', 'current'));
+        // Check if there's an existing assessment
+        const assessmentRef = doc(db, 'assessmentTemplate', 'current');
+        const assessmentDoc = await getDoc(assessmentRef);
         
-        if (contentDoc.exists()) {
-            // Store original content for reset functionality
-            originalContent = contentDoc.data();
+        if (assessmentDoc.exists()) {
+            assessmentData = assessmentDoc.data();
             
-            // Populate basic form fields
-            document.getElementById('assessment-title').value = originalContent.title || '';
-            document.getElementById('assessment-description').value = originalContent.description || '';
-            document.getElementById('instructions-text').value = originalContent.instructions || '';
-            document.getElementById('budget-instructions').value = originalContent.budgetSetupInstructions || '';
-            document.getElementById('analysis-instructions').value = originalContent.analysisInstructions || '';
+            // Populate the form with existing data
+            document.getElementById('assessment-title').value = assessmentData.title || '';
+            document.getElementById('assessment-description').value = assessmentData.description || '';
+            document.getElementById('assessment-instructions').value = assessmentData.instructions || '';
             
-            // Populate scenarios
-            populateScenarios(originalContent.scenarios || []);
+            // Load questions
+            if (assessmentData.questions && assessmentData.questions.length > 0) {
+                const questionsContainer = document.getElementById('questions-container');
+                if (questionsContainer) {
+                    questionsContainer.innerHTML = '';
+                    
+                    assessmentData.questions.forEach((question, index) => {
+                        const questionId = index + 1;
+                        const questionHTML = createQuestionHTML(questionId, question.text, question.points);
+                        questionsContainer.innerHTML += questionHTML;
+                    });
+                    
+                    currentQuestionId = assessmentData.questions.length + 1;
+                }
+            }
             
-            // Populate questions
-            populateQuestions(originalContent.questions || []);
+            // Load scenarios
+            if (assessmentData.scenarios && assessmentData.scenarios.length > 0) {
+                const scenariosContainer = document.getElementById('scenarios-container');
+                if (scenariosContainer) {
+                    scenariosContainer.innerHTML = '';
+                    
+                    assessmentData.scenarios.forEach((scenario, index) => {
+                        const scenarioHTML = createScenarioHTML(index + 1, scenario.title, scenario.description);
+                        scenariosContainer.innerHTML += scenarioHTML;
+                    });
+                }
+            }
+            
+            // Show success message
+            showStatusMessage('Assessment loaded successfully.', 'success');
         } else {
-            // Create default content if none exists
-            originalContent = {
+            // No existing assessment, create a new one
+            assessmentData = {
                 title: 'Farm Budget Assessment',
-                description: 'Complete this assessment to demonstrate your understanding of farm budget management.',
-                instructions: 'Create a budget for the farm, answer the analysis questions, and submit your assessment for review.',
-                budgetSetupInstructions: 'Create a budget for Green Valley Farm by adding income and expense items. Include all major income sources and expense categories relevant to a mixed farming operation.',
-                analysisInstructions: 'Based on your budget, answer the following questions to demonstrate your understanding of farm budget management.',
-                scenarios: [
-                    {
-                        id: 'scenario1',
-                        title: 'Green Valley Farm',
-                        description: 'You are the manager of Green Valley Farm, a mixed farming operation that produces crops and raises livestock. The farm owner has asked you to prepare a budget, analyze it, and make recommendations for improvements.'
-                    }
-                ],
-                questions: [
-                    {
-                        id: 'q1',
-                        text: 'Explain the key factors that influenced your income projections. What assumptions did you make?'
-                    },
-                    {
-                        id: 'q2',
-                        text: 'Identify the major expense categories in your budget and explain how you would prioritize them if you needed to reduce costs.'
-                    },
-                    {
-                        id: 'q3',
-                        text: 'Based on your budget analysis, what recommendations would you make to improve the farm\'s profitability?'
-                    }
-                ]
+                description: 'Assessment for farm budgeting skills',
+                instructions: 'Please complete all sections of this assessment.',
+                questions: [],
+                scenarios: [],
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+                published: false
             };
             
-            // Populate form fields with default content
-            document.getElementById('assessment-title').value = originalContent.title;
-            document.getElementById('assessment-description').value = originalContent.description;
-            document.getElementById('instructions-text').value = originalContent.instructions;
-            document.getElementById('budget-instructions').value = originalContent.budgetSetupInstructions;
-            document.getElementById('analysis-instructions').value = originalContent.analysisInstructions;
-            
-            // Populate scenarios
-            populateScenarios(originalContent.scenarios);
-            
-            // Populate questions
-            populateQuestions(originalContent.questions);
+            // Set default values in the form
+            document.getElementById('assessment-title').value = assessmentData.title;
+            document.getElementById('assessment-description').value = assessmentData.description;
+            document.getElementById('assessment-instructions').value = assessmentData.instructions;
         }
     } catch (error) {
-        console.error("Error loading assessment content:", error);
-        throw error;
+        console.error("Error loading assessment:", error);
+        showStatusMessage('Error loading assessment: ' + error.message, 'error');
     }
 }
 
-// Populate scenarios
-function populateScenarios(scenarios) {
-    const scenariosContainer = document.getElementById('scenarios-container');
-    scenariosContainer.innerHTML = '';
-    
-    if (!scenarios || scenarios.length === 0) {
-        // Add a default scenario if none exist
-        scenarios = [
-            {
-                id: 'scenario1',
-                title: 'Default Scenario',
-                description: 'Enter your scenario description here.'
-            }
-        ];
-    }
-    
-    scenarios.forEach((scenario, index) => {
-        const scenarioElement = document.createElement('div');
-        scenarioElement.className = 'scenario-container';
-        scenarioElement.dataset.id = scenario.id || `scenario${Date.now()}${index}`;
-        
-        scenarioElement.innerHTML = `
-            <div class="question-actions">
-                <button class="btn-small btn-remove scenario-remove">Remove</button>
-            </div>
-            <div class="form-group">
-                <label for="scenario-title-${index}">Scenario Title</label>
-                <input type="text" id="scenario-title-${index}" class="scenario-title" value="${scenario.title || ''}" placeholder="Enter scenario title">
-            </div>
-            <div class="form-group">
-                <label for="scenario-desc-${index}">Scenario Description</label>
-                <textarea id="scenario-desc-${index}" class="scenario-description" placeholder="Enter scenario description">${scenario.description || ''}</textarea>
-            </div>
-        `;
-        
-        scenariosContainer.appendChild(scenarioElement);
-        
-        // Add remove event listener
-        scenarioElement.querySelector('.scenario-remove').addEventListener('click', function() {
-            if (document.querySelectorAll('.scenario-container').length > 1) {
-                if (confirm('Are you sure you want to remove this scenario?')) {
-                    scenarioElement.remove();
-                }
-            } else {
-                alert('You must have at least one scenario.');
-            }
-        });
-    });
-}
-
-// Populate questions
-function populateQuestions(questions) {
-    const questionsContainer = document.getElementById('questions-container');
-    questionsContainer.innerHTML = '';
-    
-    if (!questions || questions.length === 0) {
-        // Add default questions if none exist
-        questions = [
-            {
-                id: 'q1',
-                text: 'Explain the key factors that influenced your income projections. What assumptions did you make?'
-            },
-            {
-                id: 'q2',
-                text: 'Identify the major expense categories in your budget and explain how you would prioritize them if you needed to reduce costs.'
-            },
-            {
-                id: 'q3',
-                text: 'Based on your budget analysis, what recommendations would you make to improve the farm\'s profitability?'
-            }
-        ];
-    }
-    
-    questions.forEach((question, index) => {
-        const questionElement = document.createElement('div');
-        questionElement.className = 'question-container';
-        questionElement.dataset.id = question.id || `q${Date.now()}${index}`;
-        
-        questionElement.innerHTML = `
-            <div class="question-actions">
-                <button class="btn-small btn-remove question-remove">Remove</button>
-            </div>
-            <div class="form-group">
-                <label for="question-text-${index}">Question ${index + 1}</label>
-                <textarea id="question-text-${index}" class="question-text" placeholder="Enter question text">${question.text || ''}</textarea>
-            </div>
-        `;
-        
-        questionsContainer.appendChild(questionElement);
-        
-        // Add remove event listener
-        questionElement.querySelector('.question-remove').addEventListener('click', function() {
-            if (document.querySelectorAll('.question-container').length > 1) {
-                if (confirm('Are you sure you want to remove this question?')) {
-                    questionElement.remove();
-                    // Renumber questions
-                    updateQuestionNumbers();
-                }
-            } else {
-                alert('You must have at least one question.');
-            }
-        });
-    });
-}
-
-// Update question numbers after adding/removing questions
-function updateQuestionNumbers() {
-    const questionContainers = document.querySelectorAll('.question-container');
-    questionContainers.forEach((container, index) => {
-        const label = container.querySelector('label');
-        if (label) {
-            label.textContent = `Question ${index + 1}`;
-        }
-    });
-}
-
-// Set up event listeners
-function setupEventListeners() {
-    // Tab navigation
-    document.querySelectorAll('.tab-button').forEach(button => {
-        button.addEventListener('click', function() {
-            // Remove active class from all buttons and content
-            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            
-            // Add active class to clicked button and corresponding content
-            this.classList.add('active');
-            const tabId = this.getAttribute('data-tab');
-            document.getElementById(`${tabId}-tab`).classList.add('active');
-        });
-    });
-    
-    // Add scenario button
-    document.getElementById('add-scenario').addEventListener('click', function() {
-        const scenariosContainer = document.getElementById('scenarios-container');
-        const scenarioCount = scenariosContainer.querySelectorAll('.scenario-container').length;
-        
-        const newScenario = document.createElement('div');
-        newScenario.className = 'scenario-container';
-        newScenario.dataset.id = `scenario${Date.now()}`;
-        
-        newScenario.innerHTML = `
-            <div class="question-actions">
-                <button class="btn-small btn-remove scenario-remove">Remove</button>
-            </div>
-            <div class="form-group">
-                <label for="scenario-title-${scenarioCount}">Scenario Title</label>
-                <input type="text" id="scenario-title-${scenarioCount}" class="scenario-title" placeholder="Enter scenario title">
-            </div>
-            <div class="form-group">
-                <label for="scenario-desc-${scenarioCount}">Scenario Description</label>
-                <textarea id="scenario-desc-${scenarioCount}" class="scenario-description" placeholder="Enter scenario description"></textarea>
-            </div>
-        `;
-        
-        scenariosContainer.appendChild(newScenario);
-        
-        // Add remove event listener
-        newScenario.querySelector('.scenario-remove').addEventListener('click', function() {
-            if (confirm('Are you sure you want to remove this scenario?')) {
-                newScenario.remove();
-            }
-        });
-        
-        // Focus on the new scenario title
-        newScenario.querySelector('.scenario-title').focus();
-    });
-    
-    // Add question button
-    document.getElementById('add-question').addEventListener('click', function() {
-        const questionsContainer = document.getElementById('questions-container');
-        const questionCount = questionsContainer.querySelectorAll('.question-container').length;
-        
-        const newQuestion = document.createElement('div');
-        newQuestion.className = 'question-container';
-        newQuestion.dataset.id = `q${Date.now()}`;
-        
-        newQuestion.innerHTML = `
-            <div class="question-actions">
-                <button class="btn-small btn-remove question-remove">Remove</button>
-            </div>
-            <div class="form-group">
-                <label for="question-text-${questionCount}">Question ${questionCount + 1}</label>
-                <textarea id="question-text-${questionCount}" class="question-text" placeholder="Enter question text"></textarea>
-            </div>
-        `;
-        
-        questionsContainer.appendChild(newQuestion);
-        
-        // Add remove event listener
-        newQuestion.querySelector('.question-remove').addEventListener('click', function() {
-            if (document.querySelectorAll('.question-container').length > 1) {
-                if (confirm('Are you sure you want to remove this question?')) {
-                    newQuestion.remove();
-                    // Renumber questions
-                    updateQuestionNumbers();
-                }
-            } else {
-                alert('You must have at least one question.');
-            }
-        });
-        
-        // Focus on the new question text
-        newQuestion.querySelector('.question-text').focus();
-    });
-    
-    // Reset button
-    document.getElementById('reset-button').addEventListener('click', function() {
-        if (confirm('Are you sure you want to reset all changes?')) {
-            resetForm();
-        }
-    });
-    
-    // Save button
-    document.getElementById('save-button').addEventListener('click', saveChanges);
-}
-
-// Reset form to original content
-function resetForm() {
-    document.getElementById('assessment-title').value = originalContent.title || '';
-    document.getElementById('assessment-description').value = originalContent.description || '';
-    document.getElementById('instructions-text').value = originalContent.instructions || '';
-    document.getElementById('budget-instructions').value = originalContent.budgetSetupInstructions || '';
-    document.getElementById('analysis-instructions').value = originalContent.analysisInstructions || '';
-    
-    // Reset scenarios
-    populateScenarios(originalContent.scenarios || []);
-    
-    // Reset questions
-    populateQuestions(originalContent.questions || []);
-    
-    showStatusMessage('Form reset to original values', 'success');
-}
-
-// Collect scenarios from the form
-function collectScenarios() {
-    const scenarios = [];
-    const scenarioContainers = document.querySelectorAll('.scenario-container');
-    
-    scenarioContainers.forEach(container => {
-        const id = container.dataset.id;
-        const title = container.querySelector('.scenario-title').value.trim();
-        const description = container.querySelector('.scenario-description').value.trim();
-        
-        scenarios.push({
-            id: id,
-            title: title,
-            description: description
-        });
-    });
-    
-    return scenarios;
-}
-
-// Collect questions from the form
-function collectQuestions() {
-    const questions = [];
-    const questionContainers = document.querySelectorAll('.question-container');
-    
-    questionContainers.forEach(container => {
-        const id = container.dataset.id;
-        const text = container.querySelector('.question-text').value.trim();
-        
-        questions.push({
-            id: id,
-            text: text
-        });
-    });
-    
-    return questions;
-}
-
-// Save changes to Firestore
-async function saveChanges() {
-    // Show loading state
-    const saveButton = document.getElementById('save-button');
-    const originalButtonText = saveButton.textContent;
-    saveButton.disabled = true;
-    saveButton.textContent = 'Saving...';
-    
+// Save assessment
+async function saveAssessment() {
     try {
-        // Collect form data
-        const title = document.getElementById('assessment-title').value.trim();
-        const description = document.getElementById('assessment-description').value.trim();
-        const instructions = document.getElementById('instructions-text').value.trim();
-        const budgetSetupInstructions = document.getElementById('budget-instructions').value.trim();
-        const analysisInstructions = document.getElementById('analysis-instructions').value.trim();
+        // Collect data from the form
+        const title = document.getElementById('assessment-title').value;
+        const description = document.getElementById('assessment-description').value;
+        const instructions = document.getElementById('assessment-instructions').value;
         
-        // Collect scenarios and questions
-        const scenarios = collectScenarios();
-        const questions = collectQuestions();
-        
-        // Validate form data
-        if (!title) {
-            throw new Error('Please enter an assessment title');
+        // Validate required fields
+        if (!title || !description || !instructions) {
+            showStatusMessage('Please fill in all required fields.', 'error');
+            return;
         }
         
-        if (scenarios.length === 0) {
-            throw new Error('Please add at least one scenario');
-        }
+        // Collect questions
+        const questions = [];
+        const questionElements = document.querySelectorAll('.question-container');
+        questionElements.forEach(element => {
+            const questionId = element.getAttribute('data-question-id');
+            const questionText = element.querySelector('.question-text').value;
+            const questionPoints = parseInt(element.querySelector('.question-points').value) || 10;
+            
+            questions.push({
+                id: questionId,
+                text: questionText,
+                points: questionPoints
+            });
+        });
         
-        if (questions.length === 0) {
-            throw new Error('Please add at least one question');
-        }
+        // Collect scenarios
+        const scenarios = [];
+        const scenarioElements = document.querySelectorAll('.scenario-container');
+        scenarioElements.forEach(element => {
+            const scenarioId = element.getAttribute('data-scenario-id');
+            const scenarioTitle = element.querySelector('.scenario-title').value;
+            const scenarioDescription = element.querySelector('.scenario-description').value;
+            
+            scenarios.push({
+                id: scenarioId,
+                title: scenarioTitle,
+                description: scenarioDescription
+            });
+        });
         
-        // Check for empty scenarios
-        for (let i = 0; i < scenarios.length; i++) {
-            if (!scenarios[i].title || !scenarios[i].description) {
-                throw new Error(`Scenario ${i + 1} has empty fields. Please fill in all scenario fields.`);
-            }
-        }
-        
-        // Check for empty questions
-        for (let i = 0; i < questions.length; i++) {
-            if (!questions[i].text) {
-                throw new Error(`Question ${i + 1} is empty. Please fill in all questions.`);
-            }
-        }
-        
-        // Get current user
-        const user = await getCurrentUser();
-        if (!user) {
-            throw new Error('You must be logged in to save changes');
-        }
-        
-        // Create updated content object
-        const updatedContent = {
-            title: title,
-            description: description,
-            instructions: instructions,
-            budgetSetupInstructions: budgetSetupInstructions,
-            analysisInstructions: analysisInstructions,
-            scenarios: scenarios,
-            questions: questions,
-            updatedAt: new Date(),
-            updatedBy: user.email
+        // Update assessment data
+        assessmentData = {
+            ...assessmentData,
+            title,
+            description,
+            instructions,
+            questions,
+            scenarios,
+            updatedAt: serverTimestamp(),
+            updatedBy: currentUser.uid
         };
         
         // Save to Firestore
-        await setDoc(doc(db, 'assessmentContent', 'current'), updatedContent);
+        const assessmentRef = doc(db, 'assessmentTemplate', 'current');
+        await setDoc(assessmentRef, assessmentData);
         
-        // Update original content
-        originalContent = { ...updatedContent };
-        
-        // Show success message
-        showStatusMessage('Assessment content updated successfully!', 'success');
+        showStatusMessage('Assessment saved successfully!', 'success');
     } catch (error) {
-        console.error('Error saving changes:', error);
-        showStatusMessage('Error: ' + error.message, 'error');
-    } finally {
-        // Reset button
-        saveButton.disabled = false;
-        saveButton.textContent = originalButtonText;
+        console.error("Error saving assessment:", error);
+        showStatusMessage('Error saving assessment: ' + error.message, 'error');
+    }
+}
+
+// Publish assessment
+async function publishAssessment() {
+    try {
+        // First save the assessment
+        await saveAssessment();
+        
+        // Update the published status
+        assessmentData.published = true;
+        assessmentData.publishedAt = serverTimestamp();
+        assessmentData.publishedBy = currentUser.uid;
+        
+        // Save to Firestore
+        const assessmentRef = doc(db, 'assessmentTemplate', 'current');
+        await updateDoc(assessmentRef, {
+            published: true,
+            publishedAt: serverTimestamp(),
+            publishedBy: currentUser.uid
+        });
+        
+        showStatusMessage('Assessment published successfully!', 'success');
+    } catch (error) {
+        console.error("Error publishing assessment:", error);
+        showStatusMessage('Error publishing assessment: ' + error.message, 'error');
+    }
+}
+
+// Add a new question
+function addQuestion() {
+    const questionsContainer = document.getElementById('questions-container');
+    if (questionsContainer) {
+        const questionHTML = createQuestionHTML(currentQuestionId, '', 10);
+        questionsContainer.innerHTML += questionHTML;
+        currentQuestionId++;
+        
+        // Add event listeners to the new question's buttons
+        const newQuestion = questionsContainer.lastElementChild;
+        if (newQuestion) {
+            const removeButton = newQuestion.querySelector('.btn-remove');
+            if (removeButton) {
+                removeButton.addEventListener('click', function() {
+                    newQuestion.remove();
+                });
+            }
+        }
+    }
+}
+
+// Add a new scenario
+function addScenario() {
+    const scenariosContainer = document.getElementById('scenarios-container');
+    if (scenariosContainer) {
+        const scenarioId = scenariosContainer.children.length + 1;
+        const scenarioHTML = createScenarioHTML(scenarioId, '', '');
+        scenariosContainer.innerHTML += scenarioHTML;
+        
+        // Add event listeners to the new scenario's buttons
+        const newScenario = scenariosContainer.lastElementChild;
+        if (newScenario) {
+            const removeButton = newScenario.querySelector('.btn-remove');
+            if (removeButton) {
+                removeButton.addEventListener('click', function() {
+                    newScenario.remove();
+                });
+            }
+        }
+    }
+}
+
+// Create HTML for a question
+function createQuestionHTML(id, text = '', points = 10) {
+    return `
+        <div class="question-container" data-question-id="${id}">
+            <div class="question-header">
+                <h4>Question ${id}</h4>
+                <div class="question-actions">
+                    <button class="btn-small btn-remove">Remove</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="question-${id}-text">Question Text:</label>
+                <textarea class="question-text" id="question-${id}-text" rows="3">${text}</textarea>
+            </div>
+            <div class="form-group">
+                <label for="question-${id}-points">Points:</label>
+                <input type="number" class="question-points" id="question-${id}-points" value="${points}" min="1" max="100">
+            </div>
+        </div>
+    `;
+}
+
+// Create HTML for a scenario
+function createScenarioHTML(id, title = '', description = '') {
+    return `
+        <div class="scenario-container" data-scenario-id="${id}">
+            <div class="scenario-header">
+                <h4>Scenario ${id}</h4>
+                <div class="scenario-actions">
+                    <button class="btn-small btn-remove">Remove</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="scenario-${id}-title">Scenario Title:</label>
+                <input type="text" class="scenario-title" id="scenario-${id}-title" value="${title}">
+            </div>
+            <div class="form-group">
+                <label for="scenario-${id}-description">Scenario Description:</label>
+                <textarea class="scenario-description" id="scenario-${id}-description" rows="5">${description}</textarea>
+            </div>
+        </div>
+    `;
+}
+
+// Show a tab
+function showTab(tabId) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.style.display = 'none';
+    });
+    
+    // Remove active class from all buttons
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('active');
+    });
+    
+    // Show the selected tab
+    const selectedTab = document.getElementById(tabId);
+    if (selectedTab) {
+        selectedTab.style.display = 'block';
+    }
+    
+    // Add active class to the clicked button
+    const activeButton = document.querySelector(`.tab-button[data-tab="${tabId}"]`);
+    if (activeButton) {
+        activeButton.classList.add('active');
     }
 }
 
 // Show status message
-function showStatusMessage(message, type) {
-    const statusElement = document.getElementById('status-message');
-    statusElement.textContent = message;
-    statusElement.className = 'status-message ' + type;
-    statusElement.style.display = 'block';
-    
-    // Hide message after 5 seconds
-    setTimeout(() => {
-        statusElement.style.display = 'none';
-    }, 5000);
+function showStatusMessage(message, type = 'success') {
+    const statusMessage = document.getElementById('status-message');
+    if (statusMessage) {
+        statusMessage.textContent = message;
+        statusMessage.className = `status-message ${type}`;
+        statusMessage.style.display = 'block';
+        
+        // Hide the message after 5 seconds
+        setTimeout(() => {
+            statusMessage.style.display = 'none';
+        }, 5000);
+    }
 }
+
+// Add event listeners for remove buttons
+document.addEventListener('click', function(event) {
+    if (event.target.classList.contains('btn-remove')) {
+        const container = event.target.closest('.question-container, .scenario-container');
+        if (container) {
+            container.remove();
+        }
+    }
+});
+
+// Show the general tab by default
+document.addEventListener('DOMContentLoaded', function() {
+    showTab('general-tab');
+});
