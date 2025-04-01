@@ -1,6 +1,8 @@
 // js/auth.js
 
 import { auth, onAuthStateChanged, signOut, db, doc, getDoc } from './firebase-config.js';
+import { generateNavigation } from './navigation.js';
+
 
 // Check if user is logged in and get their role
 async function getCurrentUser() {
@@ -77,6 +79,29 @@ async function requireRole(requiredRoles) {
   return user;
 }
 
+// Update UI based on authentication state
+async function updateNavigation() {
+  // Call the shared navigation generator
+  await generateNavigation();
+  
+  // Update user status display
+  const userStatusElement = document.getElementById('user-status');
+  if (userStatusElement) {
+    const user = await getCurrentUser();
+    if (user) {
+      userStatusElement.innerHTML = `
+        <p>Logged in as: <strong>${user.email}</strong></p>
+        <p class="user-role">${user.role || 'Student'}</p>
+      `;
+    } else {
+      userStatusElement.innerHTML = `
+        <p>Not logged in</p>
+        <a href="login.html" class="btn-small">Login</a>
+      `;
+    }
+  }
+}
+
 // Check if user is a student (for assessment page)
 async function requireStudent() {
   const user = await requireAuth();
@@ -101,10 +126,6 @@ function logoutUser() {
     window.location.href = 'login.html';
   });
 }
-
-// Update UI based on authentication state
-async function updateNavigation() {
-  const user = await getCurrentUser();
   
   // Update user status display
   const userStatusElement = document.getElementById('user-status');
@@ -150,7 +171,6 @@ async function updateNavigation() {
       logoutNavItem.style.display = 'none';
     }
   }
-}
 
 // Initialize authentication on page load
 function initAuth() {
