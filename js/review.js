@@ -852,127 +852,154 @@ function filterSubmissions(container, searchTerm) {
 
 // Event listeners
 document.addEventListener('DOMContentLoaded', () => {
-    // Load active submissions initially
-    loadSubmissions('active');
+    console.log("DOM fully loaded");
     
-    // Set up search functionality
-    setupSearch();
-    
-    // Back to list button
-    if (backToListButton) {
-        backToListButton.addEventListener('click', showAssessmentsList);
-    }
-    
-    // Add comment button
-    const addCommentButton = document.getElementById('add-comment');
-    if (addCommentButton) {
-        addCommentButton.addEventListener('click', addComment);
-    }
-    
-    // Archive button in detail view
-    const archiveButton = document.getElementById('archive-submission');
-    if (archiveButton) {
-        archiveButton.addEventListener('click', () => {
-            archiveSubmission(currentSubmissionId);
+    try {
+        // First, make sure all required elements exist
+        console.log("Checking for required elements...");
+        
+        // Check for tab elements
+        console.log("Tab elements:", {
+            activeTab: !!activeTab,
+            archivedTab: !!archivedTab,
+            activeAssessmentsContainer: !!activeAssessmentsContainer,
+            archivedAssessmentsContainer: !!archivedAssessmentsContainer,
+            assessmentDetail: !!assessmentDetail
         });
-    }
-    
-    // Delete button in detail view
-    const deleteButton = document.getElementById('delete-submission');
-    if (deleteButton) {
-        deleteButton.addEventListener('click', () => {
-            deleteSubmission(currentSubmissionId);
+        
+        // Check for action buttons
+        console.log("Action buttons:", {
+            backToListButton: !!backToListButton,
+            addCommentButton: !!document.getElementById('add-comment'),
+            provideFeedbackButton: !!document.getElementById('provide-feedback'),
+            finalizeButton: !!document.getElementById('finalize-assessment'),
+            reopenButton: !!document.getElementById('reopen-assessment'),
+            archiveButton: !!document.getElementById('archive-finalized')
         });
-    }
-    
-    // Restore button in detail view
-    const restoreButton = document.getElementById('restore-submission');
-    if (restoreButton) {
-        restoreButton.addEventListener('click', () => {
-            restoreSubmission(currentSubmissionId);
-        });
-    }
-    
-    // Delete archived button in detail view
-    const deleteArchivedButton = document.getElementById('delete-archived-submission');
-    if (deleteArchivedButton) {
-        deleteArchivedButton.addEventListener('click', () => {
-            deleteSubmission(currentSubmissionId);
-        });
-    }
-    
-    // Provide feedback button
-    const provideFeedbackButton = document.getElementById('provide-feedback');
-    if (provideFeedbackButton) {
-        provideFeedbackButton.addEventListener('click', provideFeedback);
-    }
-    
-    // Finalize assessment button
-    const finalizeButton = document.getElementById('finalize-assessment');
-    if (finalizeButton) {
-        finalizeButton.addEventListener('click', finalizeAssessment);
-    }
-    
-    // Reopen assessment button
-    const reopenButton = document.getElementById('reopen-assessment');
-    if (reopenButton) {
-        reopenButton.addEventListener('click', () => {
-            showModal(
-                "Return to Resubmission",
-                "Are you sure you want to return this assessment for resubmission? The student will be able to make changes.",
-                async () => {
-                    try {
-                        const user = await getCurrentUser();
-                        
-                        // Create feedback entry
-                        const feedbackEntry = {
-                            timestamp: new Date(),
-                            comments: "Assessment reopened for resubmission.",
-                            trainerEmail: user.email,
-                            trainerName: user.displayName || user.email,
-                            requestResubmission: true
-                        };
-                        
-                        // Update assessment document
-                        const submissionRef = doc(db, 'assessments', currentSubmissionId);
-                        await updateDoc(submissionRef, {
-                            status: 'feedback_provided',
-                            feedbackHistory: arrayUnion(feedbackEntry)
-                        });
-                        
-                        // Show success message
-                        alert('Assessment returned for resubmission.');
-                        
-                        // Update UI
-                        const submissionStatusElement = document.getElementById('submission-status');
-                        if (submissionStatusElement) {
-                            submissionStatusElement.textContent = 'Feedback Provided';
+        
+        // Load active submissions initially
+        console.log("Loading submissions...");
+        loadSubmissions('active');
+        
+        // Set up search functionality
+        console.log("Setting up search...");
+        setupSearch();
+        
+        console.log("Setting up event listeners...");
+        
+        // Use event delegation for all buttons to avoid null reference errors
+        document.addEventListener('click', function(e) {
+            // Back to list button
+            if (e.target && e.target.id === 'back-to-list') {
+                console.log("Back to list clicked");
+                showAssessmentsList();
+            }
+            
+            // Add comment button
+            if (e.target && e.target.id === 'add-comment') {
+                console.log("Add comment clicked");
+                addComment();
+            }
+            
+            // Provide feedback button
+            if (e.target && e.target.id === 'provide-feedback') {
+                console.log("Provide feedback clicked");
+                provideFeedback();
+            }
+            
+            // Finalize assessment button
+            if (e.target && e.target.id === 'finalize-assessment') {
+                console.log("Finalize assessment clicked");
+                finalizeAssessment();
+            }
+            
+            // Reopen assessment button
+            if (e.target && e.target.id === 'reopen-assessment') {
+                console.log("Reopen assessment clicked");
+                showModal(
+                    "Return to Resubmission",
+                    "Are you sure you want to return this assessment for resubmission? The student will be able to make changes.",
+                    async () => {
+                        try {
+                            const user = await getCurrentUser();
+                            
+                            // Create feedback entry
+                            const feedbackEntry = {
+                                timestamp: new Date(),
+                                comments: "Assessment reopened for resubmission.",
+                                trainerEmail: user.email,
+                                trainerName: user.displayName || user.email,
+                                requestResubmission: true
+                            };
+                            
+                            // Update assessment document
+                            const submissionRef = doc(db, 'assessments', currentSubmissionId);
+                            await updateDoc(submissionRef, {
+                                status: 'feedback_provided',
+                                feedbackHistory: arrayUnion(feedbackEntry)
+                            });
+                            
+                            // Show success message
+                            alert('Assessment returned for resubmission.');
+                            
+                            // Update UI
+                            const submissionStatusElement = document.getElementById('submission-status');
+                            if (submissionStatusElement) {
+                                submissionStatusElement.textContent = 'Feedback Provided';
+                            }
+                            
+                            const finalizedActions = document.getElementById('finalized-actions');
+                            if (finalizedActions) {
+                                finalizedActions.style.display = 'none';
+                            }
+                            
+                            const feedbackActions = document.getElementById('feedback-actions');
+                            if (feedbackActions) {
+                                feedbackActions.style.display = 'block';
+                            }
+                        } catch (error) {
+                            console.error("Error reopening assessment:", error);
+                            alert(`Error: ${error.message}`);
                         }
-                        
-                        const finalizedActions = document.getElementById('finalized-actions');
-                        if (finalizedActions) {
-                            finalizedActions.style.display = 'none';
-                        }
-                        
-                        const feedbackActions = document.getElementById('feedback-actions');
-                        if (feedbackActions) {
-                            feedbackActions.style.display = 'block';
-                        }
-                    } catch (error) {
-                        console.error("Error reopening assessment:", error);
-                        alert(`Error: ${error.message}`);
                     }
-                }
-            );
+                );
+            }
+            
+            // Archive finalized assessment button
+            if (e.target && e.target.id === 'archive-finalized') {
+                console.log("Archive finalized clicked");
+                archiveSubmission(currentSubmissionId);
+            }
+            
+            // Archive submission button
+            if (e.target && e.target.id === 'archive-submission') {
+                console.log("Archive submission clicked");
+                archiveSubmission(currentSubmissionId);
+            }
+            
+            // Delete submission button
+            if (e.target && e.target.id === 'delete-submission') {
+                console.log("Delete submission clicked");
+                deleteSubmission(currentSubmissionId);
+            }
+            
+            // Restore submission button
+            if (e.target && e.target.id === 'restore-submission') {
+                console.log("Restore submission clicked");
+                restoreSubmission(currentSubmissionId);
+            }
+            
+            // Delete archived submission button
+            if (e.target && e.target.id === 'delete-archived-submission') {
+                console.log("Delete archived submission clicked");
+                deleteSubmission(currentSubmissionId);
+            }
         });
-    }
-    
-    // Archive finalized assessment button
-    const archiveFinalizedButton = document.getElementById('archive-finalized');
-    if (archiveFinalizedButton) {
-        archiveFinalizedButton.addEventListener('click', () => {
-            archiveSubmission(currentSubmissionId);
-        });
+        
+        console.log("Event listeners set up successfully");
+        
+    } catch (error) {
+        console.error("Error in DOMContentLoaded event:", error);
     }
 });
 
