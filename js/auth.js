@@ -85,53 +85,50 @@ function logoutUser() {
 }
 
 // Update UI based on authentication state
-// In auth.js, update the updateNavigation function:
-
-// js/auth.js - Update the updateNavigation function
-
-export async function updateNavigation() {
-    const user = await getCurrentUser();
-    
-    // Update user status display
-    const userStatusElement = document.getElementById('user-status');
-    if (userStatusElement) {
-        if (user) {
-            userStatusElement.innerHTML = `
-                <p>Logged in as: <strong>${user.email}</strong></p>
-                <p class="user-role">${user.role || 'Student'}</p>
-            `;
-        } else {
-            userStatusElement.innerHTML = `
-                <p>Not logged in</p>
-                <a href="login.html" class="btn-small">Login</a>
-            `;
-        }
-    }
-    
-    // Show/hide trainer-only navigation items
-    const trainerOnlyItems = document.querySelectorAll('.trainer-only');
-    if (user && (user.role === 'trainer' || (user.roles && user.roles.includes('trainer')))) {
-        // User is a trainer, show trainer-only items
-        trainerOnlyItems.forEach(item => {
-            item.style.display = 'block';
-        });
+async function updateNavigation() {
+  const user = await getCurrentUser();
+  
+  // Update user status display
+  const userStatusElement = document.getElementById('user-status');
+  if (userStatusElement) {
+    if (user) {
+      userStatusElement.innerHTML = `
+        <p>Logged in as: <strong>${user.email}</strong></p>
+        <p class="user-role">${user.role || 'Student'}</p>
+      `;
     } else {
-        // User is not a trainer, hide trainer-only items
-        trainerOnlyItems.forEach(item => {
-            item.style.display = 'none';
-        });
+      userStatusElement.innerHTML = `
+        <p>Not logged in</p>
+        <a href="login.html" class="btn-small">Login</a>
+      `;
     }
-    
-    // Show/hide logout link
-    const logoutNavItem = document.getElementById('logout-nav-item');
-    if (logoutNavItem) {
-        if (user) {
-            logoutNavItem.style.display = 'block';
-        } else {
-            logoutNavItem.style.display = 'none';
-        }
+  }
+  
+  // Show/hide trainer-only navigation items
+  const trainerOnlyItems = document.querySelectorAll('.trainer-only');
+  if (user && (user.role === 'trainer' || (user.roles && user.roles.includes('trainer')))) {
+    // User is a trainer, show trainer-only items
+    trainerOnlyItems.forEach(item => {
+      item.style.display = 'block';
+    });
+  } else {
+    // User is not a trainer, hide trainer-only items
+    trainerOnlyItems.forEach(item => {
+      item.style.display = 'none';
+    });
+  }
+  
+  // Show/hide logout link
+  const logoutNavItem = document.getElementById('logout-nav-item');
+  if (logoutNavItem) {
+    if (user) {
+      logoutNavItem.style.display = 'block';
+    } else {
+      logoutNavItem.style.display = 'none';
     }
+  }
 }
+
 // Initialize authentication on page load
 function initAuth() {
   document.addEventListener('DOMContentLoaded', async () => {
@@ -167,11 +164,13 @@ async function redirectIfLoggedIn() {
   return false;
 }
 
+// Export all functions at the end
 export { 
   getCurrentUser, 
   requireAuth, 
   requireRole,
-  logoutUser,
+  logoutUser, 
+  updateNavigation,
   initAuth,
   redirectIfLoggedIn
 };
