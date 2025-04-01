@@ -15,13 +15,13 @@ let currentTab = 'active';
 // DOM elements
 const loadingIndicator = document.getElementById('loading-indicator');
 const activeTab = document.getElementById('active-tab');
-const archivedTab = document.getElementById('archived-tab');
+const finalizedTab = document.getElementById('finalized-tab');
 const activeAssessmentsContainer = document.getElementById('active-assessments-container');
-const archivedAssessmentsContainer = document.getElementById('archived-assessments-container');
+const finalizedAssessmentsContainer = document.getElementById('finalized-assessments-container');
 const assessmentDetail = document.getElementById('assessment-detail');
 const backToListButton = document.getElementById('back-to-list');
 const activeSearchInput = document.getElementById('active-search-input');
-const archivedSearchInput = document.getElementById('archived-search-input');
+const finalizedSearchInput = document.getElementById('finalized-search-input');
 
 // Modal elements
 const confirmModal = document.getElementById('confirm-modal');
@@ -112,7 +112,7 @@ async function loadSubmissions(status = 'active') {
     
     const container = status === 'active' ? 
         activeAssessmentsContainer : 
-        archivedAssessmentsContainer;
+        finalizedAssessmentsContainer;
         
     if (!container) {
         if (loadingIndicator) loadingIndicator.style.display = 'none';
@@ -126,7 +126,7 @@ async function loadSubmissions(status = 'active') {
         const assessmentsRef = collection(db, 'assessments');
         const q = query(
             assessmentsRef, 
-            where("status", "==", status === 'active' ? 'submitted' : 'archived'),
+            where("status", "==", status === 'active' ? 'submitted' : 'finalized'),
             where("submitted", "==", true)
         );
         
@@ -162,9 +162,8 @@ async function loadSubmissions(status = 'active') {
                     <div class="assessment-actions">
                         <button class="btn" onclick="viewSubmission('${submission.id}')">Review</button>
                         ${status === 'active' ? 
-                            `<button class="btn btn-warning" onclick="archiveSubmission('${submission.id}')">Archive</button>
-                            <button class="btn btn-danger" onclick="deleteSubmission('${submission.id}')">Delete</button>` : 
-                            `<button class="btn btn-success" onclick="restoreSubmission('${submission.id}')">Restore</button>
+                            `<button class="btn btn-danger" onclick="deleteSubmission('${submission.id}')">Delete</button>` : 
+                            `<button class="btn btn-warning" onclick="reopenSubmission('${submission.id}')">Reopen</button>
                             <button class="btn btn-danger" onclick="deleteSubmission('${submission.id}')">Delete</button>`
                         }
                     </div>
@@ -226,28 +225,19 @@ async function viewSubmission(submissionId) {
         }
         
         // Show appropriate action buttons based on status
-        const activeActions = document.getElementById('active-actions');
-        const archivedActions = document.getElementById('archived-actions');
         const feedbackActions = document.getElementById('feedback-actions');
         const finalizedActions = document.getElementById('finalized-actions');
         
-        if (activeActions) activeActions.style.display = 'none';
-        if (archivedActions) archivedActions.style.display = 'none';
         if (feedbackActions) feedbackActions.style.display = 'none';
         if (finalizedActions) finalizedActions.style.display = 'none';
         
         switch(currentSubmissionStatus) {
             case 'submitted':
-                if (feedbackActions) feedbackActions.style.display = 'block';
-                break;
             case 'feedback_provided':
                 if (feedbackActions) feedbackActions.style.display = 'block';
                 break;
             case 'finalized':
                 if (finalizedActions) finalizedActions.style.display = 'block';
-                break;
-            case 'archived':
-                if (archivedActions) archivedActions.style.display = 'block';
                 break;
         }
         
@@ -400,6 +390,7 @@ async function viewSubmission(submissionId) {
                 gradeContainer.innerHTML = `
                     <h3>Grade</h3>
                     <p><strong>Final Grade:</strong> ${submission.grade || 'Not graded'}</p>
+                    <p><strong>Score:</strong> ${submission.score || '0'}/100</p>
                 `;
             } else {
                 gradeContainer.innerHTML = `
@@ -408,14 +399,13 @@ async function viewSubmission(submissionId) {
                         <label for="assessment-grade">Select Grade:</label>
                         <select id="assessment-grade" class="grade-select">
                             <option value="">Select a grade...</option>
-                            <option value="A">A - Excellent</option>
-                            <option value="B">B - Good</option>
-                            <option value="C">C - Satisfactory</option>
-                            <option value="D">D - Needs Improvement</option>
-                            <option value="F">F - Unsatisfactory</option>
                             <option value="Pass">Pass</option>
                             <option value="Fail">Fail</option>
                         </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="assessment-score">Score (out of 100):</label>
+                        <input type="number" id="assessment-score" min="0" max="100" value="0">
                     </div>
                 `;
             }
@@ -546,14 +536,14 @@ function showAssessmentsList() {
 async function archiveSubmission(submissionId) {
     showModal(
         "Archive Submission", 
-        "Are you sure you want to archive this submission? It will be moved to the Archived tab.",
+        "Are you sure you want to archive this submission? It will be moved to the finalized tab.",
         async () => {
             try {
                 const submissionRef = doc(db, 'assessments', submissionId);
                 await updateDoc(submissionRef, {
-                    status: 'archived'
+                    status: 'finalized'
                 });
-                console.log("Submission archived successfully");
+                console.log("Submission finalized successfully");
                 
                 // If we're viewing this submission, update the UI
                 if (currentSubmissionId === submissionId) {
@@ -572,7 +562,7 @@ async function archiveSubmission(submissionId) {
     );
 }
 
-// Restore a submission from archived
+// Restore a submission from finalized
 async function restoreSubmission(submissionId) {
     showModal(
         "Restore Submission", 
@@ -590,9 +580,9 @@ async function restoreSubmission(submissionId) {
                     showAssessmentsList();
                 }
                 
-                // Reload submissions if we're on the archived tab
-                if (currentTab === 'archived') {
-                    loadSubmissions('archived');
+                // Reload submissions if we're on the finalized tab
+                if (currentTab === 'finalized') {
+                    loadSubmissions('finalized');
                 }
             } catch (error) {
                 console.error("Error restoring submission:", error);
@@ -714,14 +704,21 @@ async function provideFeedback() {
 async function finalizeAssessment() {
     const commentInput = document.getElementById('new-comment');
     const gradeSelect = document.getElementById('assessment-grade');
+    const scoreInput = document.getElementById('assessment-score');
     
-    if (!commentInput || !gradeSelect) return;
+    if (!commentInput || !gradeSelect || !scoreInput) return;
     
     const commentText = commentInput.value.trim();
     const grade = gradeSelect.value;
+    const score = parseInt(scoreInput.value) || 0;
     
     if (!grade) {
-        alert('Please select a grade before finalizing the assessment.');
+        alert('Please select a grade (Pass/Fail) before finalizing the assessment.');
+        return;
+    }
+    
+    if (score < 0 || score > 100) {
+        alert('Please enter a valid score between 0 and 100.');
         return;
     }
     
@@ -742,7 +739,8 @@ async function finalizeAssessment() {
             trainerEmail: user.email,
             trainerName: user.displayName || user.email,
             requestResubmission: false,
-            grade: grade
+            grade: grade,
+            score: score
         };
         
         // Update assessment document
@@ -750,6 +748,7 @@ async function finalizeAssessment() {
         await updateDoc(submissionRef, {
             status: 'finalized',
             grade: grade,
+            score: score,
             finalizedAt: new Date(),
             finalizedBy: user.uid,
             feedbackHistory: arrayUnion(feedbackEntry)
@@ -764,12 +763,13 @@ async function finalizeAssessment() {
                 trainerName: user.displayName || user.email,
                 timestamp: serverTimestamp(),
                 isFinalization: true,
-                grade: grade
+                grade: grade,
+                score: score
             });
         }
         
         // Show success message
-        alert('Assessment finalized successfully with grade: ' + grade);
+        alert(`Assessment finalized successfully with grade: ${grade} (${score}/100)`);
         
         // Reload comments
         await loadComments(currentSubmissionId);
@@ -796,6 +796,7 @@ async function finalizeAssessment() {
             gradeContainer.innerHTML = `
                 <h3>Grade</h3>
                 <p><strong>Final Grade:</strong> ${grade}</p>
+                <p><strong>Score:</strong> ${score}/100</p>
             `;
         }
         
@@ -811,11 +812,53 @@ async function finalizeAssessment() {
         }
         
         // Clear comment input
-        const commentInput = document.getElementById('new-comment');
         if (commentInput) {
             commentInput.value = '';
         }
     }
+}
+
+// Add reopenSubmission function
+async function reopenSubmission(submissionId) {
+    showModal(
+        "Reopen Submission",
+        "Are you sure you want to reopen this submission for resubmission? The student will be able to make changes.",
+        async () => {
+            try {
+                const user = await getCurrentUser();
+                
+                // Create feedback entry
+                const feedbackEntry = {
+                    timestamp: new Date(),
+                    comments: "Assessment reopened for resubmission.",
+                    trainerEmail: user.email,
+                    trainerName: user.displayName || user.email,
+                    requestResubmission: true
+                };
+                
+                // Update assessment document
+                const submissionRef = doc(db, 'assessments', submissionId);
+                await updateDoc(submissionRef, {
+                    status: 'feedback_provided',
+                    feedbackHistory: arrayUnion(feedbackEntry)
+                });
+                
+                // Show success message
+                alert('Assessment returned for resubmission.');
+                
+                // If we're viewing this submission, update the UI
+                if (currentSubmissionId === submissionId) {
+                    showAssessmentsList();
+                }
+                
+                // Reload submissions
+                loadSubmissions(currentTab);
+            } catch (error) {
+                console.error("Error reopening submission:", error);
+                alert(`Error: ${error.message}`);
+            }
+        }
+    );
 }
 
 // Search functionality
@@ -827,10 +870,10 @@ function setupSearch() {
         });
     }
     
-    if (archivedSearchInput) {
-        archivedSearchInput.addEventListener('input', (e) => {
+    if (finalizedSearchInput) {
+        finalizedSearchInput.addEventListener('input', (e) => {
             const searchTerm = e.target.value.toLowerCase();
-            filterSubmissions(archivedAssessmentsContainer, searchTerm);
+            filterSubmissions(finalizedAssessmentsContainer, searchTerm);
         });
     }
 }
@@ -861,20 +904,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // Check for tab elements
         console.log("Tab elements:", {
             activeTab: !!activeTab,
-            archivedTab: !!archivedTab,
+            finalizedTab: !!finalizedTab,
             activeAssessmentsContainer: !!activeAssessmentsContainer,
-            archivedAssessmentsContainer: !!archivedAssessmentsContainer,
+            finalizedAssessmentsContainer: !!finalizedAssessmentsContainer,
             assessmentDetail: !!assessmentDetail
         });
         
         // Check for action buttons
         console.log("Action buttons:", {
             backToListButton: !!backToListButton,
-            addCommentButton: !!document.getElementById('add-comment'),
             provideFeedbackButton: !!document.getElementById('provide-feedback'),
             finalizeButton: !!document.getElementById('finalize-assessment'),
-            reopenButton: !!document.getElementById('reopen-assessment'),
-            archiveButton: !!document.getElementById('archive-finalized')
+            reopenButton: !!document.getElementById('reopen-assessment')
         });
         
         // Load active submissions initially
@@ -916,82 +957,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // Reopen assessment button
             if (e.target && e.target.id === 'reopen-assessment') {
                 console.log("Reopen assessment clicked");
-                showModal(
-                    "Return to Resubmission",
-                    "Are you sure you want to return this assessment for resubmission? The student will be able to make changes.",
-                    async () => {
-                        try {
-                            const user = await getCurrentUser();
-                            
-                            // Create feedback entry
-                            const feedbackEntry = {
-                                timestamp: new Date(),
-                                comments: "Assessment reopened for resubmission.",
-                                trainerEmail: user.email,
-                                trainerName: user.displayName || user.email,
-                                requestResubmission: true
-                            };
-                            
-                            // Update assessment document
-                            const submissionRef = doc(db, 'assessments', currentSubmissionId);
-                            await updateDoc(submissionRef, {
-                                status: 'feedback_provided',
-                                feedbackHistory: arrayUnion(feedbackEntry)
-                            });
-                            
-                            // Show success message
-                            alert('Assessment returned for resubmission.');
-                            
-                            // Update UI
-                            const submissionStatusElement = document.getElementById('submission-status');
-                            if (submissionStatusElement) {
-                                submissionStatusElement.textContent = 'Feedback Provided';
-                            }
-                            
-                            const finalizedActions = document.getElementById('finalized-actions');
-                            if (finalizedActions) {
-                                finalizedActions.style.display = 'none';
-                            }
-                            
-                            const feedbackActions = document.getElementById('feedback-actions');
-                            if (feedbackActions) {
-                                feedbackActions.style.display = 'block';
-                            }
-                        } catch (error) {
-                            console.error("Error reopening assessment:", error);
-                            alert(`Error: ${error.message}`);
-                        }
-                    }
-                );
-            }
-            
-            // Archive finalized assessment button
-            if (e.target && e.target.id === 'archive-finalized') {
-                console.log("Archive finalized clicked");
-                archiveSubmission(currentSubmissionId);
-            }
-            
-            // Archive submission button
-            if (e.target && e.target.id === 'archive-submission') {
-                console.log("Archive submission clicked");
-                archiveSubmission(currentSubmissionId);
+                reopenSubmission(currentSubmissionId);
             }
             
             // Delete submission button
             if (e.target && e.target.id === 'delete-submission') {
                 console.log("Delete submission clicked");
-                deleteSubmission(currentSubmissionId);
-            }
-            
-            // Restore submission button
-            if (e.target && e.target.id === 'restore-submission') {
-                console.log("Restore submission clicked");
-                restoreSubmission(currentSubmissionId);
-            }
-            
-            // Delete archived submission button
-            if (e.target && e.target.id === 'delete-archived-submission') {
-                console.log("Delete archived submission clicked");
                 deleteSubmission(currentSubmissionId);
             }
         });
@@ -1005,6 +976,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Make functions available globally for onclick handlers
 window.viewSubmission = viewSubmission;
-window.archiveSubmission = archiveSubmission;
-window.restoreSubmission = restoreSubmission;
 window.deleteSubmission = deleteSubmission;
+window.reopenSubmission = reopenSubmission;

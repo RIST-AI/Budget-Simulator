@@ -234,7 +234,7 @@
         <div class="tab-container">
             <div class="tab-buttons">
                 <button class="tab-button active" data-tab="active">Active Submissions</button>
-                <button class="tab-button" data-tab="archived">Archived Submissions</button>
+                <button class="tab-button" data-tab="archived">Finalised Submissions</button>
             </div>
             
             <div id="active-tab" class="tab-content active">
@@ -247,13 +247,13 @@
                 </div>
             </div>
             
-            <div id="archived-tab" class="tab-content">
-                <h2>Archived Submissions</h2>
+            <div id="finalized-tab" class="tab-content">
+                <h2>Finalized Submissions</h2>
                 <div class="search-container">
-                    <input type="text" id="archived-search-input" class="search-input" placeholder="Search archived submissions...">
+                    <input type="text" id="finalized-search-input" class="search-input" placeholder="Search finalized submissions...">
                 </div>
-                <div id="archived-assessments-container">
-                    <!-- Archived assessments will be loaded here -->
+                <div id="finalized-assessments-container">
+                    <!-- Finalized assessments will be loaded here -->
                 </div>
             </div>
         </div>
@@ -355,7 +355,6 @@
                     <div class="new-comment-container">
                         <h4>Add Comment</h4>
                         <textarea id="new-comment" rows="4" placeholder="Enter your feedback or comment here..."></textarea>
-                        <button id="add-comment" class="btn">Add Comment</button>
                     </div>
                 </section>
                 
