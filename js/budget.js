@@ -54,6 +54,16 @@ document.addEventListener('DOMContentLoaded', async function() {
 // Set up event listeners
 function setupEventListeners() {
     // Logout functionality - UPDATED SELECTOR to match navigation.js
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('logout-link')) {
+            e.preventDefault();
+            signOut(auth).then(() => {
+                window.location.href = 'index.html';
+            }).catch((error) => {
+                console.error("Error signing out:", error);
+            });
+        }
+    });
     const logoutLink = document.querySelector('.logout-link');
     if (logoutLink) {
         logoutLink.addEventListener('click', function(e) {
