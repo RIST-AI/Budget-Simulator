@@ -193,7 +193,7 @@ async function viewSubmission(submissionId) {
         // Fill in income items
         const incomeItemsBody = document.getElementById('income-items-body');
         incomeItemsBody.innerHTML = '';
-        
+
         if (submission.budget?.incomeItems && submission.budget.incomeItems.length > 0) {
             submission.budget.incomeItems.forEach(item => {
                 const row = document.createElement('tr');
@@ -201,6 +201,15 @@ async function viewSubmission(submissionId) {
                 const nameCell = document.createElement('td');
                 nameCell.textContent = item.name || 'Unnamed item';
                 row.appendChild(nameCell);
+                
+                const quantityCell = document.createElement('td');
+                quantityCell.textContent = item.quantity || '1';
+                row.appendChild(quantityCell);
+                
+                const priceCell = document.createElement('td');
+                const price = parseFloat(item.price || 0);
+                priceCell.textContent = `$${price.toFixed(2)}`;
+                row.appendChild(priceCell);
                 
                 const amountCell = document.createElement('td');
                 const amount = parseFloat(item.amount);
@@ -212,17 +221,17 @@ async function viewSubmission(submissionId) {
         } else {
             const row = document.createElement('tr');
             const cell = document.createElement('td');
-            cell.colSpan = 2;
+            cell.colSpan = 4; // Updated colspan to 4
             cell.textContent = 'No income items found';
             cell.style.textAlign = 'center';
             row.appendChild(cell);
             incomeItemsBody.appendChild(row);
         }
-        
+
         // Fill in expense items
         const expenseItemsBody = document.getElementById('expense-items-body');
         expenseItemsBody.innerHTML = '';
-        
+
         if (submission.budget?.expenseItems && submission.budget.expenseItems.length > 0) {
             submission.budget.expenseItems.forEach(item => {
                 const row = document.createElement('tr');
@@ -230,6 +239,15 @@ async function viewSubmission(submissionId) {
                 const nameCell = document.createElement('td');
                 nameCell.textContent = item.name || 'Unnamed item';
                 row.appendChild(nameCell);
+                
+                const quantityCell = document.createElement('td');
+                quantityCell.textContent = item.quantity || '1';
+                row.appendChild(quantityCell);
+                
+                const priceCell = document.createElement('td');
+                const price = parseFloat(item.price || 0);
+                priceCell.textContent = `$${price.toFixed(2)}`;
+                row.appendChild(priceCell);
                 
                 const amountCell = document.createElement('td');
                 const amount = parseFloat(item.amount);
@@ -241,7 +259,7 @@ async function viewSubmission(submissionId) {
         } else {
             const row = document.createElement('tr');
             const cell = document.createElement('td');
-            cell.colSpan = 2;
+            cell.colSpan = 4; // Updated colspan to 4
             cell.textContent = 'No expense items found';
             cell.style.textAlign = 'center';
             row.appendChild(cell);
