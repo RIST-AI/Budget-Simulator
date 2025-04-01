@@ -1,8 +1,6 @@
-// js/assessment.js
-
 // Import Firebase modules - removed serverTimestamp
 import { auth, onAuthStateChanged, signOut, db, doc, getDoc, setDoc, collection, addDoc } from './firebase-config.js';
-import { getCurrentUser, updateNavigation } from './auth.js';
+import { requireStudent, updateNavigation } from './auth.js';
 
 // Global variables
 let currentUser = null;
@@ -15,12 +13,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Initialize navigation
         await updateNavigation();
         
-        // Get current user
-        currentUser = await getCurrentUser();
+        // Get current user and ensure they're a student
+        currentUser = await requireStudent();
         
-        // Check if user is logged in
+        // If not a student, the function will redirect and return null
         if (!currentUser) {
-            window.location.href = 'budget.html';
             return;
         }
         
