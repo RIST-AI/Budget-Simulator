@@ -183,36 +183,150 @@ function populateQuestions() {
 }
 
 // Check if user already has an assessment in progress
+// Modify checkExistingAssessment in assessment.js
+
 async function checkExistingAssessment() {
     try {
         // Get user's assessment document
         const assessmentDoc = await getDoc(doc(db, 'assessments', currentUser.uid));
         
-        if (assessmentDoc.exists() && !assessmentDoc.data().submitted) {
+        if (assessmentDoc.exists()) {
             const existingAssessment = assessmentDoc.data();
             
-            // Populate budget
-            if (existingAssessment.budget) {
-                populateExistingBudget(existingAssessment.budget);
-            }
+            // Check assessment status
+            const status = existingAssessment.status || 
+                           (existingAssessment.submitted ? 'submitted' : 'saved');
             
-            // Populate answers
-            if (existingAssessment.answers) {
-                populateExistingAnswers(existingAssessment.answers);
-            }
-            
-            // Set scenario
-            if (existingAssessment.scenario) {
-                userScenario = existingAssessment.scenario;
-                const scenarioElement = document.getElementById('scenario-text');
-                if (scenarioElement) {
-                    scenarioElement.innerHTML = userScenario.description;
-                }
+            // Handle different statuses
+            switch(status) {
+                case 'saved':
+                    // Populate the form with saved data
+                    populateExistingBudget(existingAssessment.budget);
+                    populateExistingAnswers(existingAssessment.answers);
+                    
+                    // Set scenario
+                    if (existingAssessment.scenario) {
+                        userScenario = existingAssessment.scenario;
+                        const scenarioElement = document.getElementById('scenario-text');
+                        if (scenarioElement) {
+                            scenarioElement.innerHTML = userScenario.description;
+                        }
+                    }
+                    break;
+                    
+                case 'feedback_provided':
+                    // Populate the form with previous submission
+                    populateExistingBudget(existingAssessment.budget);
+                    populateExistingAnswers(existingAssessment.answers);
+                    
+                    // Set scenario
+                    if (existingAssessment.scenario) {
+                        userScenario = existingAssessment.scenario;
+                        const scenarioElement = document.getElementById('scenario-text');
+                        if (scenarioElement) {
+                            scenarioElement.innerHTML = userScenario.description;
+                        }
+                    }
+                    
+                    // Show feedback message
+                    showFeedbackMessage(existingAssessment);
+                    break;
+                    
+                case 'submitted':
+                case 'finalized':
+                    // Show message that assessment is already submitted
+                    showSubmittedMessage(status, existingAssessment);
+                    return; // Exit function to prevent form population
             }
         }
     } catch (error) {
         console.error("Error checking existing assessment:", error);
     }
+}
+
+// Show feedback message
+function showFeedbackMessage(assessment) {
+    // Create feedback message container
+    const feedbackContainer = document.createElement('div');
+    feedbackContainer.className = 'feedback-container';
+    feedbackContainer.style.backgroundColor = '#d4edda';
+    feedbackContainer.style.color = '#155724';
+    feedbackContainer.style.padding = '15px';
+    feedbackContainer.style.marginBottom = '20px';
+    feedbackContainer.style.borderRadius = '4px';
+    
+    // Get the most recent feedback
+    const latestFeedback = assessment.feedbackHistory && assessment.feedbackHistory.length > 0 
+        ? assessment.feedbackHistory[assessment.feedbackHistory.length - 1] 
+        : { comments: 'Your trainer has provided feedback and requested resubmission.' };
+    
+    feedbackContainer.innerHTML = `
+        <h3>Trainer Feedback</h3>
+        <p>${latestFeedback.comments || 'No specific comments provided.'}</p>
+        <p>Please review your assessment, make any necessary changes, and resubmit.</p>
+    `;
+    
+    // Insert at the top of the assessment content
+    const assessmentContent = document.getElementById('assessment-content');
+    if (assessmentContent && assessmentContent.firstChild) {
+        assessmentContent.insertBefore(feedbackContainer, assessmentContent.firstChild);
+    }
+}
+
+// Show message for already submitted assessments
+function showSubmittedMessage(status, assessment) {
+    const mainContent = document.querySelector('main');
+    if (!mainContent) return;
+    
+    // Clear main content
+    mainContent.innerHTML = '';
+    
+    // Create message container
+    const messageContainer = document.createElement('div');
+    messageContainer.className = 'container';
+    
+    if (status === 'submitted') {
+        messageContainer.innerHTML = `
+            <div class="info-message">
+                <h2>Assessment Already Submitted</h2>
+                <p>Your assessment has been submitted and is awaiting review by your trainer.</p>
+                <p>You will be notified when feedback is available.</p>
+                <p><strong>Submitted on:</strong> ${new Date(assessment.submittedAt.seconds * 1000).toLocaleDateString()}</p>
+                <a href="index.html" class="btn">Return to Home</a>
+            </div>
+        `;
+    } else if (status === 'finalized') {
+        // Get the latest feedback that contains the grade
+        let grade = assessment.grade || 'Not specified';
+        let feedbackText = 'No feedback provided.';
+        
+        if (assessment.feedbackHistory && assessment.feedbackHistory.length > 0) {
+            const finalFeedback = assessment.feedbackHistory.find(f => f.grade) || 
+                                 assessment.feedbackHistory[assessment.feedbackHistory.length - 1];
+            
+            if (finalFeedback.comments) {
+                feedbackText = finalFeedback.comments;
+            }
+        }
+        
+        messageContainer.innerHTML = `
+            <div class="info-message">
+                <h2>Assessment Finalized</h2>
+                <p>Your assessment has been graded and finalized by your trainer.</p>
+                <div class="grade-display">
+                    <h3>Grade: ${grade}</h3>
+                </div>
+                <div class="feedback-container">
+                    <h3>Trainer Feedback:</h3>
+                    <p>${feedbackText}</p>
+                </div>
+                <p><strong>Finalized on:</strong> ${assessment.finalizedAt ? new Date(assessment.finalizedAt.seconds * 1000).toLocaleDateString() : 'Date not available'}</p>
+                <a href="index.html" class="btn">Return to Home</a>
+            </div>
+        `;
+    }
+    
+    mainContent.appendChild(messageContainer);
 }
 
 // Populate existing budget
@@ -682,7 +796,8 @@ async function saveAssessment() {
             scenario: userScenario,
             budget: budget,
             answers: answers,
-            lastSaved: new Date(), // Changed from serverTimestamp()
+            lastSaved: new Date(),
+            status: 'saved', // Set status to 'saved'
             submitted: false
         };
         
@@ -715,7 +830,7 @@ async function submitAssessment() {
         }
         
         // Confirm submission
-        if (!confirm('Are you sure you want to submit your assessment? You will not be able to make changes after submission.')) {
+        if (!confirm('Are you sure you want to submit your assessment? You will not be able to make changes after submission unless your trainer provides feedback and requests resubmission.')) {
             return;
         }
         
@@ -739,11 +854,12 @@ async function submitAssessment() {
             scenario: userScenario,
             budget: budget,
             answers: answers,
-            submittedAt: new Date(), // Changed from serverTimestamp()
+            submittedAt: new Date(),
+            status: 'submitted', // Set status to 'submitted'
             submitted: true,
-            status: 'submitted',
             feedback: null,
-            grade: null
+            grade: null,
+            feedbackHistory: [] // Initialize feedback history array
         };
         
         // Save to Firestore

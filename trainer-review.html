@@ -359,11 +359,23 @@
                     </div>
                 </section>
                 
+                <section class="grading-section">
+                    <div id="grade-container">
+                        <!-- Grade selection will be inserted here -->
+                    </div>
+                </section>
+
                 <section class="actions-section">
-                    <div id="active-actions" style="display: none;">
-                        <h3>Actions</h3>
-                        <button id="archive-submission" class="btn btn-warning">Archive Submission</button>
-                        <button id="delete-submission" class="btn btn-danger">Delete Submission</button>
+                    <div id="feedback-actions" style="display: none;">
+                        <h3>Assessment Actions</h3>
+                        <button id="provide-feedback" class="btn btn-primary">Provide Feedback & Request Resubmission</button>
+                        <button id="finalize-assessment" class="btn btn-success">Grade & Finalize Assessment</button>
+                    </div>
+                    
+                    <div id="finalized-actions" style="display: none;">
+                        <h3>Assessment Actions</h3>
+                        <button id="reopen-assessment" class="btn btn-warning">Return to Resubmission</button>
+                        <button id="archive-finalized" class="btn btn-secondary">Archive Assessment</button>
                     </div>
                     
                     <div id="archived-actions" style="display: none;">

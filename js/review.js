@@ -1,4 +1,4 @@
-import { auth, db, collection, query, where, getDocs, doc, updateDoc, onSnapshot, addDoc, serverTimestamp, orderBy, getDoc } from './firebase-config.js';
+import { auth, db, collection, query, where, getDocs, doc, updateDoc, onSnapshot, addDoc, serverTimestamp, orderBy, getDoc, arrayUnion } from './firebase-config.js';
 import { requireRole, initAuth, getCurrentUser } from './auth.js';
 
 // Initialize authentication
@@ -175,16 +175,34 @@ async function viewSubmission(submissionId) {
         
         // Store the current submission ID and status
         currentSubmissionId = submissionId;
-        currentSubmissionStatus = submission.status || 'submitted';
+        currentSubmissionStatus = submission.status || 
+                                 (submission.submitted ? 'submitted' : 'saved');
         
         // Fill in submission details
         document.getElementById('student-email').textContent = submission.userEmail || 'No email provided';
         document.getElementById('submission-date').textContent = new Date(submission.submittedAt.seconds * 1000).toLocaleString();
-        document.getElementById('submission-status').textContent = currentSubmissionStatus.charAt(0).toUpperCase() + currentSubmissionStatus.slice(1);
+        document.getElementById('submission-status').textContent = capitalizeFirstLetter(currentSubmissionStatus);
         
-        // Show appropriate action buttons
-        document.getElementById('active-actions').style.display = currentSubmissionStatus === 'submitted' ? 'block' : 'none';
-        document.getElementById('archived-actions').style.display = currentSubmissionStatus === 'archived' ? 'block' : 'none';
+        // Show appropriate action buttons based on status
+        document.getElementById('active-actions').style.display = 'none';
+        document.getElementById('archived-actions').style.display = 'none';
+        document.getElementById('feedback-actions').style.display = 'none';
+        document.getElementById('finalized-actions').style.display = 'none';
+        
+        switch(currentSubmissionStatus) {
+            case 'submitted':
+                document.getElementById('feedback-actions').style.display = 'block';
+                break;
+            case 'feedback_provided':
+                document.getElementById('feedback-actions').style.display = 'block';
+                break;
+            case 'finalized':
+                document.getElementById('finalized-actions').style.display = 'block';
+                break;
+            case 'archived':
+                document.getElementById('archived-actions').style.display = 'block';
+                break;
+        }
         
         // Fill in budget info
         document.getElementById('farm-type').textContent = submission.budget?.farmType || 'Not specified';
@@ -193,7 +211,7 @@ async function viewSubmission(submissionId) {
         // Fill in income items
         const incomeItemsBody = document.getElementById('income-items-body');
         incomeItemsBody.innerHTML = '';
-
+        
         if (submission.budget?.incomeItems && submission.budget.incomeItems.length > 0) {
             submission.budget.incomeItems.forEach(item => {
                 const row = document.createElement('tr');
@@ -221,17 +239,17 @@ async function viewSubmission(submissionId) {
         } else {
             const row = document.createElement('tr');
             const cell = document.createElement('td');
-            cell.colSpan = 4; // Updated colspan to 4
+            cell.colSpan = 4;
             cell.textContent = 'No income items found';
             cell.style.textAlign = 'center';
             row.appendChild(cell);
             incomeItemsBody.appendChild(row);
         }
-
+        
         // Fill in expense items
         const expenseItemsBody = document.getElementById('expense-items-body');
         expenseItemsBody.innerHTML = '';
-
+        
         if (submission.budget?.expenseItems && submission.budget.expenseItems.length > 0) {
             submission.budget.expenseItems.forEach(item => {
                 const row = document.createElement('tr');
@@ -259,7 +277,7 @@ async function viewSubmission(submissionId) {
         } else {
             const row = document.createElement('tr');
             const cell = document.createElement('td');
-            cell.colSpan = 4; // Updated colspan to 4
+            cell.colSpan = 4;
             cell.textContent = 'No expense items found';
             cell.style.textAlign = 'center';
             row.appendChild(cell);
@@ -306,6 +324,34 @@ async function viewSubmission(submissionId) {
             answersContainer.innerHTML = '<p>No answers provided</p>';
         }
         
+        // Show grade field if not already finalized
+        const gradeContainer = document.getElementById('grade-container');
+        if (gradeContainer) {
+            if (currentSubmissionStatus === 'finalized') {
+                gradeContainer.innerHTML = `
+                    <h3>Grade</h3>
+                    <p><strong>Final Grade:</strong> ${submission.grade || 'Not graded'}</p>
+                `;
+            } else {
+                gradeContainer.innerHTML = `
+                    <h3>Grade</h3>
+                    <div class="form-group">
+                        <label for="assessment-grade">Select Grade:</label>
+                        <select id="assessment-grade" class="grade-select">
+                            <option value="">Select a grade...</option>
+                            <option value="A">A - Excellent</option>
+                            <option value="B">B - Good</option>
+                            <option value="C">C - Satisfactory</option>
+                            <option value="D">D - Needs Improvement</option>
+                            <option value="F">F - Unsatisfactory</option>
+                            <option value="Pass">Pass</option>
+                            <option value="Fail">Fail</option>
+                        </select>
+                    </div>
+                `;
+            }
+        }
+        
         // Load comments
         await loadComments(submissionId);
         
@@ -320,6 +366,12 @@ async function viewSubmission(submissionId) {
         loadingIndicator.style.display = 'none';
         alert(`Error viewing submission: ${error.message}`);
     }
+}
+
+// Helper function to capitalize first letter
+function capitalizeFirstLetter(string) {
+    if (!string) return '';
+    return string.charAt(0).toUpperCase() + string.replace('_', ' ').slice(1);
 }
 
 // Load comments for a submission
@@ -478,6 +530,157 @@ async function deleteSubmission(submissionId) {
     );
 }
 
+// Add feedback and request resubmission
+async function provideFeedback() {
+    const commentText = document.getElementById('new-comment').value.trim();
+    
+    if (!commentText) {
+        alert('Please enter feedback comments before requesting resubmission.');
+        return;
+    }
+    
+    try {
+        const user = await getCurrentUser();
+        
+        // Show loading indicator
+        const feedbackButton = document.getElementById('provide-feedback');
+        if (feedbackButton) {
+            feedbackButton.disabled = true;
+            feedbackButton.textContent = 'Submitting...';
+        }
+        
+        // Create feedback entry
+        const feedbackEntry = {
+            timestamp: new Date(),
+            comments: commentText,
+            trainerEmail: user.email,
+            trainerName: user.displayName || user.email,
+            requestResubmission: true
+        };
+        
+        // Update assessment document
+        const submissionRef = doc(db, 'assessments', currentSubmissionId);
+        await updateDoc(submissionRef, {
+            status: 'feedback_provided',
+            feedback: commentText, // For backward compatibility
+            feedbackHistory: arrayUnion(feedbackEntry)
+        });
+        
+        // Add comment to comments collection
+        const commentsRef = collection(db, 'assessments', currentSubmissionId, 'comments');
+        await addDoc(commentsRef, {
+            text: commentText,
+            trainerId: user.uid,
+            trainerName: user.displayName || user.email,
+            timestamp: serverTimestamp(),
+            isResubmissionRequest: true
+        });
+        
+        // Show success message
+        alert('Feedback submitted successfully. The student will be notified to resubmit their assessment.');
+        
+        // Reload comments
+        await loadComments(currentSubmissionId);
+        
+        // Update UI to reflect new status
+        document.getElementById('submission-status').textContent = 'Feedback Provided';
+        
+    } catch (error) {
+        console.error("Error providing feedback:", error);
+        alert(`Error providing feedback: ${error.message}`);
+    } finally {
+        // Reset button
+        const feedbackButton = document.getElementById('provide-feedback');
+        if (feedbackButton) {
+            feedbackButton.disabled = false;
+            feedbackButton.textContent = 'Provide Feedback & Request Resubmission';
+        }
+        
+        // Clear comment input
+        document.getElementById('new-comment').value = '';
+    }
+}
+
+// Finalize assessment with grade
+async function finalizeAssessment() {
+    const commentText = document.getElementById('new-comment').value.trim();
+    const grade = document.getElementById('assessment-grade').value;
+    
+    if (!grade) {
+        alert('Please select a grade before finalizing the assessment.');
+        return;
+    }
+    
+    try {
+        const user = await getCurrentUser();
+        
+        // Show loading indicator
+        const finalizeButton = document.getElementById('finalize-assessment');
+        if (finalizeButton) {
+            finalizeButton.disabled = true;
+            finalizeButton.textContent = 'Finalizing...';
+        }
+        
+        // Create feedback entry
+        const feedbackEntry = {
+            timestamp: new Date(),
+            comments: commentText || 'Assessment finalized.',
+            trainerEmail: user.email,
+            trainerName: user.displayName || user.email,
+            requestResubmission: false,
+            grade: grade
+        };
+        
+        // Update assessment document
+        const submissionRef = doc(db, 'assessments', currentSubmissionId);
+        await updateDoc(submissionRef, {
+            status: 'finalized',
+            grade: grade,
+            finalizedAt: new Date(),
+            finalizedBy: user.uid,
+            feedbackHistory: arrayUnion(feedbackEntry)
+        });
+        
+        // Add comment to comments collection if provided
+        if (commentText) {
+            const commentsRef = collection(db, 'assessments', currentSubmissionId, 'comments');
+            await addDoc(commentsRef, {
+                text: commentText,
+                trainerId: user.uid,
+                trainerName: user.displayName || user.email,
+                timestamp: serverTimestamp(),
+                isFinalization: true,
+                grade: grade
+            });
+        }
+        
+        // Show success message
+        alert('Assessment finalized successfully with grade: ' + grade);
+        
+        // Reload comments
+        await loadComments(currentSubmissionId);
+        
+        // Update UI to reflect new status
+        document.getElementById('submission-status').textContent = 'Finalized';
+        document.getElementById('feedback-actions').style.display = 'none';
+        document.getElementById('finalized-actions').style.display = 'block';
+        
+    } catch (error) {
+        console.error("Error finalizing assessment:", error);
+        alert(`Error finalizing assessment: ${error.message}`);
+    } finally {
+        // Reset button
+        const finalizeButton = document.getElementById('finalize-assessment');
+        if (finalizeButton) {
+            finalizeButton.disabled = false;
+            finalizeButton.textContent = 'Grade & Finalize Assessment';
+        }
+        
+        // Clear comment input
+        document.getElementById('new-comment').value = '';
+    }
+}
+
 // Search functionality
 function setupSearch() {
     activeSearchInput.addEventListener('input', (e) => {
@@ -537,6 +740,68 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('delete-archived-submission').addEventListener('click', () => {
         deleteSubmission(currentSubmissionId);
     });
+    // Provide feedback button
+    const provideFeedbackButton = document.getElementById('provide-feedback');
+    if (provideFeedbackButton) {
+        provideFeedbackButton.addEventListener('click', provideFeedback);
+    }
+    
+    // Finalize assessment button
+    const finalizeButton = document.getElementById('finalize-assessment');
+    if (finalizeButton) {
+        finalizeButton.addEventListener('click', finalizeAssessment);
+    }
+    
+    // Reopen assessment button
+    const reopenButton = document.getElementById('reopen-assessment');
+    if (reopenButton) {
+        reopenButton.addEventListener('click', () => {
+            showModal(
+                "Return to Resubmission",
+                "Are you sure you want to return this assessment for resubmission? The student will be able to make changes.",
+                async () => {
+                    try {
+                        const user = await getCurrentUser();
+                        
+                        // Create feedback entry
+                        const feedbackEntry = {
+                            timestamp: new Date(),
+                            comments: "Assessment reopened for resubmission.",
+                            trainerEmail: user.email,
+                            trainerName: user.displayName || user.email,
+                            requestResubmission: true
+                        };
+                        
+                        // Update assessment document
+                        const submissionRef = doc(db, 'assessments', currentSubmissionId);
+                        await updateDoc(submissionRef, {
+                            status: 'feedback_provided',
+                            feedbackHistory: arrayUnion(feedbackEntry)
+                        });
+                        
+                        // Show success message
+                        alert('Assessment returned for resubmission.');
+                        
+                        // Update UI
+                        document.getElementById('submission-status').textContent = 'Feedback Provided';
+                        document.getElementById('finalized-actions').style.display = 'none';
+                        document.getElementById('feedback-actions').style.display = 'block';
+                    } catch (error) {
+                        console.error("Error reopening assessment:", error);
+                        alert(`Error: ${error.message}`);
+                    }
+                }
+            );
+        });
+    }
+    
+    // Archive finalized assessment button
+    const archiveFinalizedButton = document.getElementById('archive-finalized');
+    if (archiveFinalizedButton) {
+        archiveFinalizedButton.addEventListener('click', () => {
+            archiveSubmission(currentSubmissionId);
+        });
+    }
 });
 
 // Make functions available globally for onclick handlers
