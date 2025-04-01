@@ -11,6 +11,11 @@ let userScenario = null;
 document.addEventListener('DOMContentLoaded', async function() {
     try {
         // Initialize navigation
+        const loadingIndicator = document.getElementById('loading-indicator');
+        if (loadingIndicator) {
+            loadingIndicator.textContent = 'Loading...';
+            loadingIndicator.className = ''; // Remove any spinner classes
+        }
         await updateNavigation();
         
         // Get current user and ensure they're a student
@@ -21,8 +26,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             return;
         }
         
-        // Set up logout functionality - ADD NULL CHECK HERE
-        const logoutLink = document.getElementById('logout-link');
+        // Set up logout functionality
+        const logoutLink = document.querySelector('.logout-link');
         if (logoutLink) {  // Check if the element exists before adding event listener
             logoutLink.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -43,17 +48,39 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Set up event listeners
         setupEventListeners();
         
-        // Hide loading indicator and show assessment content
-        document.getElementById('loading-indicator').style.display = 'none';
-        document.getElementById('assessment-content').style.display = 'block';
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'none';
+        }
+        
+        // Show assessment content
+        const assessmentContent = document.getElementById('assessment-content');
+        if (assessmentContent) {
+            assessmentContent.style.display = 'block';
+        }
     } catch (error) {
         console.error("Error initializing assessment:", error);
-        document.getElementById('loading-indicator').innerHTML = `
-            <p>Error loading assessment: ${error.message}</p>
-            <button class="btn" onclick="location.reload()">Try Again</button>
-        `;
+        showErrorMessage("Error loading assessment: " + error.message);
     }
 });
+
+// Show error message
+function showErrorMessage(message) {
+    const errorContainer = document.createElement('div');
+    errorContainer.className = 'error-message';
+    errorContainer.innerHTML = `
+        <p>${message}</p>
+        <button class="btn" onclick="location.reload()">Try Again</button>
+    `;
+    
+    const mainContent = document.querySelector('main');
+    if (mainContent) {
+        // Clear main content
+        mainContent.innerHTML = '';
+        mainContent.appendChild(errorContainer);
+    } else {
+        document.body.appendChild(errorContainer);
+    }
+}
 
 // Load assessment content from Firestore
 async function loadAssessmentContent() {

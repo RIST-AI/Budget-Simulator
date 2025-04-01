@@ -1400,11 +1400,6 @@ footer a {
     margin: 20px auto;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
 /* Budget Info */
 .budget-info {
     display: flex;
@@ -1498,7 +1493,7 @@ textarea {
     border: 1px solid #ffeeba;
 }
 
-.spinner {
+#loading-indicator {
     text-align: center;
     padding: 20px;
     font-style: italic;
