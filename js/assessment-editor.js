@@ -513,7 +513,7 @@ document.addEventListener('click', function(event) {
     }
 });
 
-// Show the general tab by default
+// Show the general tab by default y
 document.addEventListener('DOMContentLoaded', function() {
     showTab('general-tab');
 });
