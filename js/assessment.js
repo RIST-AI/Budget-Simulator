@@ -248,7 +248,9 @@ function populateExistingBudget(budget) {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td><input type="text" value="${item.name}" placeholder="Income item"></td>
-                <td><input type="number" value="${item.amount}" placeholder="0.00"></td>
+                <td><input type="number" class="quantity-input" value="${item.quantity || 1}" placeholder="0" min="0"></td>
+                <td><input type="number" class="price-input" value="${item.price || item.amount || 0}" placeholder="0.00" min="0" step="0.01"></td>
+                <td class="row-total">$${((item.quantity || 1) * (item.price || item.amount || 0)).toFixed(2)}</td>
                 <td><button class="btn-small btn-remove">Remove</button></td>
             `;
             incomeTableBody.appendChild(row);
@@ -261,13 +263,29 @@ function populateExistingBudget(budget) {
                     updateBudgetTotals();
                 });
             }
+            
+            // Add event listeners to update row total when quantity or price changes
+            const quantityInput = row.querySelector('.quantity-input');
+            const priceInput = row.querySelector('.price-input');
+            
+            if (quantityInput && priceInput) {
+                const updateRowTotal = function() {
+                    calculateRowTotal(row);
+                    updateBudgetTotals();
+                };
+                
+                quantityInput.addEventListener('input', updateRowTotal);
+                priceInput.addEventListener('input', updateRowTotal);
+            }
         });
     } else {
         // Add a default empty row
         const row = document.createElement('tr');
         row.innerHTML = `
             <td><input type="text" placeholder="Income item"></td>
-            <td><input type="number" placeholder="0.00"></td>
+            <td><input type="number" class="quantity-input" placeholder="0" min="0"></td>
+            <td><input type="number" class="price-input" placeholder="0.00" min="0" step="0.01"></td>
+            <td class="row-total">$0.00</td>
             <td><button class="btn-small btn-remove">Remove</button></td>
         `;
         incomeTableBody.appendChild(row);
@@ -281,6 +299,20 @@ function populateExistingBudget(budget) {
                     updateBudgetTotals();
                 }
             });
+        }
+        
+        // Add event listeners to update row total when quantity or price changes
+        const quantityInput = row.querySelector('.quantity-input');
+        const priceInput = row.querySelector('.price-input');
+        
+        if (quantityInput && priceInput) {
+            const updateRowTotal = function() {
+                calculateRowTotal(row);
+                updateBudgetTotals();
+            };
+            
+            quantityInput.addEventListener('input', updateRowTotal);
+            priceInput.addEventListener('input', updateRowTotal);
         }
     }
     
@@ -304,7 +336,9 @@ function populateExistingBudget(budget) {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td><input type="text" value="${item.name}" placeholder="Expense item"></td>
-                <td><input type="number" value="${item.amount}" placeholder="0.00"></td>
+                <td><input type="number" class="quantity-input" value="${item.quantity || 1}" placeholder="0" min="0"></td>
+                <td><input type="number" class="price-input" value="${item.price || item.amount || 0}" placeholder="0.00" min="0" step="0.01"></td>
+                <td class="row-total">$${((item.quantity || 1) * (item.price || item.amount || 0)).toFixed(2)}</td>
                 <td><button class="btn-small btn-remove">Remove</button></td>
             `;
             expenseTableBody.appendChild(row);
@@ -317,13 +351,29 @@ function populateExistingBudget(budget) {
                     updateBudgetTotals();
                 });
             }
+            
+            // Add event listeners to update row total when quantity or price changes
+            const quantityInput = row.querySelector('.quantity-input');
+            const priceInput = row.querySelector('.price-input');
+            
+            if (quantityInput && priceInput) {
+                const updateRowTotal = function() {
+                    calculateRowTotal(row);
+                    updateBudgetTotals();
+                };
+                
+                quantityInput.addEventListener('input', updateRowTotal);
+                priceInput.addEventListener('input', updateRowTotal);
+            }
         });
     } else {
         // Add a default empty row
         const row = document.createElement('tr');
         row.innerHTML = `
             <td><input type="text" placeholder="Expense item"></td>
-            <td><input type="number" placeholder="0.00"></td>
+            <td><input type="number" class="quantity-input" placeholder="0" min="0"></td>
+            <td><input type="number" class="price-input" placeholder="0.00" min="0" step="0.01"></td>
+            <td class="row-total">$0.00</td>
             <td><button class="btn-small btn-remove">Remove</button></td>
         `;
         expenseTableBody.appendChild(row);
@@ -338,10 +388,43 @@ function populateExistingBudget(budget) {
                 }
             });
         }
+        
+        // Add event listeners to update row total when quantity or price changes
+        const quantityInput = row.querySelector('.quantity-input');
+        const priceInput = row.querySelector('.price-input');
+        
+        if (quantityInput && priceInput) {
+            const updateRowTotal = function() {
+                calculateRowTotal(row);
+                updateBudgetTotals();
+            };
+            
+            quantityInput.addEventListener('input', updateRowTotal);
+            priceInput.addEventListener('input', updateRowTotal);
+        }
     }
     
     // Update budget totals
     updateBudgetTotals();
+}
+
+// Calculate row total
+function calculateRowTotal(row) {
+    const quantityInput = row.querySelector('.quantity-input');
+    const priceInput = row.querySelector('.price-input');
+    
+    if (!quantityInput || !priceInput) return 0;
+    
+    const quantity = parseFloat(quantityInput.value) || 0;
+    const price = parseFloat(priceInput.value) || 0;
+    const total = quantity * price;
+    
+    const rowTotalElement = row.querySelector('.row-total');
+    if (rowTotalElement) {
+        rowTotalElement.textContent = '$' + total.toFixed(2);
+    }
+    
+    return total;
 }
 
 // Populate existing answers
@@ -369,7 +452,9 @@ function setupEventListeners() {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td><input type="text" placeholder="Income item"></td>
-                <td><input type="number" placeholder="0.00"></td>
+                <td><input type="number" class="quantity-input" placeholder="0" min="0"></td>
+                <td><input type="number" class="price-input" placeholder="0.00" min="0" step="0.01"></td>
+                <td class="row-total">$0.00</td>
                 <td><button class="btn-small btn-remove">Remove</button></td>
             `;
             incomeTableBody.appendChild(row);
@@ -383,11 +468,19 @@ function setupEventListeners() {
                 });
             }
             
-            // Add event listeners to update totals when values change
-            row.querySelectorAll('input').forEach(input => {
-                input.addEventListener('change', updateBudgetTotals);
-                input.addEventListener('keyup', updateBudgetTotals);
-            });
+            // Add event listeners to update row total when quantity or price changes
+            const quantityInput = row.querySelector('.quantity-input');
+            const priceInput = row.querySelector('.price-input');
+            
+            if (quantityInput && priceInput) {
+                const updateRowTotal = function() {
+                    calculateRowTotal(row);
+                    updateBudgetTotals();
+                };
+                
+                quantityInput.addEventListener('input', updateRowTotal);
+                priceInput.addEventListener('input', updateRowTotal);
+            }
             
             // Focus on the new input
             const firstInput = row.querySelector('input');
@@ -410,7 +503,9 @@ function setupEventListeners() {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td><input type="text" placeholder="Expense item"></td>
-                <td><input type="number" placeholder="0.00"></td>
+                <td><input type="number" class="quantity-input" placeholder="0" min="0"></td>
+                <td><input type="number" class="price-input" placeholder="0.00" min="0" step="0.01"></td>
+                <td class="row-total">$0.00</td>
                 <td><button class="btn-small btn-remove">Remove</button></td>
             `;
             expenseTableBody.appendChild(row);
@@ -424,11 +519,19 @@ function setupEventListeners() {
                 });
             }
             
-            // Add event listeners to update totals when values change
-            row.querySelectorAll('input').forEach(input => {
-                input.addEventListener('change', updateBudgetTotals);
-                input.addEventListener('keyup', updateBudgetTotals);
-            });
+            // Add event listeners to update row total when quantity or price changes
+            const quantityInput = row.querySelector('.quantity-input');
+            const priceInput = row.querySelector('.price-input');
+            
+            if (quantityInput && priceInput) {
+                const updateRowTotal = function() {
+                    calculateRowTotal(row);
+                    updateBudgetTotals();
+                };
+                
+                quantityInput.addEventListener('input', updateRowTotal);
+                priceInput.addEventListener('input', updateRowTotal);
+            }
             
             // Focus on the new input
             const firstInput = row.querySelector('input');
@@ -439,10 +542,18 @@ function setupEventListeners() {
     }
     
     // Add event listeners to existing inputs
-    document.querySelectorAll('#income-table input, #expense-table input').forEach(input => {
-        if (input) {
-            input.addEventListener('change', updateBudgetTotals);
-            input.addEventListener('keyup', updateBudgetTotals);
+    document.querySelectorAll('tr').forEach(row => {
+        const quantityInput = row.querySelector('.quantity-input');
+        const priceInput = row.querySelector('.price-input');
+        
+        if (quantityInput && priceInput) {
+            const updateRowTotal = function() {
+                calculateRowTotal(row);
+                updateBudgetTotals();
+            };
+            
+            quantityInput.addEventListener('input', updateRowTotal);
+            priceInput.addEventListener('input', updateRowTotal);
         }
     });
     
@@ -486,23 +597,25 @@ function setupEventListeners() {
 
 // Update budget totals
 function updateBudgetTotals() {
-    // Calculate total income
+    // Calculate total income by summing row totals
     let totalIncome = 0;
     document.querySelectorAll('#income-table tbody tr').forEach(row => {
-        const amountInput = row.querySelector('input[type="number"]');
-        if (amountInput) {
-            const amount = parseFloat(amountInput.value) || 0;
-            totalIncome += amount;
+        const rowTotalElement = row.querySelector('.row-total');
+        if (rowTotalElement) {
+            // Remove $ sign and convert to number
+            const rowTotal = parseFloat(rowTotalElement.textContent.replace('$', '')) || 0;
+            totalIncome += rowTotal;
         }
     });
     
-    // Calculate total expenses
+    // Calculate total expenses by summing row totals
     let totalExpenses = 0;
     document.querySelectorAll('#expense-table tbody tr').forEach(row => {
-        const amountInput = row.querySelector('input[type="number"]');
-        if (amountInput) {
-            const amount = parseFloat(amountInput.value) || 0;
-            totalExpenses += amount;
+        const rowTotalElement = row.querySelector('.row-total');
+        if (rowTotalElement) {
+            // Remove $ sign and convert to number
+            const rowTotal = parseFloat(rowTotalElement.textContent.replace('$', '')) || 0;
+            totalExpenses += rowTotal;
         }
     });
     
@@ -672,17 +785,23 @@ function collectBudgetData() {
     const incomeItems = [];
     document.querySelectorAll('#income-table tbody tr').forEach(row => {
         const nameInput = row.querySelector('input[type="text"]');
-        const amountInput = row.querySelector('input[type="number"]');
+        const quantityInput = row.querySelector('.quantity-input');
+        const priceInput = row.querySelector('.price-input');
+        const rowTotalElement = row.querySelector('.row-total');
         
-        if (!nameInput || !amountInput) return;
+        if (!nameInput || !quantityInput || !priceInput || !rowTotalElement) return;
         
         const name = nameInput.value.trim();
-        const amount = parseFloat(amountInput.value) || 0;
+        const quantity = parseFloat(quantityInput.value) || 0;
+        const price = parseFloat(priceInput.value) || 0;
+        const total = quantity * price;
         
-        if (name || amount > 0) {
+        if (name || quantity > 0 || price > 0) {
             incomeItems.push({
                 name: name,
-                amount: amount
+                quantity: quantity,
+                price: price,
+                amount: total // Keep amount for backward compatibility
             });
         }
     });
@@ -691,17 +810,23 @@ function collectBudgetData() {
     const expenseItems = [];
     document.querySelectorAll('#expense-table tbody tr').forEach(row => {
         const nameInput = row.querySelector('input[type="text"]');
-        const amountInput = row.querySelector('input[type="number"]');
+        const quantityInput = row.querySelector('.quantity-input');
+        const priceInput = row.querySelector('.price-input');
+        const rowTotalElement = row.querySelector('.row-total');
         
-        if (!nameInput || !amountInput) return;
+        if (!nameInput || !quantityInput || !priceInput || !rowTotalElement) return;
         
         const name = nameInput.value.trim();
-        const amount = parseFloat(amountInput.value) || 0;
+        const quantity = parseFloat(quantityInput.value) || 0;
+        const price = parseFloat(priceInput.value) || 0;
+        const total = quantity * price;
         
-        if (name || amount > 0) {
+        if (name || quantity > 0 || price > 0) {
             expenseItems.push({
                 name: name,
-                amount: amount
+                quantity: quantity,
+                price: price,
+                amount: total // Keep amount for backward compatibility
             });
         }
     });
@@ -750,9 +875,13 @@ function validateAssessment() {
     let hasValidIncome = false;
     incomeItems.forEach(row => {
         const nameInput = row.querySelector('input[type="text"]');
-        const amountInput = row.querySelector('input[type="number"]');
+        const quantityInput = row.querySelector('.quantity-input');
+        const priceInput = row.querySelector('.price-input');
         
-        if (nameInput && amountInput && nameInput.value.trim() && parseFloat(amountInput.value) > 0) {
+        if (nameInput && quantityInput && priceInput && 
+            nameInput.value.trim() && 
+            parseFloat(quantityInput.value) > 0 && 
+            parseFloat(priceInput.value) > 0) {
             hasValidIncome = true;
         }
     });
@@ -760,16 +889,20 @@ function validateAssessment() {
     if (!hasValidIncome) {
         return {
             valid: false,
-            message: 'Please add at least one income item with a name and amount greater than zero.'
+            message: 'Please add at least one income item with a name, quantity, and price greater than zero.'
         };
     }
     
     let hasValidExpense = false;
     expenseItems.forEach(row => {
         const nameInput = row.querySelector('input[type="text"]');
-        const amountInput = row.querySelector('input[type="number"]');
+        const quantityInput = row.querySelector('.quantity-input');
+        const priceInput = row.querySelector('.price-input');
         
-        if (nameInput && amountInput && nameInput.value.trim() && parseFloat(amountInput.value) > 0) {
+        if (nameInput && quantityInput && priceInput && 
+            nameInput.value.trim() && 
+            parseFloat(quantityInput.value) > 0 && 
+            parseFloat(priceInput.value) > 0) {
             hasValidExpense = true;
         }
     });
@@ -777,7 +910,7 @@ function validateAssessment() {
     if (!hasValidExpense) {
         return {
             valid: false,
-            message: 'Please add at least one expense item with a name and amount greater than zero.'
+            message: 'Please add at least one expense item with a name, quantity, and price greater than zero.'
         };
     }
     

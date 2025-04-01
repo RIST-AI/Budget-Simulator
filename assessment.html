@@ -2,16 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Farm Budget Assessment</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Assessment - RIST Budget Master</title>
     <link rel="stylesheet" href="css/styles.css">
-    <style>
-        .question-text, .scenario-description, #instructions-text, #scenario-text, 
-        #budget-instructions, #analysis-instructions, textarea {
-            white-space: pre-wrap;
-            line-height: 1.5;
-        }
-    </style>
+    <link rel="icon" href="images/RIST Brandmark - Navy Circle.png" type="image/png">
 </head>
 <body>
     <header>
@@ -33,129 +27,136 @@
 
     <nav>
         <div class="container">
-          <ul>
-            <!-- Navigation items will be inserted here by JavaScript -->
-          </ul>
+            <ul>
+                <!-- Navigation items will be inserted here by JavaScript -->
+            </ul>
         </div>
-      </nav>
+    </nav>
 
     <main class="container">
         <div id="loading-indicator">Loading...</div>
-
-
         <div id="assessment-content" style="display: none;">
-            <section class="assessment-intro">
+            <section class="page-header">
                 <h2 id="assessment-title">Farm Budget Assessment</h2>
                 <p id="assessment-description">Complete this assessment to demonstrate your understanding of farm budget management.</p>
-                
-                <div class="scenario-box">
-                    <h3>Scenario</h3>
-                    <p id="scenario-text">You are the manager of Green Valley Farm, a mixed farming operation that produces crops and raises livestock. The farm owner has asked you to prepare a budget, analyze it, and make recommendations for improvements.</p>
-                </div>
-                
-                <div class="instructions-box">
-                    <h3>Instructions</h3>
-                    <p id="instructions-text">Create a budget for the farm, answer the analysis questions, and submit your assessment for review.</p>
+            </section>
+
+            <section class="assessment-instructions">
+                <h3>Instructions</h3>
+                <div id="instructions-text">
+                    Create a budget for the farm, answer the analysis questions, and submit your assessment for review.
                 </div>
             </section>
 
-            <section class="assessment-section">
-                <h2>Part 1: Budget Setup</h2>
-                <p id="budget-instructions">Create a budget for Green Valley Farm by adding income and expense items. Include all major income sources and expense categories relevant to a mixed farming operation.</p>
+            <section class="assessment-scenario">
+                <h3>Scenario</h3>
+                <div id="scenario-text">
+                    <!-- Scenario will be inserted here by JavaScript -->
+                </div>
+            </section>
+
+            <section class="assessment-budget">
+                <h3>Budget Setup</h3>
+                <div id="budget-instructions">
+                    Create a budget for the farm by adding income and expense items.
+                </div>
+
+                <div class="budget-controls">
+                    <div class="form-group">
+                        <label for="farm-type">Farm Type:</label>
+                        <select id="farm-type">
+                            <option value="dairy">Dairy Farm</option>
+                            <option value="crop">Crop Farm</option>
+                            <option value="livestock">Livestock Farm</option>
+                            <option value="mixed" selected>Mixed Farm</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="budget-period">Budget Period:</label>
+                        <select id="budget-period">
+                            <option value="monthly">Monthly</option>
+                            <option value="quarterly">Quarterly</option>
+                            <option value="annual" selected>Annual</option>
+                        </select>
+                    </div>
+                </div>
                 
-                <!-- Budget Section (Styled like budget.html) -->
-                <div class="budget-container">
-                    <div class="budget-header">
-                        <div class="budget-info">
-                            <div class="form-group">
-                                <label for="farm-type">Farm Type:</label>
-                                <select id="farm-type">
-                                    <option value="dairy">Dairy</option>
-                                    <option value="crop">Crop</option>
-                                    <option value="livestock">Livestock</option>
-                                    <option value="mixed">Mixed</option>
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="budget-period">Budget Period:</label>
-                                <select id="budget-period">
-                                    <option value="annual">Annual</option>
-                                    <option value="quarterly">Quarterly</option>
-                                    <option value="monthly">Monthly</option>
-                                </select>
-                            </div>
-                        </div>
+                <div class="budget-workspace">
+                    <div class="budget-section">
+                        <h4>Income</h4>
+                        <table class="budget-table" id="income-table">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Quantity</th>
+                                    <th>Price ($)</th>
+                                    <th>Total ($)</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><input type="text" placeholder="Income item"></td>
+                                    <td><input type="number" class="quantity-input" placeholder="0" min="0"></td>
+                                    <td><input type="number" class="price-input" placeholder="0.00" min="0" step="0.01"></td>
+                                    <td class="row-total">$0.00</td>
+                                    <td><button class="btn-small btn-remove">Remove</button></td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="5">
+                                        <button id="add-income" class="btn-small">+ Add Income Item</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3"><strong>Total Income</strong></td>
+                                    <td id="total-income">$0.00</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
                     </div>
-
-                    <div class="budget-tables">
-                        <div class="budget-table-container">
-                            <h3>Income</h3>
-                            <table id="income-table" class="budget-table">
-                                <thead>
-                                    <tr>
-                                        <th>Item</th>
-                                        <th>Amount ($)</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td><input type="text" placeholder="Income item"></td>
-                                        <td><input type="number" placeholder="0.00"></td>
-                                        <td><button class="btn-small btn-remove">Remove</button></td>
-                                    </tr>
-                                </tbody>
-                                <tfoot>
-                                    <tr>
-                                        <td colspan="3">
-                                            <button id="add-income" class="btn-small">+ Add Income Item</button>
-                                        </td>
-                                    </tr>
-                                    <tr class="total-row">
-                                        <td>Total Income:</td>
-                                        <td id="total-income">$0.00</td>
-                                        <td></td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-
-                        <div class="budget-table-container">
-                            <h3>Expenses</h3>
-                            <table id="expense-table" class="budget-table">
-                                <thead>
-                                    <tr>
-                                        <th>Item</th>
-                                        <th>Amount ($)</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td><input type="text" placeholder="Expense item"></td>
-                                        <td><input type="number" placeholder="0.00"></td>
-                                        <td><button class="btn-small btn-remove">Remove</button></td>
-                                    </tr>
-                                </tbody>
-                                <tfoot>
-                                    <tr>
-                                        <td colspan="3">
-                                            <button id="add-expense" class="btn-small">+ Add Expense Item</button>
-                                        </td>
-                                    </tr>
-                                    <tr class="total-row">
-                                        <td>Total Expenses:</td>
-                                        <td id="total-expenses">$0.00</td>
-                                        <td></td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
+                    
+                    <div class="budget-section">
+                        <h4>Expenses</h4>
+                        <table class="budget-table" id="expense-table">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Quantity</th>
+                                    <th>Price ($)</th>
+                                    <th>Total ($)</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><input type="text" placeholder="Expense item"></td>
+                                    <td><input type="number" class="quantity-input" placeholder="0" min="0"></td>
+                                    <td><input type="number" class="price-input" placeholder="0.00" min="0" step="0.01"></td>
+                                    <td class="row-total">$0.00</td>
+                                    <td><button class="btn-small btn-remove">Remove</button></td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="5">
+                                        <button id="add-expense" class="btn-small">+ Add Expense Item</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3"><strong>Total Expenses</strong></td>
+                                    <td id="total-expenses">$0.00</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
                     </div>
-
+                    
                     <div class="budget-summary">
-                        <h3>Budget Summary</h3>
+                        <h4>Budget Summary</h4>
                         <table class="summary-table">
                             <tr>
                                 <td>Total Income:</td>
@@ -165,7 +166,7 @@
                                 <td>Total Expenses:</td>
                                 <td id="summary-expenses">$0.00</td>
                             </tr>
-                            <tr class="net-result-row">
+                            <tr class="net-result">
                                 <td>Net Result:</td>
                                 <td id="net-result">$0.00</td>
                             </tr>
@@ -174,43 +175,38 @@
                 </div>
             </section>
 
-            <section class="assessment-section">
-                <h2>Part 2: Budget Analysis</h2>
-                <p id="analysis-instructions">Based on your budget, answer the following questions to demonstrate your understanding of farm budget management.</p>
+            <section class="assessment-analysis">
+                <h3>Analysis Questions</h3>
+                <div id="analysis-instructions">
+                    Based on your budget, answer the following questions.
+                </div>
                 
                 <div class="question-container">
-                    <div class="question">
-                        <h3>Question 1</h3>
-                        <p>Explain the key factors that influenced your income projections. What assumptions did you make?</p>
-                        <textarea id="question1" rows="5" placeholder="Your answer here..."></textarea>
-                    </div>
-                    
-                    <div class="question">
-                        <h3>Question 2</h3>
-                        <p>Identify the major expense categories in your budget and explain how you would prioritize them if you needed to reduce costs.</p>
-                        <textarea id="question2" rows="5" placeholder="Your answer here..."></textarea>
-                    </div>
-                    
-                    <div class="question">
-                        <h3>Question 3</h3>
-                        <p>Based on your budget analysis, what recommendations would you make to improve the farm's profitability?</p>
-                        <textarea id="question3" rows="5" placeholder="Your answer here..."></textarea>
-                    </div>
+                    <!-- Questions will be inserted here by JavaScript -->
                 </div>
             </section>
 
-            <div class="assessment-actions">
-                <button id="save-assessment" class="btn">Save Progress</button>
-                <button id="submit-assessment" class="btn btn-primary">Submit Assessment</button>
-            </div>
+            <section class="assessment-submission">
+                <div class="submission-buttons">
+                    <button id="save-assessment" class="btn">Save Progress</button>
+                    <button id="submit-assessment" class="btn btn-primary">Submit Assessment</button>
+                </div>
+            </section>
         </div>
 
         <div id="submission-success" style="display: none;">
-            <div class="success-message">
-                <h2>Assessment Submitted Successfully!</h2>
-                <p>Your assessment has been submitted for review. You will be notified when feedback is available.</p>
-                <button class="btn" onclick="window.location.href='index.html'">Return to Home</button>
-            </div>
+            <section class="page-header">
+                <h2>Assessment Submitted</h2>
+                <p>Your assessment has been submitted successfully!</p>
+            </section>
+            
+            <section class="submission-details">
+                <p>Thank you for completing the assessment. Your trainer will review your work and provide feedback.</p>
+                <p>You can view your submission status on the dashboard.</p>
+                <div class="submission-buttons">
+                    <a href="index.html" class="btn">Return to Home</a>
+                </div>
+            </section>
         </div>
     </main>
 
@@ -232,22 +228,6 @@
     </footer>
 
     <script type="module" src="js/assessment.js"></script>
-    <script type="module">
-        // Add this to your page for debugging
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                const { getCurrentUser } = await import('./js/auth.js');
-                const user = await getCurrentUser();
-                console.log("Current user:", user);
-                if (user) {
-                    console.log("User role:", user.role);
-                    console.log("User roles array:", user.roles);
-                }
-            } catch (error) {
-                console.error("Debug error:", error);
-            }
-        });
-    </script>
     <script type="module" src="js/navigation.js"></script>
 </body>
 </html>
