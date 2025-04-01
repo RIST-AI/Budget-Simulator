@@ -37,7 +37,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 // Set up event listeners for the editor
-// Set up event listeners for the editor
 function setupEventListeners() {
     // Check if elements exist before adding event listeners
     const saveButton = document.getElementById('save-assessment');
@@ -75,7 +74,6 @@ function setupEventListeners() {
     });
 }
 
-// Load existing assessment data
 // Load existing assessment data
 async function loadAssessment() {
     try {
@@ -316,57 +314,6 @@ function previewAssessment() {
         console.error("Error previewing assessment:", error);
         showStatusMessage('Error previewing assessment: ' + error.message, 'error');
     }
-}
-
-// Save assessment data to localStorage for preview
-function saveAssessmentToLocalStorage() {
-    // Collect data from the form
-    const title = document.getElementById('assessment-title').value;
-    const description = document.getElementById('assessment-description').value;
-    const instructions = document.getElementById('assessment-instructions').value;
-    
-    // Collect questions
-    const questions = [];
-    const questionElements = document.querySelectorAll('.question-container');
-    questionElements.forEach(element => {
-        const questionId = element.getAttribute('data-question-id');
-        const questionText = element.querySelector('.question-text').value;
-        const questionPoints = parseInt(element.querySelector('.question-points').value) || 10;
-        
-        questions.push({
-            id: questionId,
-            text: questionText,
-            points: questionPoints
-        });
-    });
-    
-    // Collect scenarios
-    const scenarios = [];
-    const scenarioElements = document.querySelectorAll('.scenario-container');
-    scenarioElements.forEach(element => {
-        const scenarioId = element.getAttribute('data-scenario-id');
-        const scenarioTitle = element.querySelector('.scenario-title').value;
-        const scenarioDescription = element.querySelector('.scenario-description').value;
-        
-        scenarios.push({
-            id: scenarioId,
-            title: scenarioTitle,
-            description: scenarioDescription
-        });
-    });
-    
-    // Create preview data
-    const previewData = {
-        title,
-        description,
-        instructions,
-        questions,
-        scenarios,
-        previewTimestamp: new Date().toISOString()
-    };
-    
-    // Save to localStorage
-    localStorage.setItem('assessmentPreview', JSON.stringify(previewData));
 }
 
 // Save assessment data to localStorage for preview
