@@ -89,31 +89,58 @@ async function loadAssessment() {
             document.getElementById('assessment-description').value = assessmentData.description || '';
             document.getElementById('assessment-instructions').value = assessmentData.instructions || '';
             
-            // Load questions
+            // Inside loadAssessment() function, replace the questions loading code with:
             if (assessmentData.questions && assessmentData.questions.length > 0) {
                 const questionsContainer = document.getElementById('questions-container');
                 if (questionsContainer) {
-                    questionsContainer.innerHTML = '';
+                    questionsContainer.innerHTML = ''; // Clear existing questions
                     
                     assessmentData.questions.forEach((question, index) => {
                         const questionId = index + 1;
-                        const questionHTML = createQuestionHTML(questionId, question.text, question.points);
-                        questionsContainer.innerHTML += questionHTML;
+                        
+                        // Create a temporary container
+                        const tempContainer = document.createElement('div');
+                        tempContainer.innerHTML = createQuestionHTML(questionId, question.text, question.points);
+                        
+                        // Get the question element and append it
+                        const questionElement = tempContainer.firstElementChild;
+                        questionsContainer.appendChild(questionElement);
+                        
+                        // Add event listeners
+                        const removeButton = questionElement.querySelector('.btn-remove');
+                        if (removeButton) {
+                            removeButton.addEventListener('click', function() {
+                                questionElement.remove();
+                            });
+                        }
                     });
                     
                     currentQuestionId = assessmentData.questions.length + 1;
                 }
             }
             
-            // Load scenarios
+            // And replace the scenarios loading code with:
             if (assessmentData.scenarios && assessmentData.scenarios.length > 0) {
                 const scenariosContainer = document.getElementById('scenarios-container');
                 if (scenariosContainer) {
-                    scenariosContainer.innerHTML = '';
+                    scenariosContainer.innerHTML = ''; // Clear existing scenarios
                     
                     assessmentData.scenarios.forEach((scenario, index) => {
-                        const scenarioHTML = createScenarioHTML(index + 1, scenario.title, scenario.description);
-                        scenariosContainer.innerHTML += scenarioHTML;
+                        // Create a temporary container
+                        const tempContainer = document.createElement('div');
+                        tempContainer.innerHTML = createScenarioHTML(index + 1, scenario.title, scenario.description);
+                        
+                        // Get the scenario element and append it
+                        const scenarioElement = tempContainer.firstElementChild;
+                        scenariosContainer.appendChild(scenarioElement);
+                        
+                        // Add event listeners
+                        const removeButton = scenarioElement.querySelector('.btn-remove');
+                        if (removeButton) {
+                            removeButton.addEventListener('click', function() {
+                                scenarioElement.remove();
+                            });
+                        }
                     });
                 }
             }
@@ -378,40 +405,51 @@ function saveAssessmentToLocalStorage() {
 function addQuestion() {
     const questionsContainer = document.getElementById('questions-container');
     if (questionsContainer) {
-        const questionHTML = createQuestionHTML(currentQuestionId, '', 10);
-        questionsContainer.innerHTML += questionHTML;
-        currentQuestionId++;
+        // Create a temporary container to hold the new question HTML
+        const tempContainer = document.createElement('div');
+        tempContainer.innerHTML = createQuestionHTML(currentQuestionId, '', 10);
+        
+        // Get the actual question element from the temporary container
+        const newQuestion = tempContainer.firstElementChild;
+        
+        // Append the new question to the questions container
+        questionsContainer.appendChild(newQuestion);
         
         // Add event listeners to the new question's buttons
-        const newQuestion = questionsContainer.lastElementChild;
-        if (newQuestion) {
-            const removeButton = newQuestion.querySelector('.btn-remove');
-            if (removeButton) {
-                removeButton.addEventListener('click', function() {
-                    newQuestion.remove();
-                });
-            }
+        const removeButton = newQuestion.querySelector('.btn-remove');
+        if (removeButton) {
+            removeButton.addEventListener('click', function() {
+                newQuestion.remove();
+            });
         }
+        
+        // Increment the question ID counter
+        currentQuestionId++;
     }
 }
 
-// Add a new scenario
+/// Add a new scenario
 function addScenario() {
     const scenariosContainer = document.getElementById('scenarios-container');
     if (scenariosContainer) {
         const scenarioId = scenariosContainer.children.length + 1;
-        const scenarioHTML = createScenarioHTML(scenarioId, '', '');
-        scenariosContainer.innerHTML += scenarioHTML;
+        
+        // Create a temporary container to hold the new scenario HTML
+        const tempContainer = document.createElement('div');
+        tempContainer.innerHTML = createScenarioHTML(scenarioId, '', '');
+        
+        // Get the actual scenario element from the temporary container
+        const newScenario = tempContainer.firstElementChild;
+        
+        // Append the new scenario to the scenarios container
+        scenariosContainer.appendChild(newScenario);
         
         // Add event listeners to the new scenario's buttons
-        const newScenario = scenariosContainer.lastElementChild;
-        if (newScenario) {
-            const removeButton = newScenario.querySelector('.btn-remove');
-            if (removeButton) {
-                removeButton.addEventListener('click', function() {
-                    newScenario.remove();
-                });
-            }
+        const removeButton = newScenario.querySelector('.btn-remove');
+        if (removeButton) {
+            removeButton.addEventListener('click', function() {
+                newScenario.remove();
+            });
         }
     }
 }
