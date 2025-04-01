@@ -44,6 +44,11 @@ function setupEventListeners() {
         saveButton.addEventListener('click', saveAssessment);
     }
     
+    const previewButton = document.getElementById('preview-assessment');
+    if (previewButton) {
+        previewButton.addEventListener('click', previewAssessment);
+    }
+
     const publishButton = document.getElementById('publish-assessment');
     if (publishButton) {
         publishButton.addEventListener('click', publishAssessment);
@@ -232,6 +237,76 @@ async function publishAssessment() {
     }
 }
 
+// Preview assessment
+function previewAssessment() {
+    try {
+        // First save the current state
+        saveAssessmentToLocalStorage();
+        
+        // Open preview in a new tab/window
+        const previewWindow = window.open('assessment-preview.html', '_blank');
+        
+        // If popup was blocked, inform the user
+        if (!previewWindow) {
+            showStatusMessage('Preview popup was blocked. Please allow popups for this site.', 'error');
+        }
+    } catch (error) {
+        console.error("Error previewing assessment:", error);
+        showStatusMessage('Error previewing assessment: ' + error.message, 'error');
+    }
+}
+
+// Save assessment data to localStorage for preview
+function saveAssessmentToLocalStorage() {
+    // Collect data from the form
+    const title = document.getElementById('assessment-title').value;
+    const description = document.getElementById('assessment-description').value;
+    const instructions = document.getElementById('assessment-instructions').value;
+    
+    // Collect questions
+    const questions = [];
+    const questionElements = document.querySelectorAll('.question-container');
+    questionElements.forEach(element => {
+        const questionId = element.getAttribute('data-question-id');
+        const questionText = element.querySelector('.question-text').value;
+        const questionPoints = parseInt(element.querySelector('.question-points').value) || 10;
+        
+        questions.push({
+            id: questionId,
+            text: questionText,
+            points: questionPoints
+        });
+    });
+    
+    // Collect scenarios
+    const scenarios = [];
+    const scenarioElements = document.querySelectorAll('.scenario-container');
+    scenarioElements.forEach(element => {
+        const scenarioId = element.getAttribute('data-scenario-id');
+        const scenarioTitle = element.querySelector('.scenario-title').value;
+        const scenarioDescription = element.querySelector('.scenario-description').value;
+        
+        scenarios.push({
+            id: scenarioId,
+            title: scenarioTitle,
+            description: scenarioDescription
+        });
+    });
+    
+    // Create preview data
+    const previewData = {
+        title,
+        description,
+        instructions,
+        questions,
+        scenarios,
+        previewTimestamp: new Date().toISOString()
+    };
+    
+    // Save to localStorage
+    localStorage.setItem('assessmentPreview', JSON.stringify(previewData));
+}
+
 // Add a new question
 function addQuestion() {
     const questionsContainer = document.getElementById('questions-container');
@@ -350,6 +425,9 @@ function showStatusMessage(message, type = 'success') {
         statusMessage.textContent = message;
         statusMessage.className = `status-message ${type}`;
         statusMessage.style.display = 'block';
+        
+        // Scroll to the message
+        statusMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
         
         // Hide the message after 5 seconds
         setTimeout(() => {
