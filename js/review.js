@@ -34,6 +34,8 @@ const closeModalButton = confirmModal ? document.querySelector('.close-modal') :
 // Tab switching functionality
 document.querySelectorAll('.tab-button').forEach(button => {
     button.addEventListener('click', () => {
+        console.log("Tab button clicked:", button.getAttribute('data-tab'));
+        
         // Update active tab button
         document.querySelectorAll('.tab-button').forEach(btn => {
             btn.classList.remove('active');
@@ -47,6 +49,8 @@ document.querySelectorAll('.tab-button').forEach(button => {
         
         const tabName = button.getAttribute('data-tab');
         const tabContent = document.getElementById(`${tabName}-tab`);
+        console.log("Tab content element:", tabContent);
+        
         if (tabContent) {
             tabContent.classList.add('active');
         }
@@ -106,6 +110,8 @@ window.onclick = (event) => {
 
 // Load submissions based on status
 async function loadSubmissions(status = 'active') {
+    console.log(`Loading submissions for status: ${status}`);
+    
     if (loadingIndicator) {
         loadingIndicator.style.display = 'block';
     }
@@ -115,26 +121,42 @@ async function loadSubmissions(status = 'active') {
         finalizedAssessmentsContainer;
         
     if (!container) {
+        console.error(`Container for ${status} tab not found`);
         if (loadingIndicator) loadingIndicator.style.display = 'none';
         return;
     }
     
+    console.log(`Container for ${status} found:`, container);
     container.innerHTML = '';
     
     try {
         // Create a query to get submissions with the specified status
         const assessmentsRef = collection(db, 'assessments');
-        const q = query(
-            assessmentsRef, 
-            where("status", "==", status === 'active' ? 'submitted' : 'finalized'),
-            where("submitted", "==", true)
-        );
         
+        // MODIFIED: Improve the query to handle both 'submitted' and 'feedback_provided' for active tab
+        let q;
+        if (status === 'active') {
+            q = query(
+                assessmentsRef,
+                where("submitted", "==", true),
+                where("status", "in", ["submitted", "feedback_provided"])
+            );
+        } else {
+            q = query(
+                assessmentsRef,
+                where("submitted", "==", true),
+                where("status", "==", "finalized")
+            );
+        }
+        
+        console.log(`Executing query for ${status} submissions`);
         const snapshot = await getDocs(q);
         
         if (loadingIndicator) {
             loadingIndicator.style.display = 'none';
         }
+        
+        console.log(`Found ${snapshot.size} submissions with status: ${status}`);
         
         if (snapshot.empty) {
             container.innerHTML = `<div class="info-message">No ${status} submissions found.</div>`;
@@ -145,6 +167,8 @@ async function loadSubmissions(status = 'active') {
         snapshot.forEach((doc) => {
             const submission = doc.data();
             submission.id = doc.id;
+            
+            console.log(`Processing submission: ${submission.id}, Status: ${submission.status}`);
             
             const submissionDate = submission.submittedAt ? 
                 new Date(submission.submittedAt.seconds * 1000).toLocaleDateString() : 
@@ -203,6 +227,8 @@ async function viewSubmission(submissionId) {
         const submission = submissionDoc.data();
         submission.id = submissionDoc.id;
         
+        console.log("Viewing submission:", submission);
+        
         // Store the current submission ID and status
         currentSubmissionId = submissionId;
         currentSubmissionStatus = submission.status || 
@@ -230,6 +256,8 @@ async function viewSubmission(submissionId) {
         
         if (feedbackActions) feedbackActions.style.display = 'none';
         if (finalizedActions) finalizedActions.style.display = 'none';
+        
+        console.log("Current submission status:", currentSubmissionStatus);
         
         switch(currentSubmissionStatus) {
             case 'submitted':
@@ -532,66 +560,6 @@ function showAssessmentsList() {
     currentSubmissionId = null;
 }
 
-// Archive a submission
-async function archiveSubmission(submissionId) {
-    showModal(
-        "Archive Submission", 
-        "Are you sure you want to archive this submission? It will be moved to the finalized tab.",
-        async () => {
-            try {
-                const submissionRef = doc(db, 'assessments', submissionId);
-                await updateDoc(submissionRef, {
-                    status: 'finalized'
-                });
-                console.log("Submission finalized successfully");
-                
-                // If we're viewing this submission, update the UI
-                if (currentSubmissionId === submissionId) {
-                    showAssessmentsList();
-                }
-                
-                // Reload submissions if we're on the active tab
-                if (currentTab === 'active') {
-                    loadSubmissions('active');
-                }
-            } catch (error) {
-                console.error("Error archiving submission:", error);
-                alert(`Error archiving submission: ${error.message}`);
-            }
-        }
-    );
-}
-
-// Restore a submission from finalized
-async function restoreSubmission(submissionId) {
-    showModal(
-        "Restore Submission", 
-        "Are you sure you want to restore this submission? It will be moved back to Active submissions.",
-        async () => {
-            try {
-                const submissionRef = doc(db, 'assessments', submissionId);
-                await updateDoc(submissionRef, {
-                    status: 'submitted'
-                });
-                console.log("Submission restored successfully");
-                
-                // If we're viewing this submission, update the UI
-                if (currentSubmissionId === submissionId) {
-                    showAssessmentsList();
-                }
-                
-                // Reload submissions if we're on the finalized tab
-                if (currentTab === 'finalized') {
-                    loadSubmissions('finalized');
-                }
-            } catch (error) {
-                console.error("Error restoring submission:", error);
-                alert(`Error restoring submission: ${error.message}`);
-            }
-        }
-    );
-}
-
 // Delete a submission (mark as deleted)
 async function deleteSubmission(submissionId) {
     showModal(
@@ -754,6 +722,8 @@ async function finalizeAssessment() {
             feedbackHistory: arrayUnion(feedbackEntry)
         });
         
+        console.log(`Assessment finalized with grade: ${grade}, score: ${score}`);
+        
         // Add comment to comments collection if provided
         if (commentText) {
             const commentsRef = collection(db, 'assessments', currentSubmissionId, 'comments');
@@ -800,6 +770,10 @@ async function finalizeAssessment() {
             `;
         }
         
+        // Return to list and reload to show in finalized tab
+        showAssessmentsList();
+        loadSubmissions(currentTab);
+        
     } catch (error) {
         console.error("Error finalizing assessment:", error);
         alert(`Error finalizing assessment: ${error.message}`);
@@ -843,6 +817,8 @@ async function reopenSubmission(submissionId) {
                     feedbackHistory: arrayUnion(feedbackEntry)
                 });
                 
+                console.log("Assessment reopened for resubmission");
+                
                 // Show success message
                 alert('Assessment returned for resubmission.');
                 
@@ -863,6 +839,10 @@ async function reopenSubmission(submissionId) {
 
 // Search functionality
 function setupSearch() {
+    console.log("Setting up search functionality");
+    console.log("Active search input:", activeSearchInput);
+    console.log("Finalized search input:", finalizedSearchInput);
+    
     if (activeSearchInput) {
         activeSearchInput.addEventListener('input', (e) => {
             const searchTerm = e.target.value.toLowerCase();
