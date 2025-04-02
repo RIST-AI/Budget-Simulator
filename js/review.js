@@ -153,52 +153,63 @@ async function loadSubmissions(status = 'active') {
             return;
         }
         
-        let submissionsHTML = '';
-        snapshot.forEach(async (doc) => {
-            const submission = doc.data();
-            submission.id = doc.id;
+        // Process each submission and build HTML
+        const processSubmissions = async () => {
+            let submissionsHTML = '';
             
-            const submissionDate = submission.submittedAt ? 
-                new Date(submission.submittedAt.seconds * 1000).toLocaleDateString() : 
-                'Date unknown';
-            
-            // Try to get student's full name
-            let studentName = '';
-            try {
+            // Process each submission
+            for (const docSnapshot of snapshot.docs) {
+                const submission = docSnapshot.data();
+                submission.id = docSnapshot.id;
+                
+                const submissionDate = submission.submittedAt ? 
+                    new Date(submission.submittedAt.seconds * 1000).toLocaleDateString() : 
+                    'Date unknown';
+                
+                // Get student name from users collection if available
+                let studentName = '';
                 if (submission.userId) {
-                    const userDoc = await getDoc(doc(db, 'users', submission.userId));
-                    if (userDoc.exists() && userDoc.data().fullName) {
-                        studentName = userDoc.data().fullName;
+                    try {
+                        const userDoc = await getDoc(doc(db, 'users', submission.userId));
+                        if (userDoc.exists()) {
+                            studentName = userDoc.data().fullName || '';
+                        }
+                    } catch (error) {
+                        console.error("Error fetching user data:", error);
                     }
                 }
-            } catch (error) {
-                console.error("Error fetching user details:", error);
+                
+                const studentEmail = submission.userEmail || 'No email provided';
+                const studentDisplay = studentName ? 
+                    `${studentName} (${studentEmail})` : 
+                    studentEmail;
+                
+                submissionsHTML += `
+                    <div class="assessment-card" id="submission-${submission.id}">
+                        <div class="assessment-card-header">
+                            <div class="assessment-type">Farm Budget Assessment</div>
+                            <div class="assessment-duration">${submissionDate}</div>
+                        </div>
+                        <h3>${studentDisplay}</h3>
+                        <p>Farm Type: ${submission.budget?.farmType || 'Not specified'}</p>
+                        <div class="assessment-actions">
+                            <button class="btn" onclick="viewSubmission('${submission.id}')">Review</button>
+                            ${status === 'active' ? 
+                                `<button class="btn btn-danger" onclick="deleteSubmission('${submission.id}')">Delete</button>` : 
+                                `<button class="btn btn-warning" onclick="reopenSubmission('${submission.id}')">Reopen</button>
+                                <button class="btn btn-danger" onclick="deleteSubmission('${submission.id}')">Delete</button>`
+                            }
+                        </div>
+                    </div>
+                `;
             }
             
-            const studentEmail = submission.userEmail || 'No email provided';
-            const studentDisplay = studentName ? `${studentName} (${studentEmail})` : studentEmail;
-            
-            submissionsHTML += `
-                <div class="assessment-card" id="submission-${submission.id}">
-                    <div class="assessment-card-header">
-                        <div class="assessment-type">Farm Budget Assessment</div>
-                        <div class="assessment-duration">${submissionDate}</div>
-                    </div>
-                    <h3>${studentDisplay}</h3>
-                    <p>Farm Type: ${submission.budget?.farmType || 'Not specified'}</p>
-                    <div class="assessment-actions">
-                        <button class="btn" onclick="viewSubmission('${submission.id}')">Review</button>
-                        ${status === 'active' ? 
-                            `<button class="btn btn-danger" onclick="deleteSubmission('${submission.id}')">Delete</button>` : 
-                            `<button class="btn btn-warning" onclick="reopenSubmission('${submission.id}')">Reopen</button>
-                            <button class="btn btn-danger" onclick="deleteSubmission('${submission.id}')">Delete</button>`
-                        }
-                    </div>
-                </div>
-            `;
-        });
+            container.innerHTML = submissionsHTML;
+        };
         
-        container.innerHTML = submissionsHTML;
+        // Execute the async processing
+        await processSubmissions();
+        
     } catch (error) {
         console.error("Error loading submissions:", error);
         if (loadingIndicator) {
