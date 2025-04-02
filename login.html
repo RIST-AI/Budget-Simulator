@@ -69,6 +69,10 @@
             color: #e74c3c;
             margin-top: 15px;
             text-align: center;
+            background-color: #fadbd8;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
         }
     </style>
 </head>
@@ -91,7 +95,7 @@
                 <input type="password" id="password" name="password" required>
             </div>
             
-            <button type="submit" class="btn-login">Login</button>
+            <button type="submit" id="login-button" class="btn-login">Login</button>
         </form>
         
         <div id="error-message" class="error-message"></div>
@@ -124,16 +128,17 @@
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const errorMessage = document.getElementById('error-message');
+            const loginButton = document.getElementById('login-button');
             
             try {
                 // Clear any previous error messages
                 errorMessage.textContent = '';
+                errorMessage.style.display = 'none';
                 
                 // Show loading state
-                const submitButton = e.target.querySelector('button[type="submit"]');
-                const originalButtonText = submitButton.textContent;
-                submitButton.textContent = 'Logging in...';
-                submitButton.disabled = true;
+                const originalButtonText = loginButton.textContent;
+                loginButton.textContent = 'Logging in...';
+                loginButton.disabled = true;
                 
                 // Attempt to sign in
                 await signInWithEmailAndPassword(auth, email, password);
@@ -151,7 +156,9 @@
                 console.error("Login error:", error);
                 
                 // Display user-friendly error message
-                if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                if (error.code === 'auth/wrong-password' || 
+                    error.code === 'auth/user-not-found' || 
+                    error.code === 'auth/invalid-login-credentials') {
                     errorMessage.textContent = 'Invalid email or password. Please try again.';
                 } else if (error.code === 'auth/too-many-requests') {
                     errorMessage.textContent = 'Too many failed login attempts. Please try again later.';
@@ -159,9 +166,12 @@
                     errorMessage.textContent = 'An error occurred during login. Please try again.';
                 }
                 
+                // Show the error message
+                errorMessage.style.display = 'block';
+            } finally {
                 // Reset button state
-                submitButton.textContent = originalButtonText;
-                submitButton.disabled = false;
+                loginButton.textContent = originalButtonText;
+                loginButton.disabled = false;
             }
         });
     </script>
