@@ -34,8 +34,6 @@ const closeModalButton = confirmModal ? document.querySelector('.close-modal') :
 // Tab switching functionality
 document.querySelectorAll('.tab-button').forEach(button => {
     button.addEventListener('click', () => {
-        console.log("Tab button clicked:", button.getAttribute('data-tab'));
-        
         // Update active tab button
         document.querySelectorAll('.tab-button').forEach(btn => {
             btn.classList.remove('active');
@@ -49,8 +47,6 @@ document.querySelectorAll('.tab-button').forEach(button => {
         
         const tabName = button.getAttribute('data-tab');
         const tabContent = document.getElementById(`${tabName}-tab`);
-        console.log("Tab content element:", tabContent);
-        
         if (tabContent) {
             tabContent.classList.add('active');
         }
@@ -110,8 +106,6 @@ window.onclick = (event) => {
 
 // Load submissions based on status
 async function loadSubmissions(status = 'active') {
-    console.log(`Loading submissions for status: ${status}`);
-    
     if (loadingIndicator) {
         loadingIndicator.style.display = 'block';
     }
@@ -121,27 +115,26 @@ async function loadSubmissions(status = 'active') {
         finalizedAssessmentsContainer;
         
     if (!container) {
-        console.error(`Container for ${status} tab not found`);
         if (loadingIndicator) loadingIndicator.style.display = 'none';
         return;
     }
     
-    console.log(`Container for ${status} found:`, container);
     container.innerHTML = '';
     
     try {
         // Create a query to get submissions with the specified status
         const assessmentsRef = collection(db, 'assessments');
-        
-        // MODIFIED: Improve the query to handle both 'submitted' and 'feedback_provided' for active tab
         let q;
+        
         if (status === 'active') {
+            // Active submissions include both submitted and feedback_provided
             q = query(
                 assessmentsRef,
                 where("submitted", "==", true),
                 where("status", "in", ["submitted", "feedback_provided"])
             );
         } else {
+            // Finalized tab shows finalized submissions
             q = query(
                 assessmentsRef,
                 where("submitted", "==", true),
@@ -149,14 +142,11 @@ async function loadSubmissions(status = 'active') {
             );
         }
         
-        console.log(`Executing query for ${status} submissions`);
         const snapshot = await getDocs(q);
         
         if (loadingIndicator) {
             loadingIndicator.style.display = 'none';
         }
-        
-        console.log(`Found ${snapshot.size} submissions with status: ${status}`);
         
         if (snapshot.empty) {
             container.innerHTML = `<div class="info-message">No ${status} submissions found.</div>`;
@@ -167,8 +157,6 @@ async function loadSubmissions(status = 'active') {
         snapshot.forEach((doc) => {
             const submission = doc.data();
             submission.id = doc.id;
-            
-            console.log(`Processing submission: ${submission.id}, Status: ${submission.status}`);
             
             const submissionDate = submission.submittedAt ? 
                 new Date(submission.submittedAt.seconds * 1000).toLocaleDateString() : 
@@ -227,8 +215,6 @@ async function viewSubmission(submissionId) {
         const submission = submissionDoc.data();
         submission.id = submissionDoc.id;
         
-        console.log("Viewing submission:", submission);
-        
         // Store the current submission ID and status
         currentSubmissionId = submissionId;
         currentSubmissionStatus = submission.status || 
@@ -257,16 +243,10 @@ async function viewSubmission(submissionId) {
         if (feedbackActions) feedbackActions.style.display = 'none';
         if (finalizedActions) finalizedActions.style.display = 'none';
         
-        console.log("Current submission status:", currentSubmissionStatus);
-        
-        switch(currentSubmissionStatus) {
-            case 'submitted':
-            case 'feedback_provided':
-                if (feedbackActions) feedbackActions.style.display = 'block';
-                break;
-            case 'finalized':
-                if (finalizedActions) finalizedActions.style.display = 'block';
-                break;
+        if (currentSubmissionStatus === 'submitted' || currentSubmissionStatus === 'feedback_provided') {
+            if (feedbackActions) feedbackActions.style.display = 'block';
+        } else if (currentSubmissionStatus === 'finalized') {
+            if (finalizedActions) finalizedActions.style.display = 'block';
         }
         
         // Fill in budget info
@@ -512,40 +492,6 @@ async function loadComments(submissionId) {
     }
 }
 
-// Add a comment to a submission
-async function addComment() {
-    const commentInput = document.getElementById('new-comment');
-    if (!commentInput) return;
-    
-    const commentText = commentInput.value.trim();
-    
-    if (!commentText) {
-        alert('Please enter a comment');
-        return;
-    }
-    
-    try {
-        const user = await getCurrentUser();
-        
-        const commentsRef = collection(db, 'assessments', currentSubmissionId, 'comments');
-        await addDoc(commentsRef, {
-            text: commentText,
-            trainerId: user.uid,
-            trainerName: user.displayName || user.email,
-            timestamp: serverTimestamp()
-        });
-        
-        // Clear the comment input
-        commentInput.value = '';
-        
-        // Reload comments
-        await loadComments(currentSubmissionId);
-    } catch (error) {
-        console.error("Error adding comment:", error);
-        alert(`Error adding comment: ${error.message}`);
-    }
-}
-
 // Show the assessments list
 function showAssessmentsList() {
     if (assessmentDetail) {
@@ -722,8 +668,6 @@ async function finalizeAssessment() {
             feedbackHistory: arrayUnion(feedbackEntry)
         });
         
-        console.log(`Assessment finalized with grade: ${grade}, score: ${score}`);
-        
         // Add comment to comments collection if provided
         if (commentText) {
             const commentsRef = collection(db, 'assessments', currentSubmissionId, 'comments');
@@ -741,36 +685,7 @@ async function finalizeAssessment() {
         // Show success message
         alert(`Assessment finalized successfully with grade: ${grade} (${score}/100)`);
         
-        // Reload comments
-        await loadComments(currentSubmissionId);
-        
-        // Update UI to reflect new status
-        const submissionStatusElement = document.getElementById('submission-status');
-        if (submissionStatusElement) {
-            submissionStatusElement.textContent = 'Finalized';
-        }
-        
-        const feedbackActions = document.getElementById('feedback-actions');
-        if (feedbackActions) {
-            feedbackActions.style.display = 'none';
-        }
-        
-        const finalizedActions = document.getElementById('finalized-actions');
-        if (finalizedActions) {
-            finalizedActions.style.display = 'block';
-        }
-        
-        // Update grade display
-        const gradeContainer = document.getElementById('grade-container');
-        if (gradeContainer) {
-            gradeContainer.innerHTML = `
-                <h3>Grade</h3>
-                <p><strong>Final Grade:</strong> ${grade}</p>
-                <p><strong>Score:</strong> ${score}/100</p>
-            `;
-        }
-        
-        // Return to list and reload to show in finalized tab
+        // Return to list view and reload submissions
         showAssessmentsList();
         loadSubmissions(currentTab);
         
@@ -786,13 +701,14 @@ async function finalizeAssessment() {
         }
         
         // Clear comment input
+        const commentInput = document.getElementById('new-comment');
         if (commentInput) {
             commentInput.value = '';
         }
     }
 }
 
-// Add reopenSubmission function
+// Reopen a finalized submission
 async function reopenSubmission(submissionId) {
     showModal(
         "Reopen Submission",
@@ -817,8 +733,6 @@ async function reopenSubmission(submissionId) {
                     feedbackHistory: arrayUnion(feedbackEntry)
                 });
                 
-                console.log("Assessment reopened for resubmission");
-                
                 // Show success message
                 alert('Assessment returned for resubmission.');
                 
@@ -839,10 +753,6 @@ async function reopenSubmission(submissionId) {
 
 // Search functionality
 function setupSearch() {
-    console.log("Setting up search functionality");
-    console.log("Active search input:", activeSearchInput);
-    console.log("Finalized search input:", finalizedSearchInput);
-    
     if (activeSearchInput) {
         activeSearchInput.addEventListener('input', (e) => {
             const searchTerm = e.target.value.toLowerCase();
@@ -890,14 +800,6 @@ document.addEventListener('DOMContentLoaded', () => {
             assessmentDetail: !!assessmentDetail
         });
         
-        // Check for action buttons
-        console.log("Action buttons:", {
-            backToListButton: !!backToListButton,
-            provideFeedbackButton: !!document.getElementById('provide-feedback'),
-            finalizeButton: !!document.getElementById('finalize-assessment'),
-            reopenButton: !!document.getElementById('reopen-assessment')
-        });
-        
         // Load active submissions initially
         console.log("Loading submissions...");
         loadSubmissions('active');
@@ -914,12 +816,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.target && e.target.id === 'back-to-list') {
                 console.log("Back to list clicked");
                 showAssessmentsList();
-            }
-            
-            // Add comment button
-            if (e.target && e.target.id === 'add-comment') {
-                console.log("Add comment clicked");
-                addComment();
             }
             
             // Provide feedback button

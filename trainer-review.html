@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" href="images/RIST Brandmark - Navy Circle.png" type="image/png">
     <style>
+        /* CSS styles remain unchanged */
         .tab-container {
             margin-bottom: 20px;
         }
@@ -234,7 +235,7 @@
         <div class="tab-container">
             <div class="tab-buttons">
                 <button class="tab-button active" data-tab="active">Active Submissions</button>
-                <button class="tab-button" data-tab="archived">Finalised Submissions</button>
+                <button class="tab-button" data-tab="finalized">Finalised Submissions</button>
             </div>
             
             <div id="active-tab" class="tab-content active">
@@ -374,13 +375,6 @@
                     <div id="finalized-actions" style="display: none;">
                         <h3>Assessment Actions</h3>
                         <button id="reopen-assessment" class="btn btn-warning">Return to Resubmission</button>
-                        <button id="archive-finalized" class="btn btn-secondary">Archive Assessment</button>
-                    </div>
-                    
-                    <div id="archived-actions" style="display: none;">
-                        <h3>Actions</h3>
-                        <button id="restore-submission" class="btn btn-success">Restore Submission</button>
-                        <button id="delete-archived-submission" class="btn btn-danger">Delete Submission</button>
                     </div>
                 </section>
             </div>
