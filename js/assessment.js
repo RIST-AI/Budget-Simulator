@@ -298,6 +298,7 @@ function showSubmittedMessage(status, assessment) {
     } else if (status === 'finalized') {
         // Get the latest feedback that contains the grade
         let grade = assessment.grade || 'Not specified';
+        let score = assessment.score || '0';
         let feedbackText = 'No feedback provided.';
         
         if (assessment.feedbackHistory && assessment.feedbackHistory.length > 0) {
@@ -307,6 +308,11 @@ function showSubmittedMessage(status, assessment) {
             if (finalFeedback.comments) {
                 feedbackText = finalFeedback.comments;
             }
+            
+            // Use score from feedback if available
+            if (finalFeedback.score !== undefined) {
+                score = finalFeedback.score;
+            }
         }
         
         messageContainer.innerHTML = `
@@ -315,6 +321,7 @@ function showSubmittedMessage(status, assessment) {
                 <p>Your assessment has been graded and finalized by your trainer.</p>
                 <div class="grade-display">
                     <h3>Grade: ${grade}</h3>
+                    <h3>Score: ${score}/100</h3>
                 </div>
                 <div class="feedback-container">
                     <h3>Trainer Feedback:</h3>
