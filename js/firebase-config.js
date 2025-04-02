@@ -10,7 +10,8 @@ import {
     signOut,
     setPersistence,
     browserLocalPersistence,
-    browserSessionPersistence
+    browserSessionPersistence,
+    updateProfile  // Add this import
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 import { 
     getFirestore, 
@@ -30,7 +31,7 @@ import {
     Timestamp,
     arrayUnion,
     serverTimestamp,
-    onSnapshot  // Add this import
+    onSnapshot
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
 // Your web app's Firebase configuration
@@ -38,7 +39,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyDLztoc272ZAP8Uy524n8z_x0TjgX0wb50",
   authDomain: "budget-assessment-system-1d840.firebaseapp.com",
   projectId: "budget-assessment-system-1d840",
-  storageBucket: "budget-assessment-system-1d840.firebasestorage.app",
+  storageBucket: "budget-assessment-system-1d840.firebaseapp.com",
   messagingSenderId: "852745387240",
   appId: "1:852745387240:web:3bb0f6f684491c96505d5d"
 };
@@ -58,6 +59,7 @@ export {
   setPersistence,
   browserLocalPersistence,
   browserSessionPersistence,
+  updateProfile,  // Add this export
   db,
   collection,
   doc,
@@ -75,5 +77,5 @@ export {
   Timestamp,
   arrayUnion,
   serverTimestamp,
-  onSnapshot  // Add this export
+  onSnapshot
 };
