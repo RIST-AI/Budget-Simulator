@@ -125,10 +125,6 @@
         .form-toggle a:hover {
             text-decoration: underline;
         }
-        
-        #register-form {
-            display: none;
-        }
     </style>
 </head>
 <body>
@@ -234,13 +230,15 @@
             const errorMessage = document.getElementById('login-error');
             const loginButton = document.getElementById('login-button');
             
+            // Store the original button text BEFORE we change it
+            const originalButtonText = loginButton.textContent;
+            
             try {
                 // Clear any previous error messages
                 errorMessage.textContent = '';
                 errorMessage.style.display = 'none';
                 
                 // Show loading state
-                const originalButtonText = loginButton.textContent;
                 loginButton.textContent = 'Logging in...';
                 loginButton.disabled = true;
                 
@@ -272,7 +270,7 @@
                 
                 // Show the error message
                 errorMessage.style.display = 'block';
-            } finally {
+                
                 // Reset button state
                 loginButton.textContent = originalButtonText;
                 loginButton.disabled = false;
@@ -290,6 +288,9 @@
             const errorMessage = document.getElementById('register-error');
             const successMessage = document.getElementById('register-success');
             const registerButton = document.getElementById('register-button');
+            
+            // Store the original button text BEFORE we change it
+            const originalButtonText = registerButton.textContent;
             
             try {
                 // Clear any previous messages
@@ -318,7 +319,6 @@
                 }
                 
                 // Show loading state
-                const originalButtonText = registerButton.textContent;
                 registerButton.textContent = 'Registering...';
                 registerButton.disabled = true;
                 
