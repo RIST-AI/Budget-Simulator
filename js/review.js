@@ -105,6 +105,7 @@ window.onclick = (event) => {
 };
 
 // Load submissions based on status
+// Load submissions based on status
 async function loadSubmissions(status = 'active') {
     if (loadingIndicator) {
         loadingIndicator.style.display = 'block';
