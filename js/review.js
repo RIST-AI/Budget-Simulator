@@ -672,7 +672,19 @@ async function finalizeAssessment() {
         if (commentText) {
             const commentsRef = collection(db, 'assessments', currentSubmissionId, 'comments');
             await addDoc(commentsRef, {
-                text: commentText,
+                text: commentText + `\n\nGrade: ${grade}\nScore: ${score}/100`,  // Include grade and score in comment
+                trainerId: user.uid,
+                trainerName: user.displayName || user.email,
+                timestamp: serverTimestamp(),
+                isFinalization: true,
+                grade: grade,
+                score: score
+            });
+        } else {
+            // If no comment was provided, still add a system comment with the grade info
+            const commentsRef = collection(db, 'assessments', currentSubmissionId, 'comments');
+            await addDoc(commentsRef, {
+                text: `Assessment has been graded.\n\nGrade: ${grade}\nScore: ${score}/100`,
                 trainerId: user.uid,
                 trainerName: user.displayName || user.email,
                 timestamp: serverTimestamp(),
