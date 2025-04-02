@@ -154,14 +154,29 @@ async function loadSubmissions(status = 'active') {
         }
         
         let submissionsHTML = '';
-        snapshot.forEach((doc) => {
+        snapshot.forEach(async (doc) => {
             const submission = doc.data();
             submission.id = doc.id;
             
             const submissionDate = submission.submittedAt ? 
                 new Date(submission.submittedAt.seconds * 1000).toLocaleDateString() : 
                 'Date unknown';
+            
+            // Try to get student's full name
+            let studentName = '';
+            try {
+                if (submission.userId) {
+                    const userDoc = await getDoc(doc(db, 'users', submission.userId));
+                    if (userDoc.exists() && userDoc.data().fullName) {
+                        studentName = userDoc.data().fullName;
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching user details:", error);
+            }
+            
             const studentEmail = submission.userEmail || 'No email provided';
+            const studentDisplay = studentName ? `${studentName} (${studentEmail})` : studentEmail;
             
             submissionsHTML += `
                 <div class="assessment-card" id="submission-${submission.id}">
@@ -169,7 +184,7 @@ async function loadSubmissions(status = 'active') {
                         <div class="assessment-type">Farm Budget Assessment</div>
                         <div class="assessment-duration">${submissionDate}</div>
                     </div>
-                    <h3>${studentEmail}</h3>
+                    <h3>${studentDisplay}</h3>
                     <p>Farm Type: ${submission.budget?.farmType || 'Not specified'}</p>
                     <div class="assessment-actions">
                         <button class="btn" onclick="viewSubmission('${submission.id}')">Review</button>
@@ -223,7 +238,18 @@ async function viewSubmission(submissionId) {
         // Fill in submission details
         const studentEmailElement = document.getElementById('student-email');
         if (studentEmailElement) {
-            studentEmailElement.textContent = submission.userEmail || 'No email provided';
+            // Try to get the user's full name from the users collection
+            try {
+                const userDoc = await getDoc(doc(db, 'users', submission.userId));
+                if (userDoc.exists() && userDoc.data().fullName) {
+                    studentEmailElement.textContent = `${userDoc.data().fullName} (${submission.userEmail || 'No email provided'})`;
+                } else {
+                    studentEmailElement.textContent = submission.userEmail || 'No email provided';
+                }
+            } catch (error) {
+                console.error("Error fetching user details:", error);
+                studentEmailElement.textContent = submission.userEmail || 'No email provided';
+            }
         }
         
         const submissionDateElement = document.getElementById('submission-date');
