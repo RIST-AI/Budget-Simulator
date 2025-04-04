@@ -7,6 +7,7 @@ import { requireRole, getCurrentUser } from './auth.js';
 let currentUser = null;
 let assessmentData = null;
 let currentQuestionId = 1;
+let siteSettings = null; // Added for site settings
 
 // Initialize the assessment editor
 document.addEventListener('DOMContentLoaded', async function() {
@@ -18,12 +19,18 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Load existing assessment if available
         await loadAssessment();
         
+        // Load site settings
+        await loadSiteSettings();
+        
         // Set up event listeners
         setupEventListeners();
         
         // Show the editor
         document.getElementById('loading-indicator').style.display = 'none';
         document.getElementById('editor-container').style.display = 'block';
+        
+        // Show the general tab by default
+        showTab('general-tab');
     } catch (error) {
         console.error("Error initializing editor:", error);
         const loadingIndicator = document.getElementById('loading-indicator');
@@ -35,6 +42,41 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 });
+
+// Update the help text in the site settings tab
+// Improved approach with better condition matching
+function updateSiteSettingsHelpText() {
+    if (!siteSettings) {
+        console.error("Site settings not available for help text update");
+        return;
+    }
+    
+    console.log("Updating site settings help text with:", siteSettings);
+    
+    // Find all small elements with form-hint class in the entire document
+    const allHints = document.querySelectorAll('small.form-hint');
+    console.log(`Found ${allHints.length} hint elements`, allHints);
+    
+    // Process each hint
+    allHints.forEach(hint => {
+        const hintText = hint.textContent;
+        console.log("Processing hint:", hintText);
+        
+        // Check which field this hint is for using more specific conditions
+        if (hintText.includes("header of all pages")) {
+            hint.textContent = `This name appears in the header of all pages (currently "${siteSettings.courseName}")`;
+            console.log("Updated course name hint");
+        }
+        else if (hintText.includes("below the course name")) {
+            hint.textContent = `This text appears below the course name (currently "${siteSettings.courseSubtitle}")`;
+            console.log("Updated subtitle hint");
+        }
+        else if (hintText.includes("browser tab")) {
+            hint.textContent = `This text appears in the browser tab (currently "${siteSettings.pageTitle}")`;
+            console.log("Updated page title hint");
+        }
+    });
+}
 
 // Set up event listeners for the editor
 function setupEventListeners() {
@@ -64,6 +106,29 @@ function setupEventListeners() {
         addScenarioButton.addEventListener('click', addScenario);
     }
     
+    // Site Settings buttons and inputs
+    const saveSiteSettingsButton = document.getElementById('save-site-settings');
+    if (saveSiteSettingsButton) {
+        saveSiteSettingsButton.addEventListener('click', saveSiteSettings);
+    }
+    
+    // Live preview for site settings
+    const courseNameInput = document.getElementById('course-name');
+    const courseSubtitleInput = document.getElementById('course-subtitle');
+    const pageTitleInput = document.getElementById('page-title');
+    
+    if (courseNameInput) {
+        courseNameInput.addEventListener('input', updateSiteSettingsPreview);
+    }
+    
+    if (courseSubtitleInput) {
+        courseSubtitleInput.addEventListener('input', updateSiteSettingsPreview);
+    }
+    
+    if (pageTitleInput) {
+        pageTitleInput.addEventListener('input', updateSiteSettingsPreview);
+    }
+    
     // Tab navigation
     const tabButtons = document.querySelectorAll('.tab-button');
     tabButtons.forEach(button => {
@@ -71,6 +136,16 @@ function setupEventListeners() {
             const tabId = button.getAttribute('data-tab');
             showTab(tabId);
         });
+    });
+    
+    // Add event listeners for remove buttons
+    document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('btn-remove')) {
+            const container = event.target.closest('.question-container, .scenario-container');
+            if (container) {
+                container.remove();
+            }
+        }
     });
 }
 
@@ -100,7 +175,7 @@ async function loadAssessment() {
                         
                         // Create a temporary container
                         const tempContainer = document.createElement('div');
-                        tempContainer.innerHTML = createQuestionHTML(questionId, question.text, question.points);
+                        tempContainer.innerHTML = createQuestionHTML(questionId, question.text);
                         
                         // Get the question element and append it
                         const questionElement = tempContainer.firstElementChild;
@@ -156,18 +231,15 @@ async function loadAssessment() {
                 questions: [
                     {
                         id: 1,
-                        text: 'Explain the key factors that influenced your income projections in your budget. What assumptions did you make about prices, yields, or production levels?',
-                        points: 15
+                        text: 'Explain the key factors that influenced your income projections in your budget. What assumptions did you make about prices, yields, or production levels?'
                     },
                     {
                         id: 2,
-                        text: 'Identify the major expense categories in your budget and explain how you would prioritize them if you needed to reduce costs by 15% due to financial constraints.',
-                        points: 20
+                        text: 'Identify the major expense categories in your budget and explain how you would prioritize them if you needed to reduce costs by 15% due to financial constraints.'
                     },
                     {
                         id: 3,
-                        text: 'Based on your budget analysis, what are three specific recommendations you would make to improve the farm\'s profitability? Explain the potential impact of each recommendation.',
-                        points: 25
+                        text: 'Based on your budget analysis, what are three specific recommendations you would make to improve the farm\'s profitability? Explain the potential impact of each recommendation.'
                     }
                 ],
                 scenarios: [
@@ -205,7 +277,7 @@ async function loadAssessment() {
                 
                 assessmentData.questions.forEach((question, index) => {
                     const questionId = index + 1;
-                    const questionHTML = createQuestionHTML(questionId, question.text, question.points);
+                    const questionHTML = createQuestionHTML(questionId, question.text);
                     questionsContainer.innerHTML += questionHTML;
                 });
                 
@@ -231,6 +303,114 @@ async function loadAssessment() {
     }
 }
 
+// Load site settings from Firestore
+async function loadSiteSettings() {
+    try {
+        // Get settings document
+        const settingsRef = doc(db, 'siteConfig', 'settings');
+        const settingsDoc = await getDoc(settingsRef);
+        
+        if (settingsDoc.exists()) {
+            // Store settings in global variable
+            siteSettings = settingsDoc.data();
+            console.log("Loaded settings from Firestore:", siteSettings);
+            
+            // Populate form fields
+            document.getElementById('course-name').value = siteSettings.courseName || 'AHCBUS408 Budget Master';
+            document.getElementById('course-subtitle').value = siteSettings.courseSubtitle || 'Agricultural Budgeting Training Tool';
+            document.getElementById('page-title').value = siteSettings.pageTitle || 'Budget Simulator - RIST Budget Master';
+            
+            // Update the help text
+            updateSiteSettingsHelpText();
+            
+            // Update preview
+            updateSiteSettingsPreview();
+        } else {
+            // Initialize with default values if no settings exist
+            siteSettings = {
+                courseName: 'AHCBUS408 Budget Master',
+                courseSubtitle: 'Agricultural Budgeting Training Tool',
+                pageTitle: 'Budget Simulator - RIST Budget Master'
+            };
+            console.log("Using default settings:", siteSettings);
+            
+            // Populate form fields with defaults
+            document.getElementById('course-name').value = siteSettings.courseName;
+            document.getElementById('course-subtitle').value = siteSettings.courseSubtitle;
+            document.getElementById('page-title').value = siteSettings.pageTitle;
+            
+            // Update the help text
+            updateSiteSettingsHelpText();
+            
+            // Update preview
+            updateSiteSettingsPreview();
+        }
+    } catch (error) {
+        console.error("Error loading site settings:", error);
+        showStatusMessage('Error loading site settings: ' + error.message, 'error');
+    }
+}
+
+// Save site settings to Firestore
+// Save site settings to Firestore
+async function saveSiteSettings() {
+    try {
+        // Get values from form
+        const courseName = document.getElementById('course-name').value;
+        const courseSubtitle = document.getElementById('course-subtitle').value;
+        const pageTitle = document.getElementById('page-title').value;
+        
+        // Validate
+        if (!courseName || !courseSubtitle || !pageTitle) {
+            showStatusMessage('Please fill in all site settings fields.', 'error');
+            return;
+        }
+        
+        // Create settings object
+        const settings = {
+            courseName,
+            courseSubtitle,
+            pageTitle,
+            updatedAt: serverTimestamp(),
+            updatedBy: currentUser.uid
+        };
+        
+        // Save to Firestore
+        const settingsRef = doc(db, 'siteConfig', 'settings');
+        await setDoc(settingsRef, settings);
+        
+        // Update global variable
+        siteSettings = settings;
+        
+        // Update site header elements immediately
+        document.querySelector('.title-container h1').textContent = settings.courseName;
+        document.getElementById('footer-course-name').textContent = settings.courseName;
+        document.title = settings.pageTitle;
+        
+        // Update help text with new values
+        updateSiteSettingsHelpText();
+        
+        // Show success message
+        showStatusMessage('Site settings saved successfully!', 'success');
+        
+    } catch (error) {
+        console.error("Error saving site settings:", error);
+        showStatusMessage('Error saving site settings: ' + error.message, 'error');
+    }
+}
+
+// Update site settings preview
+function updateSiteSettingsPreview() {
+    const courseName = document.getElementById('course-name').value;
+    const courseSubtitle = document.getElementById('course-subtitle').value;
+    const pageTitle = document.getElementById('page-title').value;
+    
+    // Update preview elements
+    document.getElementById('preview-course-name').textContent = courseName;
+    document.getElementById('preview-course-subtitle').textContent = courseSubtitle;
+    document.getElementById('preview-page-title').textContent = pageTitle;
+}
+
 // Save assessment
 async function saveAssessment() {
     try {
@@ -251,12 +431,10 @@ async function saveAssessment() {
         questionElements.forEach(element => {
             const questionId = element.getAttribute('data-question-id');
             const questionText = element.querySelector('.question-text').value;
-            const questionPoints = parseInt(element.querySelector('.question-points').value) || 10;
             
             questions.push({
                 id: questionId,
-                text: questionText,
-                points: questionPoints
+                text: questionText
             });
         });
         
@@ -363,12 +541,10 @@ function saveAssessmentToLocalStorage() {
     questionElements.forEach(element => {
         const questionId = element.getAttribute('data-question-id');
         const questionText = element.querySelector('.question-text').value;
-        const questionPoints = parseInt(element.querySelector('.question-points').value) || 10;
         
         questions.push({
             id: questionId,
-            text: questionText,
-            points: questionPoints
+            text: questionText
         });
     });
     
@@ -407,7 +583,7 @@ function addQuestion() {
     if (questionsContainer) {
         // Create a temporary container to hold the new question HTML
         const tempContainer = document.createElement('div');
-        tempContainer.innerHTML = createQuestionHTML(currentQuestionId, '', 10);
+        tempContainer.innerHTML = createQuestionHTML(currentQuestionId, '');
         
         // Get the actual question element from the temporary container
         const newQuestion = tempContainer.firstElementChild;
@@ -428,7 +604,7 @@ function addQuestion() {
     }
 }
 
-/// Add a new scenario
+// Add a new scenario
 function addScenario() {
     const scenariosContainer = document.getElementById('scenarios-container');
     if (scenariosContainer) {
@@ -455,7 +631,7 @@ function addScenario() {
 }
 
 // Create HTML for a question
-function createQuestionHTML(id, text = '', points = 10) {
+function createQuestionHTML(id, text = '') {
     return `
         <div class="question-container" data-question-id="${id}">
             <div class="question-header">
@@ -467,10 +643,6 @@ function createQuestionHTML(id, text = '', points = 10) {
             <div class="form-group">
                 <label for="question-${id}-text">Question Text:</label>
                 <textarea class="question-text" id="question-${id}-text" rows="3">${text}</textarea>
-            </div>
-            <div class="form-group">
-                <label for="question-${id}-points">Points:</label>
-                <input type="number" class="question-points" id="question-${id}-points" value="${points}" min="1" max="100">
             </div>
         </div>
     `;
@@ -540,18 +712,3 @@ function showStatusMessage(message, type = 'success') {
         }, 5000);
     }
 }
-
-// Add event listeners for remove buttons
-document.addEventListener('click', function(event) {
-    if (event.target.classList.contains('btn-remove')) {
-        const container = event.target.closest('.question-container, .scenario-container');
-        if (container) {
-            container.remove();
-        }
-    }
-});
-
-// Show the general tab by default y
-document.addEventListener('DOMContentLoaded', function() {
-    showTab('general-tab');
-});
