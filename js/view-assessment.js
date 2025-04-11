@@ -30,15 +30,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Load assessment data from Firestore
 async function loadAssessment(assessmentId, accessToken) {
     try {
+        if (!assessmentId || !accessToken) {
+            throw new Error('Both assessment ID and access token are required in the URL');
+        }
         // Get assessment document
-        const assessmentRef = doc(db, 'assessments', assessmentId);
+        const assessmentRef = doc(db, 'submissions', assessmentId);
         const assessmentDoc = await getDoc(assessmentRef);
         
         if (!assessmentDoc.exists()) {
+            console.error(`Submission ID ${assessmentId} not found`);
             throw new Error('Assessment not found');
         }
         
         const assessment = assessmentDoc.data();
+        console.log("Found submission:", assessment);
+
+        console.log(`Token validation: expected=${assessment.publicAccessToken}, actual=${accessToken}`);
         
         // Check if assessment is finalised and has a matching public access token
         if (assessment.status !== 'finalised') {
@@ -46,7 +53,8 @@ async function loadAssessment(assessmentId, accessToken) {
         }
         
         if (!assessment.publicAccessToken || assessment.publicAccessToken !== accessToken) {
-            throw new Error('Invalid access token');
+            console.error(`Token mismatch or missing. URL needs to include token=${assessment.publicAccessToken}`);
+            throw new Error('Invalid access token. The URL may be incomplete or incorrect.');
         }
         
         // Populate assessment data
@@ -71,7 +79,11 @@ function populateAssessmentData(assessment) {
     const studentEmailElement = document.getElementById('student-email');
     const submissionDateElement = document.getElementById('submission-date');
     const submissionStatusElement = document.getElementById('submission-status');
-    
+    const assessmentTitleElement = document.getElementById('assessment-title');
+
+    if (assessmentTitleElement) {
+        assessmentTitleElement.textContent = assessment.assessmentTitle || 'Assessment';
+    }
     if (studentNameElement) studentNameElement.textContent = assessment.studentName || 'Not provided';
     if (studentEmailElement) studentEmailElement.textContent = assessment.userEmail || 'Not provided';
     if (submissionDateElement && assessment.submittedAt) {
@@ -250,7 +262,7 @@ async function loadComments(assessmentId) {
     if (!commentsContainer) return;
     
     try {
-        const commentsRef = collection(db, 'assessments', assessmentId, 'comments');
+        const commentsRef = collection(db, 'submissions', assessmentId, 'comments');
         const q = query(commentsRef, orderBy('timestamp', 'desc'));
         
         const snapshot = await getDocs(q);

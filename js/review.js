@@ -1,4 +1,4 @@
-import { auth, db, collection, query, where, getDocs, doc, updateDoc, onSnapshot, addDoc, serverTimestamp, orderBy, getDoc, arrayUnion } from './firebase-config.js';
+import { auth, db, collection, query, activeAssessmentRef, where, getDocs, doc, updateDoc, onSnapshot, addDoc, serverTimestamp, orderBy, getDoc, arrayUnion } from './firebase-config.js';
 import { requireRole, initAuth, getCurrentUser } from './auth.js';
 
 // Initialize authentication
@@ -7,10 +7,13 @@ initAuth();
 // Ensure user is authenticated and has trainer role
 requireRole('trainer');
 
+const submissionsRef = collection(db, 'submissions');
+
 // Global variables
 let currentSubmissionId = null;
 let currentSubmissionStatus = null;
 let currentTab = 'active';
+let assessmentFilter = '';
 
 // DOM elements
 const loadingIndicator = document.getElementById('loading-indicator');
@@ -70,17 +73,31 @@ function showModal(title, message, confirmAction) {
     modalMessage.textContent = message;
     confirmModal.style.display = 'block';
     
-    // Remove previous event listeners
-    const newModalConfirm = modalConfirm.cloneNode(true);
-    modalConfirm.parentNode.replaceChild(newModalConfirm, modalConfirm);
-    
-    // Add new event listener
-    const newConfirmButton = document.getElementById('modal-confirm');
-    if (newConfirmButton) {
-        newConfirmButton.addEventListener('click', () => {
+    // Safer approach to handling event listeners
+    try {
+        // First, remove existing onclick handler
+        modalConfirm.onclick = null;
+        
+        // Create a new fresh reference to ensure we have the element
+        const confirmButton = document.getElementById('modal-confirm');
+        if (confirmButton) {
+            confirmButton.onclick = () => {
+                confirmAction();
+                confirmModal.style.display = 'none';
+            };
+        } else {
+            // If we can't find the button, add a direct listener to modalConfirm
+            modalConfirm.addEventListener('click', () => {
+                confirmAction();
+                confirmModal.style.display = 'none';
+            });
+        }
+    } catch (error) {
+        console.error("Error setting up modal:", error);
+        // Last resort fallback
+        if (confirm(`${title}\n\n${message}`)) {
             confirmAction();
-            confirmModal.style.display = 'none';
-        });
+        }
     }
 }
 
@@ -105,7 +122,6 @@ window.onclick = (event) => {
 };
 
 // Load submissions based on status
-// Load submissions based on status
 async function loadSubmissions(status = 'active') {
     if (loadingIndicator) {
         loadingIndicator.style.display = 'block';
@@ -124,23 +140,36 @@ async function loadSubmissions(status = 'active') {
     
     try {
         // Create a query to get submissions with the specified status
-        const assessmentsRef = collection(db, 'assessments');
+        // Make sure we're using the correct collection
         let q;
         
+        // Dynamic query based on status and filter
         if (status === 'active') {
-            // Active submissions include both submitted and feedback_provided
-            q = query(
-                assessmentsRef,
-                where("submitted", "==", true),
-                where("status", "in", ["submitted", "feedback_provided"])
-            );
+            if (assessmentFilter) {
+                q = query(
+                    submissionsRef,
+                    where("status", "in", ["submitted", "feedback_provided"]),
+                    where("assessmentId", "==", assessmentFilter)
+                );
+            } else {
+                q = query(
+                    submissionsRef,
+                    where("status", "in", ["submitted", "feedback_provided"])
+                );
+            }
         } else {
-            // finalised tab shows finalised submissions
-            q = query(
-                assessmentsRef,
-                where("submitted", "==", true),
-                where("status", "==", "finalised")
-            );
+            if (assessmentFilter) {
+                q = query(
+                    submissionsRef,
+                    where("status", "==", "finalised"),
+                    where("assessmentId", "==", assessmentFilter)
+                );
+            } else {
+                q = query(
+                    submissionsRef,
+                    where("status", "==", "finalised")
+                );
+            }
         }
         
         const snapshot = await getDocs(q);
@@ -156,62 +185,132 @@ async function loadSubmissions(status = 'active') {
         
         // Process each submission and build HTML
         const processSubmissions = async () => {
-            let submissionsHTML = '';
+            // Get active assessment ID ONCE at the beginning
+            let activeAssessmentId = null;
+            try {
+                const activeDoc = await getDoc(activeAssessmentRef);
+                if (activeDoc.exists()) {
+                    activeAssessmentId = activeDoc.data().assessmentId;
+                    console.log("Active assessment ID:", activeAssessmentId);
+                } else {
+                    console.log("No active assessment found");
+                }
+            } catch (error) {
+                console.error("Error getting active assessment:", error);
+            }
+
+            // Group submissions by student
+            const studentSubmissions = {};
             
             // Process each submission
             for (const docSnapshot of snapshot.docs) {
                 const submission = docSnapshot.data();
                 submission.id = docSnapshot.id;
                 
-                const submissionDate = submission.submittedAt ? 
-                    new Date(submission.submittedAt.seconds * 1000).toLocaleDateString() : 
-                    'Date unknown';
+                // Get student info
+                const userId = submission.userId;
+                if (!userId) continue;
                 
-                // Get student name from users collection if available
-                let studentName = '';
-                if (submission.userId) {
+                // Initialize student group if not exists
+                if (!studentSubmissions[userId]) {
+                    studentSubmissions[userId] = {
+                        info: {
+                            name: '',
+                            email: submission.userEmail || 'No email'
+                        },
+                        submissions: []
+                    };
+                    
+                    // Try to get student name
                     try {
-                        const userDoc = await getDoc(doc(db, 'users', submission.userId));
+                        const userDoc = await getDoc(doc(db, 'users', userId));
                         if (userDoc.exists()) {
-                            studentName = userDoc.data().fullName || '';
+                            studentSubmissions[userId].info.name = userDoc.data().fullName || '';
                         }
                     } catch (error) {
                         console.error("Error fetching user data:", error);
                     }
                 }
                 
-                const studentEmail = submission.userEmail || 'No email provided';
-                const studentDisplay = studentName ? 
-                    `${studentName} (${studentEmail})` : 
-                    studentEmail;
+                const assessmentTitle = submission.assessmentTitle || 'Assessment';
+                submission.assessmentTitle = assessmentTitle;
+                
+                // Add to student's submissions
+                studentSubmissions[userId].submissions.push(submission);
+            }
+            
+            // Build HTML by student groups
+            let submissionsHTML = '';
+            
+            // Sort students alphabetically
+            const sortedStudentIds = Object.keys(studentSubmissions).sort((a, b) => {
+                const nameA = studentSubmissions[a].info.name.toLowerCase() || studentSubmissions[a].info.email.toLowerCase();
+                const nameB = studentSubmissions[b].info.name.toLowerCase() || studentSubmissions[b].info.email.toLowerCase();
+                return nameA.localeCompare(nameB);
+            });
+            
+            sortedStudentIds.forEach(userId => {
+                const student = studentSubmissions[userId];
+                const studentDisplayName = student.info.name || 'Student';
+                const studentEmail = student.info.email;
                 
                 submissionsHTML += `
-                    <div class="assessment-card" id="submission-${submission.id}">
-                        <div class="assessment-card-header">
-                            <div class="assessment-type">Farm Budget Assessment</div>
-                            <div class="assessment-duration">${submissionDate}</div>
+                    <div class="student-group" style="margin-bottom: 30px;">
+                        <div class="student-header" style="padding: 10px; background-color: #f0f0f0; margin-bottom: 10px; border-radius: 4px;">
+                            <h3>${studentDisplayName} (${studentEmail})</h3>
                         </div>
-                        <h3>${studentDisplay}</h3>
-                        <p>Farm Type: ${submission.budget?.farmType || 'Not specified'}</p>
-                        <div class="assessment-actions">
-                            <button class="btn" onclick="viewSubmission('${submission.id}')">Review</button>
-                            ${status === 'active' ? 
-                                `<button class="btn btn-danger" onclick="deleteSubmission('${submission.id}')">Delete</button>` : 
-                                `<button class="btn btn-primary" onclick="viewPublicUrl('${submission.id}')">View Public URL</button>
-                                <button class="btn btn-warning" onclick="reopenSubmission('${submission.id}')">Reopen</button>
-                                <button class="btn btn-danger" onclick="deleteSubmission('${submission.id}')">Delete</button>`
-                            }
+                        <div class="student-submissions" style="padding-left: 10px;">
+                `;
+                
+                // Add each submission for this student
+                student.submissions.forEach(submission => {
+                    const submissionDate = submission.submittedAt ? 
+                        new Date(submission.submittedAt.seconds * 1000).toLocaleDateString() : 
+                        'Date unknown';
+                    
+                    // Use activeAssessmentId from above when building HTML
+                    submissionsHTML += `
+                        <div class="assessment-card" id="submission-${submission.id}">
+                            <div class="assessment-card-header">
+                                <div class="assessment-type">${submission.assessmentTitle || 'Assessment'}</div>
+                                <div class="assessment-duration">${submissionDate}</div>
+                            </div>
+                            <p>Status: ${submission.status || 'Submitted'}</p>
+                            <p>Assessment: ${submission.assessmentTitle || 'Not specified'}</p>
+                            <div class="assessment-actions">
+                                ${status === 'active' ? 
+                                    `<button class="btn" onclick="viewSubmission('${submission.id}')">Review</button>
+                                    <button class="btn btn-danger" onclick="deleteSubmission('${submission.id}')">Delete</button>` : 
+                                    `<button class="btn btn-primary" onclick="viewPublicUrl('${submission.id}')">View Public URL</button>
+                                    ${(submission.assessmentId === activeAssessmentId) ? 
+                                        `<button class="btn" onclick="viewSubmission('${submission.id}')">Review</button>
+                                        <button class="btn btn-warning" onclick="reopenSubmission('${submission.id}')">Reopen</button>` : 
+                                        '<!-- Non-active assessment -->'
+                                    }
+                                    <button class="btn btn-danger" onclick="deleteSubmission('${submission.id}')">Delete</button>`
+                                }
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                submissionsHTML += `
                         </div>
                     </div>
                 `;
+            });
+            
+            // If no submissions are found
+            if (sortedStudentIds.length === 0) {
+                submissionsHTML = `<div class="info-message">No ${status} submissions found${assessmentFilter ? ' for the selected assessment' : ''}.</div>`;
             }
             
             container.innerHTML = submissionsHTML;
         };
-        
+
         // Execute the async processing
         await processSubmissions();
-        
+
     } catch (error) {
         console.error("Error loading submissions:", error);
         if (loadingIndicator) {
@@ -226,7 +325,7 @@ async function loadSubmissions(status = 'active') {
 // View public URL in new tab
 async function viewPublicUrl(submissionId) {
     try {
-        const submissionRef = doc(db, 'assessments', submissionId);
+        const submissionRef = doc(db, 'submissions', submissionId);
         const submissionDoc = await getDoc(submissionRef);
         
         if (!submissionDoc.exists()) {
@@ -266,7 +365,7 @@ async function viewSubmission(submissionId) {
     }
     
     try {
-        const submissionRef = doc(db, 'assessments', submissionId);
+        const submissionRef = doc(db, 'submissions', submissionId);
         const submissionDoc = await getDoc(submissionRef);
         
         if (!submissionDoc.exists()) {
@@ -308,6 +407,28 @@ async function viewSubmission(submissionId) {
             }
         }
         
+        // Get assessment title
+        let assessmentTitle = 'Assessment';
+        try {
+            if (submission.assessmentId) {
+                const assessmentDoc = await getDoc(doc(db, 'submissions', submission.assessmentId));
+                if (assessmentDoc.exists()) {
+                    assessmentTitle = assessmentDoc.data().title || 'Assessment';
+                    
+                    // Add assessment title to the UI
+                    const assessmentTitleElement = document.createElement('p');
+                    assessmentTitleElement.innerHTML = `<strong>Assessment:</strong> ${assessmentTitle}`;
+                    
+                    // Insert after student info
+                    const studentInfoElement = document.querySelector('.assessment-meta');
+                    if (studentInfoElement) {
+                        studentInfoElement.appendChild(assessmentTitleElement);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching assessment data:", error);
+        }
         const submissionDateElement = document.getElementById('submission-date');
         if (submissionDateElement && submission.submittedAt) {
             submissionDateElement.textContent = new Date(submission.submittedAt.seconds * 1000).toLocaleString();
@@ -532,7 +653,7 @@ async function loadComments(submissionId) {
     commentsContainer.innerHTML = '<p>Loading comments...</p>';
     
     try {
-        const commentsRef = collection(db, 'assessments', submissionId, 'comments');
+        const commentsRef = collection(db, 'submissions', submissionId, 'comments');
         const q = query(commentsRef, orderBy('timestamp', 'desc'));
         
         const snapshot = await getDocs(q);
@@ -569,6 +690,16 @@ async function loadComments(submissionId) {
     }
 }
 
+async function isCurrentActiveAssessment(assessmentId) {
+    try {
+        const activeDoc = await getDoc(activeAssessmentRef);
+        return activeDoc.exists() && activeDoc.data().assessmentId === assessmentId;
+    } catch (error) {
+        console.error("Error checking active assessment:", error);
+        return false;
+    }
+}
+
 // Show the assessments list
 function showAssessmentsList() {
     if (assessmentDetail) {
@@ -590,7 +721,7 @@ async function deleteSubmission(submissionId) {
         "Are you sure you want to delete this submission? This action can be undone by a database administrator.",
         async () => {
             try {
-                const submissionRef = doc(db, 'assessments', submissionId);
+                const submissionRef = doc(db, 'submissions', submissionId);
                 await updateDoc(submissionRef, {
                     status: 'deleted'
                 });
@@ -643,7 +774,7 @@ async function provideFeedback() {
         };
         
         // Update assessment document
-        const submissionRef = doc(db, 'assessments', currentSubmissionId);
+        const submissionRef = doc(db, 'submissions', currentSubmissionId);
         await updateDoc(submissionRef, {
             status: 'feedback_provided',
             feedback: commentText, // For backward compatibility
@@ -651,7 +782,7 @@ async function provideFeedback() {
         });
         
         // Add comment to comments collection
-        const commentsRef = collection(db, 'assessments', currentSubmissionId, 'comments');
+        const commentsRef = collection(db, 'submissions', currentSubmissionId, 'comments');
         await addDoc(commentsRef, {
             text: commentText,
             trainerId: user.uid,
@@ -733,7 +864,7 @@ async function finaliseAssessment() {
         let studentName = '';
         try {
             if (currentSubmissionId) {
-                const submissionDoc = await getDoc(doc(db, 'assessments', currentSubmissionId));
+                const submissionDoc = await getDoc(doc(db, 'submissions', currentSubmissionId));
                 if (submissionDoc.exists()) {
                     const submission = submissionDoc.data();
                     if (submission.userId) {
@@ -749,7 +880,7 @@ async function finaliseAssessment() {
         }
         
         // Update assessment document
-        const submissionRef = doc(db, 'assessments', currentSubmissionId);
+        const submissionRef = doc(db, 'submissions', currentSubmissionId);
         await updateDoc(submissionRef, {
             status: 'finalised',
             grade: grade,
@@ -761,12 +892,16 @@ async function finaliseAssessment() {
         });
         
         // Generate public URL
-        const baseUrl = window.location.origin + window.location.pathname.replace('trainer-review.html', 'view-assessment.html');
-        const publicUrl = `${baseUrl}?id=${currentSubmissionId}&token=${publicAccessToken}`;
+        const origin = window.location.origin;
+        const pathParts = window.location.pathname.split('/');
+        pathParts.pop(); // Remove current filename (trainer-review.html)
+        const basePath = pathParts.join('/');
+        const publicUrl = `${origin}${basePath}/view-assessment.html?id=${currentSubmissionId}&token=${publicAccessToken}`;
+
         
         // Add comment to comments collection if provided
         if (commentText) {
-            const commentsRef = collection(db, 'assessments', currentSubmissionId, 'comments');
+            const commentsRef = collection(db, 'submissions', currentSubmissionId, 'comments');
             await addDoc(commentsRef, {
                 text: commentText + `\n\nGrade: ${grade}`,
                 trainerId: user.uid,
@@ -777,7 +912,7 @@ async function finaliseAssessment() {
             });
         } else {
             // If no comment was provided, still add a system comment with the grade info
-            const commentsRef = collection(db, 'assessments', currentSubmissionId, 'comments');
+            const commentsRef = collection(db, 'submissions', currentSubmissionId, 'comments');
             await addDoc(commentsRef, {
                 text: `Assessment has been graded.\n\nGrade: ${grade}`,
                 trainerId: user.uid,
@@ -838,7 +973,7 @@ async function copyPublicUrl() {
     if (!currentSubmissionId) return;
     
     try {
-        const submissionRef = doc(db, 'assessments', currentSubmissionId);
+        const submissionRef = doc(db, 'submissions', currentSubmissionId);
         const submissionDoc = await getDoc(submissionRef);
         
         if (!submissionDoc.exists()) {
@@ -891,7 +1026,7 @@ async function reopenSubmission(submissionId) {
                 };
                 
                 // Update assessment document
-                const submissionRef = doc(db, 'assessments', submissionId);
+                const submissionRef = doc(db, 'submissions', submissionId);
                 await updateDoc(submissionRef, {
                     status: 'feedback_provided',
                     feedbackHistory: arrayUnion(feedbackEntry)
@@ -947,6 +1082,108 @@ function filterSubmissions(container, searchTerm) {
     });
 }
 
+// Setup function for assessment filtering
+function setupAssessmentFilter() {
+    const reviewHeader = document.querySelector('.tab-container');
+    
+    // Create filter element
+    const filterDiv = document.createElement('div');
+    filterDiv.className = 'assessment-filter';
+    filterDiv.style.marginBottom = '20px';
+    filterDiv.style.marginTop = '10px';
+    filterDiv.style.padding = '10px';
+    filterDiv.style.backgroundColor = '#f9f9f9';
+    filterDiv.style.borderRadius = '4px';
+    filterDiv.innerHTML = `
+        <div class="form-group">
+            <label for="assessment-filter" style="margin-right: 10px; font-weight: bold;">Filter by Assessment:</label>
+            <select id="assessment-filter" style="padding: 5px; min-width: 200px;">
+                <option value="">All Assessments</option>
+                <!-- Assessment options will be added dynamically -->
+            </select>
+        </div>
+    `;
+    
+    // Insert after tab buttons
+    reviewHeader.insertBefore(filterDiv, document.getElementById('active-tab'));
+    
+    // Load available assessments
+    loadAssessmentOptions();
+    
+    // Add event listener
+    const filterSelect = document.getElementById('assessment-filter');
+    if (filterSelect) {
+        filterSelect.addEventListener('change', (e) => {
+            assessmentFilter = e.target.value;
+            loadSubmissions(currentTab);
+        });
+    }
+}
+
+// Function to load assessment options
+async function loadAssessmentOptions() {
+    try {
+        const filterSelect = document.getElementById('assessment-filter');
+        if (!filterSelect) return;
+        
+        // Get all assessments from the correct collection
+        const assessmentsSnapshot = await getDocs(collection(db, 'assessments'));
+        
+        // Create options
+        let options = '<option value="">All Assessments</option>';
+        
+        // Get active assessment ID
+        let activeAssessmentId = '';
+        try {
+            const activeDoc = await getDoc(activeAssessmentRef);
+            if (activeDoc.exists()) {
+                activeAssessmentId = activeDoc.data().assessmentId;
+            }
+        } catch (error) {
+            console.error("Error getting active assessment:", error);
+        }
+        
+        // Create a map of assessment IDs to titles
+        const assessmentTitles = {};
+        
+        // First pass - collect all assessment titles
+        assessmentsSnapshot.forEach(doc => {
+            const assessment = doc.data();
+            const id = doc.id;
+            const title = assessment.title || 'Unnamed Assessment';
+            assessmentTitles[id] = title;
+        });
+        
+        // Now get submissions to count them
+        const submissionsSnapshot = await getDocs(collection(db, 'submissions'));
+        const submissionCounts = {};
+        
+        // Count submissions per assessment
+        submissionsSnapshot.forEach(doc => {
+            const submission = doc.data();
+            const assessmentId = submission.assessmentId;
+            if (assessmentId) {
+                submissionCounts[assessmentId] = (submissionCounts[assessmentId] || 0) + 1;
+            }
+        });
+        
+        // Create dropdown options
+        Object.keys(assessmentTitles).forEach(id => {
+            const title = assessmentTitles[id];
+            const count = submissionCounts[id] || 0;
+            const isActive = id === activeAssessmentId;
+            
+            options += `<option value="${id}" ${isActive ? 'style="font-weight: bold;"' : ''}>
+                ${title} (${count} submissions) ${isActive ? '(Active)' : ''}
+            </option>`;
+        });
+        
+        filterSelect.innerHTML = options;
+    } catch (error) {
+        console.error("Error loading assessment options:", error);
+    }
+}
+
 // Event listeners
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM fully loaded");
@@ -971,7 +1208,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Set up search functionality
         console.log("Setting up search...");
         setupSearch();
-        
+
+        setupAssessmentFilter();
+
         console.log("Setting up event listeners...");
         
         // Use event delegation for all buttons to avoid null reference errors

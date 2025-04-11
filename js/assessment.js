@@ -1,5 +1,5 @@
 // Import Firebase modules
-import { auth, onAuthStateChanged, signOut, db, doc, getDoc, setDoc, collection, addDoc } from './firebase-config.js';
+import { auth, onAuthStateChanged, signOut, db, doc, getDoc, setDoc, collection, addDoc, activeAssessmentRef, getStudentBudgetRef } from './firebase-config.js';
 import { requireStudent, updateNavigation } from './auth.js';
 
 // Global variables
@@ -41,9 +41,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         // Load assessment content
         await loadAssessmentContent();
+        await loadPreviousBudgetData();
         
         // Check if user already has an assessment in progress
-        await checkExistingAssessment();
+        await checkExistingSubmission();
         
         // Set up event listeners
         setupEventListeners();
@@ -57,11 +58,29 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (assessmentContent) {
             assessmentContent.style.display = 'block';
         }
+        fixRemoveButtons();
     } catch (error) {
         console.error("Error initializing assessment:", error);
         showErrorMessage("Error loading assessment: " + error.message);
     }
 });
+
+function fixRemoveButtons() {
+    // Target the actual button classes in your HTML
+    document.querySelectorAll('#income-table .btn-remove, #expense-table .btn-remove').forEach(button => {
+        // Set the onclick property directly (avoids event listener issues)
+        button.onclick = function() {
+            const row = this.closest('tr');
+            if (row) {
+                const tbody = row.closest('tbody');
+                if (tbody && tbody.querySelectorAll('tr').length > 1) {
+                    row.remove();
+                    updateBudgetTotals();
+                }
+            }
+        };
+    });
+}
 
 // Show error message
 function showErrorMessage(message) {
@@ -82,53 +101,249 @@ function showErrorMessage(message) {
     }
 }
 
-// Load assessment content from Firestore
+// Load assessment content
 async function loadAssessmentContent() {
     try {
-        // Get the assessment content document
-        const contentDoc = await getDoc(doc(db, 'assessmentContent', 'current'));
+        // Function to show error messages
+        function displayError(message) {
+            // Hide loading indicator
+            const loadingIndicator = document.getElementById('loading-indicator');
+            if (loadingIndicator) {
+                loadingIndicator.style.display = 'none';
+            }
+            
+            // Create error element
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-danger';
+            errorDiv.innerHTML = `
+                <h4>Error Loading Assessment</h4>
+                <p>${message}</p>
+                <button class="btn" onclick="location.reload()">Try Again</button>
+            `;
+            
+            // Insert after loading indicator
+            loadingIndicator.parentNode.insertBefore(errorDiv, loadingIndicator.nextSibling);
+        }
         
-        if (contentDoc.exists()) {
-            assessmentData = contentDoc.data();
+        // Try to get the active assessment ID
+        let activeAssessmentId = null;
+        try {
+            const activeDoc = await getDoc(activeAssessmentRef);
+            if (activeDoc.exists()) {
+                activeAssessmentId = activeDoc.data().assessmentId;
+            } else {
+                displayError("No active assessment is currently available. Please contact your instructor.");
+                return;
+            }
+        } catch (error) {
+            console.error("Error getting active assessment:", error);
             
-            // Populate assessment title and description
-            const titleElement = document.getElementById('assessment-title');
-            if (titleElement) {
-                titleElement.textContent = assessmentData.title || 'Farm Budget Assessment';
+            // Specific handling for permission error
+            if (error.code === 'permission-denied') {
+                displayError("You don't have permission to access the assessment. Please make sure you're logged in with the correct account.");
+            } else {
+                displayError(`Could not load the active assessment: ${error.message}`);
+            }
+            return;
+        }
+
+        // Try to get the assessment content
+        try {
+            const assessmentRef = doc(db, 'assessments', activeAssessmentId);
+            const assessmentDoc = await getDoc(assessmentRef);
+            
+            if (!assessmentDoc.exists()) {
+                displayError(`The active assessment (ID: ${activeAssessmentId}) could not be found. Please contact your instructor.`);
+                return;
             }
             
-            const descElement = document.getElementById('assessment-description');
-            if (descElement) {
-                descElement.innerHTML = assessmentData.description || 'Complete this assessment to demonstrate your understanding of farm budget management.';
+            // We have the assessment data, proceed with display
+            const assessmentData = assessmentDoc.data();
+            displayAssessment(assessmentData);
+            
+        } catch (error) {
+            console.error("Error loading assessment content:", error);
+            
+            // Specific handling for permission error
+            if (error.code === 'permission-denied') {
+                displayError("You don't have permission to access this assessment. This might be because the security rules are still updating or you're using the wrong account.");
+            } else {
+                displayError(`Failed to load the assessment content: ${error.message}`);
+            }
+        }
+        
+    } catch (error) {
+        console.error("Error in assessment loading process:", error);
+        displayError(`An unexpected error occurred while loading the assessment: ${error.message}`);
+    }
+}
+
+// Display assessment content
+function displayAssessment(data) {
+    assessmentData = data;
+    // Hide loading indicator
+    const loadingIndicator = document.getElementById('loading-indicator');
+    if (loadingIndicator) {
+        loadingIndicator.style.display = 'none';
+    }
+    
+    // Show assessment content
+    const assessmentContent = document.getElementById('assessment-content');
+    if (assessmentContent) {
+        assessmentContent.style.display = 'block';
+    }
+    
+    // Fill in the assessment details
+    document.getElementById('assessment-title').textContent = assessmentData.title || 'Farm Budget Assessment';
+    document.getElementById('assessment-description').textContent = assessmentData.description || '';
+    document.getElementById('instructions-text').textContent = assessmentData.instructions || '';
+    
+    // Handle scenarios - select one if available
+    if (assessmentData.scenarios && assessmentData.scenarios.length > 0) {
+        // For simplicity, use the first scenario (or you could implement a dropdown)
+        const scenarioHTML = `
+            <div class="scenario">
+                <h4>${assessmentData.scenarios[0].title}</h4>
+                <p>${assessmentData.scenarios[0].description}</p>
+            </div>
+        `;
+        document.getElementById('scenario-text').innerHTML = scenarioHTML;
+    } else {
+        document.getElementById('scenario-text').innerHTML = '<p>No scenario available for this assessment.</p>';
+    }
+    
+    // Handle questions
+    if (assessmentData.questions && assessmentData.questions.length > 0) {
+        let questionsHTML = '';
+        
+        assessmentData.questions.forEach((question, index) => {
+            questionsHTML += `
+                <div class="question">
+                    <div class="question-text">
+                        <p><strong>Question ${index + 1}:</strong> ${question.text}</p>
+                    </div>
+                    <div class="answer-area">
+                        <textarea id="answer-${question.id}" placeholder="Enter your answer here..." rows="4"></textarea>
+                    </div>
+                </div>
+            `;
+        });
+        
+        document.querySelector('.question-container').innerHTML = questionsHTML;
+    } else {
+        document.querySelector('.question-container').innerHTML = '<p>No questions available for this assessment.</p>';
+    }
+}
+
+// Add function to load previous budget data
+async function loadPreviousBudgetData() {
+    try {
+        // Get the user's saved budget data
+        const budgetRef = getStudentBudgetRef(currentUser.uid);
+        const budgetDoc = await getDoc(budgetRef);
+        
+        if (budgetDoc.exists()) {
+            const budgetData = budgetDoc.data();
+            
+            // Update farm type if it exists
+            const farmTypeSelect = document.getElementById('farm-type');
+            if (farmTypeSelect && budgetData.farmType) {
+                farmTypeSelect.value = budgetData.farmType;
             }
             
-            // Populate instructions
-            const instructionsElement = document.getElementById('instructions-text');
-            if (instructionsElement) {
-                instructionsElement.innerHTML = assessmentData.instructions || 'Create a budget for the farm, answer the analysis questions, and submit your assessment for review.';
+            // Update budget period if it exists
+            const budgetPeriodSelect = document.getElementById('budget-period');
+            if (budgetPeriodSelect && budgetData.budgetPeriod) {
+                budgetPeriodSelect.value = budgetData.budgetPeriod;
             }
             
-            const budgetInstructionsElement = document.getElementById('budget-instructions');
-            if (budgetInstructionsElement) {
-                budgetInstructionsElement.innerHTML = assessmentData.budgetSetupInstructions || 'Create a budget for the farm by adding income and expense items.';
+            // Populate income items
+            if (budgetData.incomeItems && budgetData.incomeItems.length > 0) {
+                const incomeTable = document.getElementById('income-table');
+                if (incomeTable) {
+                    const incomeTableBody = incomeTable.querySelector('tbody');
+                    if (incomeTableBody) {
+                        incomeTableBody.innerHTML = '';
+                        
+                        budgetData.incomeItems.forEach(item => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td><input type="text" value="${item.name}" placeholder="Income item"></td>
+                                <td><input type="number" class="quantity-input" value="${item.quantity || 1}" placeholder="0" min="0"></td>
+                                <td><input type="number" class="price-input" value="${item.price || 0}" placeholder="0.00" min="0" step="0.01"></td>
+                                <td class="row-total">$${((item.quantity || 1) * (item.price || 0)).toFixed(2)}</td>
+                                <td><button class="btn-small btn-remove">Remove</button></td>
+                            `;
+                            incomeTableBody.appendChild(row);
+                            
+                            // Add event listeners to the new row
+                            addEventListenersToRow(row);
+                        });
+                    }
+                }
             }
             
-            const analysisInstructionsElement = document.getElementById('analysis-instructions');
-            if (analysisInstructionsElement) {
-                analysisInstructionsElement.innerHTML = assessmentData.analysisInstructions || 'Based on your budget, answer the following questions.';
+            // Populate expense items
+            if (budgetData.expenseItems && budgetData.expenseItems.length > 0) {
+                const expenseTable = document.getElementById('expense-table');
+                if (expenseTable) {
+                    const expenseTableBody = expenseTable.querySelector('tbody');
+                    if (expenseTableBody) {
+                        expenseTableBody.innerHTML = '';
+                        
+                        budgetData.expenseItems.forEach(item => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td><input type="text" value="${item.name}" placeholder="Expense item"></td>
+                                <td><input type="number" class="quantity-input" value="${item.quantity || 1}" placeholder="0" min="0"></td>
+                                <td><input type="number" class="price-input" value="${item.price || 0}" placeholder="0.00" min="0" step="0.01"></td>
+                                <td class="row-total">$${((item.quantity || 1) * (item.price || 0)).toFixed(2)}</td>
+                                <td><button class="btn-small btn-remove">Remove</button></td>
+                            `;
+                            expenseTableBody.appendChild(row);
+                            
+                            // Add event listeners to the new row
+                            addEventListenersToRow(row);
+                        });
+                    }
+                }
             }
             
-            // Assign a random scenario to the user
-            assignScenario();
-            
-            // Populate questions
-            populateQuestions();
-        } else {
-            throw new Error('Assessment content not found');
+            // Update budget totals
+            updateBudgetTotals();
+
         }
     } catch (error) {
-        console.error("Error loading assessment content:", error);
-        throw error;
+        console.error("Error loading previous budget data:", error);
+    }
+}
+
+// Add helper function for row event listeners
+function addEventListenersToRow(row) {
+    // Add event listener to remove button
+    const removeButton = row.querySelector('.btn-remove');
+    if (removeButton) {
+        removeButton.onclick = function() {
+            const tbody = row.closest('tbody');
+            if (tbody && tbody.querySelectorAll('tr').length > 1) {
+                row.remove();
+                updateBudgetTotals();
+            }
+        };
+    }
+    
+    // Add event listeners for quantity and price inputs
+    const quantityInput = row.querySelector('.quantity-input');
+    const priceInput = row.querySelector('.price-input');
+    
+    if (quantityInput && priceInput) {
+        const updateTotals = function() {
+            calculateRowTotal(row);
+            updateBudgetTotals();
+        };
+        
+        quantityInput.addEventListener('input', updateTotals);
+        priceInput.addEventListener('input', updateTotals);
     }
 }
 
@@ -183,30 +398,37 @@ function populateQuestions() {
 }
 
 // Check if user already has an assessment in progress
-// Modify checkExistingAssessment in assessment.js
+// Modify checkExistingSubmission in assessment.js
 
-async function checkExistingAssessment() {
+async function checkExistingSubmission() {
     try {
-        // Get user's assessment document
-        const assessmentDoc = await getDoc(doc(db, 'assessments', currentUser.uid));
+        // Get active assessment ID first
+        const activeDoc = await getDoc(activeAssessmentRef);
+        if (!activeDoc.exists()) return;
         
-        if (assessmentDoc.exists()) {
-            const existingAssessment = assessmentDoc.data();
+        const activeAssessmentId = activeDoc.data().assessmentId;
+        
+        // Check for existing submission with compound key
+        const submissionRef = doc(db, 'submissions', `${currentUser.uid}_${activeAssessmentId}`);
+        const submissionDoc = await getDoc(submissionRef);
+        
+        if (submissionDoc.exists()) {
+            const existingSubmission = submissionDoc.data();
             
             // Check assessment status
-            const status = existingAssessment.status || 
-                           (existingAssessment.submitted ? 'submitted' : 'saved');
+            const status = existingSubmission.status || 
+                           (existingSubmission.submitted ? 'submitted' : 'saved');
             
             // Handle different statuses
             switch(status) {
                 case 'saved':
                     // Populate the form with saved data
-                    populateExistingBudget(existingAssessment.budget);
-                    populateExistingAnswers(existingAssessment.answers);
+                    populateExistingBudget(existingSubmission.budget);
+                    populateExistingAnswers(existingSubmission.answers);
                     
                     // Set scenario
-                    if (existingAssessment.scenario) {
-                        userScenario = existingAssessment.scenario;
+                    if (existingSubmission.scenario) {
+                        userScenario = existingSubmission.scenario;
                         const scenarioElement = document.getElementById('scenario-text');
                         if (scenarioElement) {
                             scenarioElement.innerHTML = userScenario.description;
@@ -216,12 +438,12 @@ async function checkExistingAssessment() {
                     
                 case 'feedback_provided':
                     // Populate the form with previous submission
-                    populateExistingBudget(existingAssessment.budget);
-                    populateExistingAnswers(existingAssessment.answers);
+                    populateExistingBudget(existingSubmission.budget);
+                    populateExistingAnswers(existingSubmission.answers);
                     
                     // Set scenario
-                    if (existingAssessment.scenario) {
-                        userScenario = existingAssessment.scenario;
+                    if (existingSubmission.scenario) {
+                        userScenario = existingSubmission.scenario;
                         const scenarioElement = document.getElementById('scenario-text');
                         if (scenarioElement) {
                             scenarioElement.innerHTML = userScenario.description;
@@ -229,13 +451,13 @@ async function checkExistingAssessment() {
                     }
                     
                     // Show feedback message
-                    showFeedbackMessage(existingAssessment);
+                    showFeedbackMessage(existingSubmission);
                     break;
                     
                 case 'submitted':
                 case 'finalised':
                     // Show message that assessment is already submitted
-                    showSubmittedMessage(status, existingAssessment);
+                    showSubmittedMessage(status, existingSubmission);
                     return; // Exit function to prevent form population
             }
         }
@@ -555,6 +777,7 @@ function populateExistingAnswers(answers) {
 function setupEventListeners() {
     // Add income item
     const addIncomeButton = document.getElementById('add-income');
+
     if (addIncomeButton) {
         addIncomeButton.addEventListener('click', function() {
             const incomeTable = document.getElementById('income-table');
@@ -705,7 +928,78 @@ function setupEventListeners() {
         submitButton.addEventListener('click', submitAssessment);
     }
     
+    const resetBudgetButton = document.getElementById('reset-budget');
+
+    if (resetBudgetButton) {
+        resetBudgetButton.addEventListener('click', function() {
+            if (confirm('Are you sure you want to reset your budget? All current entries will be cleared.')) {
+                resetBudget();
+            }
+        });
+}
     // Update budget totals initially
+    updateBudgetTotals();
+}
+
+function resetBudget() {
+    // Reset farm type and budget period to defaults
+    const farmTypeSelect = document.getElementById('farm-type');
+    if (farmTypeSelect) {
+        farmTypeSelect.value = 'mixed';
+    }
+    
+    const budgetPeriodSelect = document.getElementById('budget-period');
+    if (budgetPeriodSelect) {
+        budgetPeriodSelect.value = 'annual';
+    }
+    
+    // Reset income table
+    const incomeTable = document.getElementById('income-table');
+    if (incomeTable) {
+        const incomeTableBody = incomeTable.querySelector('tbody');
+        if (incomeTableBody) {
+            incomeTableBody.innerHTML = `
+                <tr>
+                    <td><input type="text" placeholder="Income item"></td>
+                    <td><input type="number" class="quantity-input" placeholder="0" min="0"></td>
+                    <td><input type="number" class="price-input" placeholder="0.00" min="0" step="0.01"></td>
+                    <td class="row-total">$0.00</td>
+                    <td><button class="btn-small btn-remove">Remove</button></td>
+                </tr>
+            `;
+            
+            // Add event listeners to the row
+            const row = incomeTableBody.querySelector('tr');
+            if (row) {
+                addEventListenersToRow(row);
+            }
+        }
+    }
+    
+    // Reset expense table
+    const expenseTable = document.getElementById('expense-table');
+    if (expenseTable) {
+        const expenseTableBody = expenseTable.querySelector('tbody');
+        if (expenseTableBody) {
+            expenseTableBody.innerHTML = `
+                <tr>
+                    <td><input type="text" placeholder="Expense item"></td>
+                    <td><input type="number" class="quantity-input" placeholder="0" min="0"></td>
+                    <td><input type="number" class="price-input" placeholder="0.00" min="0" step="0.01"></td>
+                    <td class="row-total">$0.00</td>
+                    <td><button class="btn-small btn-remove">Remove</button></td>
+                </tr>
+            `;
+            
+            // Add event listeners to the row
+            const row = expenseTableBody.querySelector('tr');
+            if (row) {
+                addEventListenersToRow(row);
+            }
+        }
+    }
+    
+    // Update totals
     updateBudgetTotals();
 }
 
@@ -783,6 +1077,13 @@ async function saveAssessment() {
         saveButton.disabled = true;
         saveButton.textContent = 'Saving...';
         
+        // Get the active assessment ID first
+        const activeAssessmentDoc = await getDoc(activeAssessmentRef);
+        if (!activeAssessmentDoc.exists()) {
+            throw new Error('No active assessment available');
+        }
+        const activeAssessmentId = activeAssessmentDoc.data().assessmentId;
+        
         // Collect budget data
         const budget = collectBudgetData();
         
@@ -797,12 +1098,13 @@ async function saveAssessment() {
             budget: budget,
             answers: answers,
             lastSaved: new Date(),
-            status: 'saved', // Set status to 'saved'
-            submitted: false
+            status: 'saved',
+            submitted: false,
+            assessmentId: activeAssessmentId
         };
         
-        // Save to Firestore
-        await setDoc(doc(db, 'assessments', currentUser.uid), assessmentData);
+        // Save to submissions collection with compound key
+        await setDoc(doc(db, 'submissions', `${currentUser.uid}_${activeAssessmentId}`), assessmentData);
         
         // Show success message
         alert('Assessment saved successfully!');
@@ -847,6 +1149,20 @@ async function submitAssessment() {
         // Collect answers
         const answers = collectAnswers();
         
+        // Get assessment title before submission
+    let assessmentTitle = "Assessment";
+    try {
+        const activeAssessmentDoc = await getDoc(activeAssessmentRef);
+        if (activeAssessmentDoc.exists()) {
+            const activeAssessmentId = activeAssessmentDoc.data().assessmentId;
+            const assessmentDoc = await getDoc(doc(db, 'assessments', activeAssessmentId));
+            if (assessmentDoc.exists()) {
+                assessmentTitle = assessmentDoc.data().title || "Assessment";
+            }
+        }
+    } catch (error) {
+        console.error("Error getting assessment title:", error);
+    }
         // Create assessment data
         const assessmentData = {
             userId: currentUser.uid,
@@ -859,11 +1175,32 @@ async function submitAssessment() {
             submitted: true,
             feedback: null,
             grade: null,
-            feedbackHistory: [] // Initialize feedback history array
+            feedbackHistory: [], // Initialize feedback history array
+            assessmentTitle: assessmentTitle
         };
         
-        // Save to Firestore
-        await setDoc(doc(db, 'assessments', currentUser.uid), assessmentData);
+        // Get the active assessment ID
+        const activeAssessmentDoc = await getDoc(activeAssessmentRef);
+        if (!activeAssessmentDoc.exists()) {
+            throw new Error('No active assessment available');
+        }
+        const activeAssessmentId = activeAssessmentDoc.data().assessmentId;
+
+        // Update the assessmentData with the assessment ID
+        assessmentData.assessmentId = activeAssessmentId;
+
+        // Save budget data separately for reuse in future assessments
+        await setDoc(getStudentBudgetRef(currentUser.uid), {
+            userId: currentUser.uid,
+            farmType: budget.farmType,
+            budgetPeriod: budget.budgetPeriod,
+            incomeItems: budget.incomeItems,
+            expenseItems: budget.expenseItems,
+            lastUpdated: new Date()
+        });
+
+        // Save to Firestore - use composite key
+        await setDoc(doc(db, 'submissions', `${currentUser.uid}_${activeAssessmentId}`), assessmentData);
         
         // Show success message
         const assessmentContent = document.getElementById('assessment-content');

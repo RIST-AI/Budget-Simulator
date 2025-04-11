@@ -1,13 +1,15 @@
 // js/navigation.js
 import { getCurrentUser } from './auth.js';
-import { db, doc, getDoc } from './firebase-config.js'; // Add this import
+import { db, doc, getDoc, collection, query, where, getDocs } from './firebase-config.js'; 
+
 
 // Navigation items configuration
 const navItems = {
   left: [
-    { id: 'budget-nav-item', text: 'Budget Simulator', href: 'budget.html' }
   ],
   student: [
+    { id: 'budget-nav-item', text: 'Budget Simulator', href: 'budget.html' },
+    { id: 'dashboard-nav-item', text: 'Dashboard', href: 'student-dashboard.html' },
     { id: 'assessment-nav-item', text: 'Assessment', href: 'assessment.html' }
   ],
   trainer: [
@@ -22,35 +24,35 @@ const navItems = {
 // Check for assessment notifications
 async function checkAssessmentNotifications() {
   const user = await getCurrentUser();
-  if (!user || user.roles.includes('trainer')) return;
+  if (!user || user.roles?.includes('trainer')) return;
   
   try {
-    // Check if the user has an assessment with feedback or grade
-    const assessmentRef = doc(db, 'assessments', user.uid);
-    const assessmentDoc = await getDoc(assessmentRef);
+    // Query for submissions with feedback instead of checking assessments
+    const submissionsRef = collection(db, 'submissions');
+    const q = query(
+      submissionsRef,
+      where("userId", "==", user.uid),
+      where("status", "in", ["feedback_provided", "finalised"])
+    );
+    const snapshot = await getDocs(q);
     
-    if (assessmentDoc.exists()) {
-      const assessment = assessmentDoc.data();
-      const status = assessment.status;
-      
-      // If there's feedback or the assessment is finalised, show notification
-      if (status === 'feedback_provided' || status === 'finalised') {
-        const assessmentNavItem = document.getElementById('assessment-nav-item');
-        if (assessmentNavItem) {
-          const navLink = assessmentNavItem.querySelector('a');
-          if (navLink && !navLink.querySelector('.notification-dot')) {
-            // Create notification dot
-            const notificationDot = document.createElement('span');
-            notificationDot.className = 'notification-dot';
-            notificationDot.style.display = 'inline-block';
-            notificationDot.style.width = '10px';
-            notificationDot.style.height = '10px';
-            notificationDot.style.backgroundColor = '#e74c3c';
-            notificationDot.style.borderRadius = '50%';
-            notificationDot.style.marginLeft = '5px';
-            
-            navLink.appendChild(notificationDot);
-          }
+    // If there are submissions with feedback or finalised status, show notification
+    if (!snapshot.empty) {
+      const assessmentNavItem = document.getElementById('assessment-nav-item');
+      if (assessmentNavItem) {
+        const navLink = assessmentNavItem.querySelector('a');
+        if (navLink && !navLink.querySelector('.notification-dot')) {
+          // Create notification dot
+          const notificationDot = document.createElement('span');
+          notificationDot.className = 'notification-dot';
+          notificationDot.style.display = 'inline-block';
+          notificationDot.style.width = '10px';
+          notificationDot.style.height = '10px';
+          notificationDot.style.backgroundColor = '#e74c3c';
+          notificationDot.style.borderRadius = '50%';
+          notificationDot.style.marginLeft = '5px';
+          
+          navLink.appendChild(notificationDot);
         }
       }
     }
