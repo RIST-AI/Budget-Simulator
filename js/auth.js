@@ -197,11 +197,11 @@ async function redirectIfLoggedIn() {
     const userRoles = getUserRoles(currentUser);
     
     if (userRoles.includes('student')) {
-      window.location.href = 'student-dashboard.html';
+      window.location.href = 'assessment.html';
     } else if (userRoles.includes('trainer')) {
-      window.location.href = 'trainer-dashboard.html';
+      window.location.href = 'trainter-review.html';
     } else {
-      window.location.href = 'budget.html';
+      window.location.href = 'index.html';
     }
     return true;
   }
