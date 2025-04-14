@@ -8,9 +8,8 @@ const navItems = {
   left: [
   ],
   student: [
-    { id: 'budget-nav-item', text: 'Budget Simulator', href: 'budget.html' },
-    { id: 'dashboard-nav-item', text: 'Dashboard', href: 'student-dashboard.html' },
-    { id: 'assessment-nav-item', text: 'Assessment', href: 'assessment.html' }
+    { id: 'assessment-nav-item', text: 'Assessment', href: 'assessment.html' },
+    { id: 'dashboard-nav-item', text: 'Dashboard', href: 'student-dashboard.html' }
   ],
   trainer: [
     { id: 'review-nav-item', text: 'Review Assessments', href: 'trainer-review.html' },

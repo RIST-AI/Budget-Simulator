@@ -4,13 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AHCBUS408 Budget Master</title>
-    <meta http-equiv="refresh" content="0;url=budget.html">
-    <script>
-        window.location.href = "budget.html";
+    <!-- Import Firebase auth system -->
+    <script type="module">
+        import { getCurrentUser } from './js/auth.js';
+        
+        // Handle redirection based on user role
+        async function redirectBasedOnRole() {
+            try {
+                const user = await getCurrentUser();
+                
+                if (!user) {
+                    // User not logged in, redirect to login page
+                    window.location.href = 'login.html';
+                    return;
+                }
+                
+                // Get user roles (supporting both formats)
+                const userRoles = Array.isArray(user.roles) ? user.roles : [user.role];
+                
+                // Redirect based on role
+                if (userRoles.includes('trainer') || userRoles.includes('admin')) {
+                    window.location.href = 'trainer-review.html';
+                } else {
+                    // Default for students and others
+                    window.location.href = 'assessment.html';
+                }
+            } catch (error) {
+                console.error("Error determining redirect:", error);
+                // Fallback to login on error
+                window.location.href = 'login.html';
+            }
+        }
+        
+        // Run redirect when page loads
+        redirectBasedOnRole();
     </script>
 </head>
 <body>
-    <p>Redirecting to Budget Simulator...</p>
-    <p>If you are not redirected automatically, <a href="budget.html">click here</a>.</p>
+    <p>Redirecting...</p>
+    <p>If you are not redirected automatically, please <a href="login.html">log in</a>.</p>
 </body>
 </html>
