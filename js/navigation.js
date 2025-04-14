@@ -152,7 +152,7 @@ function setActiveNavItem() {
   navLinks.forEach(link => {
     const linkPage = link.getAttribute('href');
     if (linkPage === currentPage || 
-        (currentPage === 'index.html' && linkPage === 'budget.html')) {
+        (currentPage === 'index.html' && linkPage === 'index.html')) {
       link.classList.add('active');
     } else {
       link.classList.remove('active');
